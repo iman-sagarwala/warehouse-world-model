@@ -9,8 +9,8 @@
 
 > **Updated 2026-09-05 (M5 closed).** The headline is no longer an in-house comparison. Against
 > **TA-RWARE's own dispatcher**, on 144 paired days per regime, the planner is worth **+21.1%**
-> (wave) and **+48.9%** (live-stream) on clean floors, rising to **+31.6%** and **+62.3%** once
-> disturbances are active (t = 9.1–11.8) — while paying an energy cost the baselines skip. A
+> (wave) and **+47.5%** (live-stream) on clean floors, rising to **+31.6%** and **+62.3%** once
+> disturbances are active (t = 9.1–12.4) — while paying an energy cost the baselines skip. A
 > policy-gradient dispatcher given identical information loses to the hand-built rules by 5.3%.
 > **Ten mechanisms shipped, twenty-two measured and cut** (`docs/ABLATION.md`).
 
@@ -33,8 +33,8 @@ supply. The method's value comes not from the plan — obeying the whole imagine
 applied to every imagined completion.
 
 Against **TA-RWARE's own dispatcher**, on 144 paired days per regime, the planner is worth **+21.1%**
-(wave) and **+48.9%** (live-stream) on clean floors and **+31.6%** / **+62.3%** once disturbances are
-active (t = 9.1–11.8), while paying an energy cost the baselines skip. Safety is absolute rather than
+(wave) and **+47.5%** (live-stream) on clean floors and **+31.6%** / **+62.3%** once disturbances are
+active (t = 9.1–12.4), while paying an energy cost the baselines skip. Safety is absolute rather than
 statistical: **zero strandings** across 2,300+ runs and **zero collisions** of either vertex or swap
 type, measured directly over ~96,000 robot-steps per controller, with the inner-loop planner solving
 100% of 1,800 MovingAI MAPF scenarios. A policy-gradient dispatcher trained on 960 days with
@@ -68,7 +68,7 @@ argue such audits should be routine, because most of our own earlier findings di
 **on-time value**, not throughput. A late delivery banks **zero**.
 
 **Contributions.**
-1. **A rollout sequencer** for task choice, worth **+21.1% / +48.9%** over the simulator's own
+1. **A rollout sequencer** for task choice, worth **+21.1% / +47.5%** over the simulator's own
    dispatcher on clean floors and **+31.6% / +62.3%** under disturbances (§5.20), at **zero**
    strandings and **zero** measured collisions.
 2. **Six negative results with mechanisms**, obtained cheaply via a VoPI discipline (§5.3, §5.5,
@@ -266,7 +266,7 @@ must not be cited.**
 | 3 | `fig_benchmark.png` | head-to-head vs the simulator's own dispatcher, both regimes, ± disturbances | §5.20 |
 | 4 | `m5_belief_curves.png` | the belief map as a forecaster: PR, reliability, detection latency | §5.22 |
 | 5 | `fig_sensing.png` | the prediction inversion across sight radius | §5.23 |
-| 6 | `fig_ablation.png` | the pre-registered keep/cut ledger, 10 shipped / 21 cut | §5.24 |
+| 6 | `fig_ablation.png` | the pre-registered keep/cut ledger, 10 shipped / 22 cut | §5.24 |
 | 7 | `fig_anticipation.png` | the anticipation null: horizon damage, and six channels | §5.3, §5.25 |
 | 8 | `fig_horizon.png` | the tuner's cadence/horizon grid, value against compute | §5.26 |
 
@@ -780,15 +780,16 @@ is a decision-layer redesign rather than a learned component.
 
 **Benchmarks.** Against the simulator's own dispatcher and a value-plus-urgency baseline, on 144
 paired days per regime (1,152 runs), the champion delivers 779.3 on-time value on wave days
-versus 643.5 for FIFO and 684.8 for Rush (+21.1% and +13.8%; t = 9.1 and 9.2), and 547.8 on
-live-stream days versus 368.0 and 492.7 (+48.9% and +11.2%; t = 11.3 and 4.9) — clearing the
+versus 643.5 for FIFO and 684.8 for Rush (+21.1% and +13.8%; t = 9.1 and 9.2), and 602.0 on
+live-stream days versus 408.0 and 542.4 (+47.5% and +11.0%; t = 12.4 and 5.3) — clearing the
 pre-registered "at least FIFO, target +10%" bar in both regimes. The margins are conservative:
 the baselines run without battery physics, so they pay no charging cost while the champion does.
 The safety columns are as important as the value columns: across all 1,152 runs the champion and
 its self-tuning variant stranded zero robots, and wedged carriers appear only once (a single
 stream seed) against four to thirteen for the baselines in every cell. The self-tuner adds +0.5%
-on wave (t = 2.41, clearing the significance bar at this sample size) and +1.7% on stream
-(t = 1.90), consistent with the campaign's pooled estimate.
+on wave (t = 2.41, clearing the significance bar at this sample size) and +0.9% on stream
+(t = 1.08, below it), consistent in sign with the campaign's pooled estimate but not, on the
+live-stream regime, in significance.
 
 Repeating the comparison with disturbances active — the condition the benchmark was specified
 for — widens every margin: 764.0 versus 580.6 (FIFO) and 659.7 (Rush) on wave days, 490.8 versus
@@ -1128,14 +1129,17 @@ accident while fixing something real.
   reported with disturbances active, and the margins are *larger* there. Battery remains at
   compressed scale (1,500-step discharge vs the real ~21,600) with the charge:discharge ratio
   preserved — the absolute timescale, not the trade-off structure, is the unrealistic part.
-- **The headline benchmark table has a provenance gap.** `results/m5_bench.csv` was produced on
-  2026-08-24; `wwm_sim/warehouse.py` changed on 2026-08-25. Re-running the same seeds on current code
-  gives materially different absolute values (stream FIFO 494.8 → 524.5 on seeds 1–24), so the table
-  as published is measured against a simulator one commit behind. The *margins* are the claim and
-  they are paired within each run, but the absolute numbers must be re-locked before submission; a
-  full 1,152-run re-measurement on current code is in flight. **Treat every absolute value in §5.20
-  as provisional until that lands.** The root cause is procedural — the benchmark was not re-run
-  after a simulator change — and is exactly the failure mode §3's audit was supposed to retire.
+- **The headline benchmark table was re-measured, and the process failure behind it is worth
+  reporting.** `results/m5_bench.csv` was produced on 2026-08-24; `wwm_sim/warehouse.py` changed on
+  2026-08-25, and the table was never re-run. A full 1,152-run re-measurement on current code
+  (`results/m5_bench_current.csv`, 2026-09-06) resolves it: **wave is bit-identical** (643.5 / 684.8 /
+  779.3 / 782.9), while every live-stream value rose by 40–55 points — FIFO 368.0 → 408.0, champion
+  547.8 → 602.0 — so the live-stream margin moves **+48.9% → +47.5%** (t = 12.4) and the tuner's
+  live-stream edge falls from +1.7% (t = 1.90) to +0.9% (t = 1.08), i.e. below the bar. All numbers
+  in this paper are the re-measured ones. The claim survived because it is a *paired* margin, but
+  the near-miss is the point: nothing in our process forced a re-run after a simulator change, and
+  the absolute values were wrong for twelve days. Re-running the benchmark on every simulator commit
+  is now the rule.
 - **One open liveness defect** (§5.20, seed 125, live-stream): two carriers frozen for the last 100
   steps under both champion and tuner — 574 of 576 runs clean. **Chased down in §5.27 and still open.** The
   structural diagnosis (no spare storage) was tested by supplying slack, and the wedge relocated to
@@ -1168,8 +1172,8 @@ accident while fixing something real.
 
 ## 8. Conclusion + Future Work
 Against the simulator's own dispatcher the decision layer is worth **+21.1%** on wave days and
-**+48.9%** on live-stream days with a clean floor, and **+31.6%** / **+62.3%** once disturbances are
-active (t = 9.1–11.8, 144 paired days per cell, 2,304 runs) — while paying an energy cost the
+**+47.5%** on live-stream days with a clean floor, and **+31.6%** / **+62.3%** once disturbances are
+active (t = 9.1–12.4, 144 paired days per cell, 2,304 runs) — while paying an energy cost the
 baselines skip. The liveness layer is worth a further **+6.8%** on the dense map while taking
 permanent deadlock from **51% of episodes to zero**, and the safety claims are measured rather than
 assumed: **zero strandings** in 2,300+ runs, **zero** vertex and swap collisions over ~96,000

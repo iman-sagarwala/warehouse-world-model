@@ -73,8 +73,21 @@ def bench_means(path):
 # ------------------------------------------------------------------ figure 1
 def fig_benchmark():
     """Head-to-head against the simulator's own dispatcher, both regimes, +/- disturbances."""
-    clean, _ = bench_means(os.path.join(OUT, "m5_bench.csv"))
-    dist, _ = bench_means(os.path.join(OUT, "m5_bench_disturb.csv"))
+    # prefer the 2026-09-06 re-measurement on current code; fall back to the older tables
+    def pick(*names):
+        """First complete table wins: a re-measurement still in flight is not used."""
+        for n in names:
+            p_ = os.path.join(OUT, n)
+            if not os.path.exists(p_):
+                continue
+            m, raw = bench_means(p_)
+            want = {(a_, r_) for a_ in ("fifo", "rush", "champ", "mpc")
+                    for r_ in ("wave", "stream")}
+            if want <= set(raw) and min(len(v) for v in raw.values()) >= 144:
+                return p_
+        raise IOError(names[0])
+    clean, _ = bench_means(pick("m5_bench_current.csv", "m5_bench.csv"))
+    dist, _ = bench_means(pick("m5_bench_disturb_current.csv", "m5_bench_disturb.csv"))
     arms = [("fifo", "FIFO (built-in)", C1), ("rush", "Rush", C2),
             ("champ", "champion", C3), ("mpc", "champion + tuner", C4)]
 
@@ -204,7 +217,7 @@ def fig_sensing():
 # ------------------------------------------------------------------ figure 4
 def fig_ablation():
     """The pre-registered keep/cut ledger: 10 shipped, 21 cut, one bar each."""
-    SAFE = "0 stranded / 0 frozen — a hard-constraint mechanism"
+    SAFE = "0 stranded / 0 frozen in 144 days"
     ENAB = "enabling infrastructure — no value claim"
     keep = [("Board rollout", 7.2, None), ("Belief-map routing", 6.2, None),
             ("Reset update rule", 3.5, None), ("Sight / prediction split", 2.8, None),
@@ -224,14 +237,15 @@ def fig_ablation():
            ("Tuner context prior", -0.1, None),
            ("Joint first moves", -6.9, None), ("Guessed clash model", -2.0, None),
            ("Full ADG deconfliction", 0.0, "not built — collisions already measured at 0"),
-           ("Layer-2 congestion", -0.5, None), ("Windowed pair optim.", -0.6, None)]
+           ("Layer-2 congestion", -0.5, None), ("Windowed pair optim.", -0.6, None),
+           ("Spare storage slots", -10.6, "slack supplied; the wedge relocated instead")]
 
-    fig, (axA, axB) = plt.subplots(1, 2, figsize=(10.6, 6.2),
+    fig, (axA, axB) = plt.subplots(1, 2, figsize=(10.6, 6.5),
                                    gridspec_kw={"width_ratios": [1, 1]})
     for ax, rows, col, title, sub in (
             (axA, keep, GOOD, "Kept — 10 mechanisms",
              "bars show measured value effect; four ship on safety, not value"),
-            (axB, cut, BAD, "Cut — 21 mechanisms",
+            (axB, cut, BAD, "Cut — 22 mechanisms",
              "the standing bar was fixed in advance: ≥3% or cut")):
         rows = rows[::-1]
         ax.barh(range(len(rows)), [v for _n, v, _t in rows], color=col, height=0.66,

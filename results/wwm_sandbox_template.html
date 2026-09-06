@@ -114,7 +114,7 @@ button.term:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <h1>wwm_sim Sandbox</h1>
   <p>Slide the fleet and floor. The layout, charging bays, and the constants the robots
   learned for that world update live — data straight from the MPC campaign.
-  <span class="mono" style="opacity:.55;font-size:.72rem">build r34</span></p>
+  <span class="mono" style="opacity:.55;font-size:.72rem">build r35</span></p>
   <p id="errLine" class="mono" style="color:var(--bad);display:none"></p>
 </header>
 <nav class="tabs">
@@ -182,10 +182,10 @@ value-and-urgency rule without imagination. Note both baselines run with <em>fre
 </table>
 <table>
 <tr><th>live-stream days</th><th>value</th><th>on-time %</th><th>robots stranded</th><th>robots wedged</th></tr>
-<tr><td>FIFO (built-in)</td><td class="mono">368.0</td><td class="mono">65.4%</td><td class="mono">0</td><td class="mono">9</td></tr>
-<tr><td>Rush (value + urgency)</td><td class="mono">492.7</td><td class="mono">78.5%</td><td class="mono">0</td><td class="mono">13</td></tr>
-<tr><td><b>champion</b></td><td class="mono"><b>547.8</b></td><td class="mono">77.8%</td><td class="mono"><b>0</b></td><td class="mono">2</td></tr>
-<tr><td><b>champion + self-tuner</b></td><td class="mono"><b>557.4</b></td><td class="mono">78.3%</td><td class="mono"><b>0</b></td><td class="mono">2</td></tr>
+<tr><td>FIFO (built-in)</td><td class="mono">408.0</td><td class="mono">68.4%</td><td class="mono">0</td><td class="mono">9</td></tr>
+<tr><td>Rush (value + urgency)</td><td class="mono">542.4</td><td class="mono">81.0%</td><td class="mono">0</td><td class="mono">12</td></tr>
+<tr><td><b>champion</b></td><td class="mono"><b>602.0</b></td><td class="mono">80.7%</td><td class="mono"><b>0</b></td><td class="mono">2</td></tr>
+<tr><td><b>champion + self-tuner</b></td><td class="mono"><b>607.2</b></td><td class="mono">81.1%</td><td class="mono"><b>0</b></td><td class="mono">3</td></tr>
 </table>
 <table>
 <tr><th>the same test, but with spills on the floor</th><th>value</th><th>vs the built-in dispatcher</th></tr>
@@ -216,11 +216,15 @@ lost to the hand-built rules by <b>5.3%</b>. Given identical information, there 
 left for it to find. <span style="color:var(--ink-soft)">(Caveat: a modest training budget with a
 simple algorithm; a much larger tuned run might close that gap.)</span></p>
 
-<p class="note"><b>+21% over the built-in dispatcher on wave days, +49% on live-stream days</b>
-(both far past the &plusmn;certain mark: t = 9.1 and 11.3 across 144 paired days). The safety
+<p class="note"><b>+21% over the built-in dispatcher on wave days, +47% on live-stream days</b>
+(both far past the &plusmn;certain mark: t = 9.1 and 12.4 across 144 paired days). These are the
+<b>2026-09-06 re-measurement</b>: the earlier table had been produced before a simulator change and
+never re-run, which left the live-stream absolutes 40&ndash;55 points low. Wave was unaffected, and the
+margin barely moved (+48.9% &rarr; +47.5%) because it is a paired comparison &mdash; but the numbers
+were wrong for twelve days, and re-running the benchmark on every simulator change is now the rule. The safety
 columns matter as much as the value: across all 1,152 runs our controllers stranded
 <b>zero</b> robots, while the baselines repeatedly wedge robots holding pods. The self-tuner adds
-+0.5% on wave (statistically real, t = 2.4) and +1.7% on stream.</p>
++0.5% on wave (statistically real, t = 2.4) and +0.9% on stream (t = 1.1 &mdash; below the bar).</p>
 
 <h3>2 &middot; Seeing, remembering, predicting (48 identical days with spills)</h3>
 <table>
@@ -448,14 +452,14 @@ value per 500-step day.</p>
 <table>
 <tr><th>world</th><th>FIFO (built-in)</th><th>Rush</th><th>champion</th><th>+ self-tuner</th></tr>
 <tr><td>wave days, clean floor</td><td class="mono">643.5</td><td class="mono">684.8</td><td class="mono"><b>779.3</b></td><td class="mono">782.9</td></tr>
-<tr><td>live-stream, clean floor</td><td class="mono">368.0</td><td class="mono">492.7</td><td class="mono"><b>547.8</b></td><td class="mono">557.4</td></tr>
+<tr><td>live-stream, clean floor</td><td class="mono">408.0</td><td class="mono">542.4</td><td class="mono"><b>602.0</b></td><td class="mono">607.2</td></tr>
 <tr><td>wave days, with spills</td><td class="mono">580.6</td><td class="mono">659.7</td><td class="mono"><b>764.0</b></td><td class="mono">764.1</td></tr>
 <tr><td>live-stream, with spills</td><td class="mono">302.4</td><td class="mono">434.8</td><td class="mono"><b>490.8</b></td><td class="mono">491.7</td></tr>
 </table>
-<p class="note">Champion over the built-in dispatcher: <b>+21.1%</b> and <b>+48.9%</b> on clean
-floors (t = 9.1, 11.3); <b>+31.6%</b> and <b>+62.3%</b> with spills (t = 11.0, 11.8). The
+<p class="note">Champion over the built-in dispatcher: <b>+21.1%</b> and <b>+47.5%</b> on clean
+floors (t = 9.1, 12.4); <b>+31.6%</b> and <b>+62.3%</b> with spills (t = 11.0, 11.8). The
 baselines run with free energy &mdash; only our controllers pay for charging &mdash; so these are
-understatements. Self-tuner: +0.5% wave (t = 2.41), +1.7% stream (t = 1.90), <b>0.0% with
+understatements. Self-tuner: +0.5% wave (t = 2.41), +0.9% stream (t = 1.08), <b>0.0% with
 spills</b> (t &lt; 0.3) &mdash; hazard noise drowns its comparisons.</p>
 
 <table>

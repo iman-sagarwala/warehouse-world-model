@@ -95,7 +95,7 @@ disturbance. For the belief map: Brier score and skill, AUPRC, precision/recall,
 detection latency. Every mechanism must earn **≥3% or be cut**.
 
 **Results so far.** Against TA-RWARE's own dispatcher on 144 paired days, the planner delivers
-**+21.1%** (wave) and **+48.9%** (live-stream) on clean floors, rising to **+31.6%** and
+**+21.1%** (wave) and **+47.5%** (live-stream) on clean floors, rising to **+31.6%** and
 **+62.3%** once disturbances are active (t = 9–12) — while paying an energy cost the baselines
 skip. Safety is absolute rather than statistical: **zero strandings** across 2,300+ runs and
 **zero collisions** (vertex and swap, measured directly over ~96,000 robot-steps per controller).
@@ -111,21 +111,45 @@ rescue it; idle-robot pre-positioning has a 2.4% ceiling; the learned pace head 
 68 decisions** because the deadline rule is a step function that never consults finish time; and
 the reinforcement-learning dispatcher lost to the hand-built rules by 5.3%.
 
-**Plots.** Precision–recall, reliability diagram, and detection-latency CDF for the belief map
-(complete); ablation bars; throughput-versus-disturbance; value-over-time race curves.
+**Plots.** An eight-figure set, regenerated from current data by `scripts/make_paper_figures.py`:
+the head-to-head benchmark (both regimes, ± disturbances), precision–recall / reliability /
+detection-latency for the belief map, the sensing-radius decomposition, the keep/cut ledger, the
+anticipation null, and the tuner's horizon grid. *An earlier figure list was discarded: three plots
+had been rendered before the realism audit, on a world three times too productive.*
 **Qualitative analysis:** decision traces ("why did R2 charge?"), and animations of the belief map
 beside hidden ground truth, both already produced and published in an interactive sandbox.
 
 ## 5. Next Steps
 
-Remaining work: (a) adopt a longer planning horizon — a sweep showed the shipped 100-step
-lookahead is too short, with 200 steps worth +39 more value and a third fewer strandings on
-stress days, pending an ordinary-day check; (b) fix a structural flaw found this week — the floor
-has *zero* spare storage slots, so a robot occasionally has nowhere to put a pod; (c) assemble
-the paper and figures; (d) open-source release. The main challenge has been methodological rather
-than technical: several apparent wins evaporated on fresh seeds, and one "result" came from a
-metric that was silently reading a value that was never written. Controls and re-verification are
-now standard practice.
+Since the milestone was written, (a) and (b) below have both been resolved, one as a win and one as
+an instructive failure.
+
+**(a) The longer planning horizon is adopted.** The ordinary-day re-check came back a clean tie at
+identical compute — wave +8.6 against the shipped +8.9, live-stream +2.5 against +4.4, all inside
+noise — while the stress-day gain stands at +17.8 value and strandings 95 → 63. Nothing regresses,
+so the change is free in exactly the shape a safety parameter should be.
+
+**(b) The "zero spare storage slots" flaw was not the cause, and its fix does not ship.** Auditing it
+turned up a real bug — the occupancy grid was rebuilt every step, silently restoring pods that had
+been stripped from the charging bays, so a documented world rule had never once been in force and
+the floor was running eight *fewer* slots than pods. Correcting it closes the failing day and opens
+a different one; adding genuinely empty slots changes neither. Worse, with the bay pods really gone
+the vendored baseline starts parking pods on charging bays — it has no keep-out notion, our
+controller does — which would have widened our reported margin from +62.6% to +80.7% purely by
+degrading the opponent. The pod turned out to be load-bearing and the rule cosmetic, so the bug is
+documented rather than patched and the liveness item stays open.
+
+Remaining: (c) assemble the paper and figures — the draft is complete through §5.27 with an
+eight-figure set and a reference list, and needs typesetting and a citation check; (d) the
+open-source release is staged as a licensed, gitignored repository with the two vendored
+dependencies reduced to pinned commits plus patches, awaiting only the decision to publish.
+
+The main challenge has remained methodological rather than technical. Several apparent wins
+evaporated on fresh seeds; one "result" came from a metric silently reading a value that was never
+written; a documented world rule turned out never to have executed; and the benchmark table was
+found to predate a simulator change and is being re-measured. Controls and re-verification are now
+standard practice, and the most useful habit added this week is narrower than that: **when a change
+moves your headline, check whether it moved your baseline.**
 
 ## 6. Deliverables
 

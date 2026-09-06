@@ -10,7 +10,7 @@ Against TA-RWARE's own dispatcher, on 144 paired days per regime:
 
 | | wave days | live-stream days |
 |---|---|---|
-| clean floor | **+21.1%** (t = 9.1) | **+48.9%** (t = 11.3) |
+| clean floor | **+21.1%** (t = 9.1) | **+47.5%** (t = 12.4) |
 | with disturbances | **+31.6%** (t = 11.0) | **+62.3%** (t = 11.8) |
 
 …while paying an energy cost the baselines skip, at **zero** strandings across 2,300+ runs and
@@ -18,7 +18,7 @@ Against TA-RWARE's own dispatcher, on 144 paired days per regime:
 
 The project's second half is a set of **negative** results obtained by a value-of-perfect-information
 discipline: hand a candidate predictor the true future *before* building it. Six channels came back
-null or negative. **Ten mechanisms shipped; twenty-one were measured and cut** against a bar fixed in
+null or negative. **Ten mechanisms shipped; twenty-two were measured and cut** against a bar fixed in
 advance — see [`docs/ABLATION.md`](docs/ABLATION.md).
 
 - **Paper draft:** [`docs/PAPER_DRAFT.md`](docs/PAPER_DRAFT.md)
@@ -110,12 +110,19 @@ validate in the deployment regime — are listed at the end of `docs/TODO.md`.
 
 ## Known open items
 
-- One live-stream day (seed 125) wedges two carriers, 574 of 576 runs clean. Diagnosed: the floor has
-  **zero spare storage slots** (172 pods for 172 non-charger slots), so a robot holding a pod can have
-  nowhere to put it.
-- The tuner's 100-step rollout horizon is too short — 200 is worth +3.5% at equal compute on stress
-  days (§5.26).
-- Threshold *oscillation* is worth ~7% on stress days and is measured but not built (§5.25).
+- **One live-stream day wedges two carriers.** The structural diagnosis (no spare storage) was tested
+  and is wrong: supplying slack relocates the wedge to a different seed rather than closing it. The
+  audit did find a real bug — the occupancy grid was rebuilt every step, silently restoring pods that
+  had been stripped from the charging bays, so a documented world rule had never executed — but
+  correcting it hands the vendored baseline a 39-point loss it has no way to avoid, which would
+  inflate our margin. Documented, not shipped; see §5.27. The wedge's actual mechanism is unknown.
+- **Threshold oscillation** is worth ~7% on stress days, with no forecast involved, and is measured
+  but not yet part of the tuner's move set (§5.25).
+- **The swap family has not been ported to stock TA-RWARE**, so §5.13's dispatch rules have no
+  external-validity check yet.
+- **Idle-picker yield** is the last untested liveness rule, and is deliberately deferred: it is the
+  first rule that would have to *synthesise* a move rather than gate one, and the residual it targets
+  is one 92-step wait per 144 episodes.
 
 ## Licence
 
