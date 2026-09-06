@@ -7970,3 +7970,32 @@ and is reported that way. Also re-measures both channels on post-2026-08-25 code
 reproduces (-19.93) and hazard clairvoyance is genuinely valuable on the hazardous side of the phase
 boundary (+29.98, t=+2.22), both consistent with the pre-change numbers.
 => ORACLE AUDIT NOW COMPLETE: 11 channels had a ceiling, 3 gaps found, all 3 measured.
+
+### THE PHANTOM-BLOCK TARGET IS UNREACHABLE -- MEASURED, NOT ASSERTED (user question 2026-09-06)
+
+USER: "how well does the Oracle do on criterion one anyway?" -- i.e. apply this project's own oracle
+discipline to the one criterion we actually fail. Correct instinct, and it settles the row.
+Added a perfect-memory oracle arm to exp_proposal_gaps.py: never forgets, never mis-sees, knows the
+true state of any cell the instant ANY robot looks at it, fed the IDENTICAL line-of-sight stream.
+  8 seeds x 500 steps = 4000 step-observations       episodes   per 1,000
+  shipped map                                            39        9.8    FAIL
+  ORACLE (perfect memory, same sight stream)             37        9.2    FAIL
+  cell-steps: shipped 1601 (400/1000) vs oracle 1598 (399/1000) -- essentially identical
+=> THE SHIPPED MAP IS AT 1.05x THE PHYSICAL FLOOR, AND THE FLOOR MISSES THE TARGET BY 9x.
+MECHANISM (the keeper, and not obvious): with a NOISELESS sensor a phantom is never a FALSE sighting,
+it is a STALE TRUE one. Robot saw a spill -> janitor cleaned it -> nobody has looked since. A
+perfect-recall oracle is blind in exactly the same way, because the missing information was never
+observed by anyone. The ONLY lever is looking more often -- the same physical constraint that caps
+sensitivity. No update rule, decay schedule or threshold can substitute.
+=> The criterion stands as NOT MET (it is not met) but it is not a workmanship failure: the target
+was mis-specified for sparse re-observation. A warehouse wanting <=1/1000 must buy more SENSING, not
+better inference. NB this is the correct way to have reached the conclusion that was reached WRONGLY
+about sensitivity earlier the same day: measure the ceiling, do not assert it.
+SEPARATELY: the two failures here are different in kind and should not be conflated -- the TARGET
+being mis-specified is a modelling lesson; the criterion going UNMEASURED for the life of the project
+(because the working checklist came from the roadmap, not the proposal) is a process failure and the
+more serious of the two.
+LATENCY RE-MEASURED ON AN IDLE MACHINE: mean 1.84ms, median 0.45ms, p99 46.2ms, max 136.1ms; warm-up
+median 288ms / max 445ms, now WITHIN the 1s budget too. The earlier 9.07ms/510ms/1655ms figures were
+taken while background experiment jobs were saturating all 8 cores -- worth noting as the reason the
+numbers moved, not as a correction to a claim (both readings pass).

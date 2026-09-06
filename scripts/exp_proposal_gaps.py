@@ -51,8 +51,24 @@ def phantoms(seed):
     env.b_hard = 0.5
     env.los_sensing = True
 
+    # the oracle: perfect memory, fed the IDENTICAL line-of-sight stream. It cannot know a spill was
+    # cleaned unless somebody looks, so its phantoms are the irreducible stale-sighting floor.
+    H, W = env.grid_size
+    hw = env.highways.astype(bool)
+    R = int(getattr(env, "sight_radius", 5))
+    los = []
+    for dy in range(-R, R + 1):
+        for dx in range(-R, R + 1):
+            if dy == dx == 0 or dy * dy + dx * dx > R * R:
+                continue
+            n = max(abs(dy), abs(dx))
+            between = [(round(dy * k / n), round(dx * k / n)) for k in range(1, n)]
+            los.append(((dy, dx), between))
+    oracle = {}
+
     cellsteps, episodes = 0, 0
-    was_phantom = set()
+    o_cellsteps, o_episodes = 0, 0
+    was_phantom, o_was = set(), set()
     for t in range(STEPS):
         env.step(ctrl.act())
         truth = set(env.disturbed)
@@ -61,7 +77,26 @@ def phantoms(seed):
         cellsteps += len(ph)
         episodes += len(ph - was_phantom)               # newly-phantom cells = new episodes
         was_phantom = ph
-    return ("ph", seed, cellsteps, episodes, STEPS)
+
+        seen = set()
+        for a in env.agents:
+            ay, ax = a.y, a.x
+            seen.add((ay, ax))
+            for (dy, dx), between in los:
+                y, x = ay + dy, ax + dx
+                if not (0 <= y < H and 0 <= x < W):
+                    continue
+                if any(0 <= ay + by < H and 0 <= ax + bx < W and not hw[ay + by, ax + bx]
+                       for (by, bx) in between):
+                    continue
+                seen.add((y, x))
+        for c in seen:
+            oracle[c] = c in truth
+        o_ph = {c for c, dirty in oracle.items() if dirty and c not in truth}
+        o_cellsteps += len(o_ph)
+        o_episodes += len(o_ph - o_was)
+        o_was = o_ph
+    return ("ph", seed, cellsteps, episodes, STEPS, o_cellsteps, o_episodes)
 
 
 def latency(seed):
@@ -120,12 +155,21 @@ if __name__ == "__main__":
     cs = sum(r[2] for r in ph_rows)
     ep = sum(r[3] for r in ph_rows)
     steps = sum(r[4] for r in ph_rows)
+    ocs = sum(r[5] for r in ph_rows)
+    oep = sum(r[6] for r in ph_rows)
     out.append("A. PHANTOM HARD-BLOCKS  (proposal 6.2: <= 1 per 1,000 steps)")
     out.append("   %d seeds x %d steps = %d step-observations" % (len(SEEDS), STEPS, steps))
-    out.append("   phantom EPISODES     %6d  ->  %8.1f per 1,000 steps   %s"
-               % (ep, 1000.0 * ep / steps, "PASS" if 1000.0 * ep / steps <= 1 else "FAIL"))
-    out.append("   phantom CELL-STEPS   %6d  ->  %8.1f per 1,000 steps   %s"
-               % (cs, 1000.0 * cs / steps, "PASS" if 1000.0 * cs / steps <= 1 else "FAIL"))
+    out.append("   %-34s %6s %12s %8s" % ("", "count", "per 1,000", "verdict"))
+    for lbl, v in (("shipped map, episodes", ep), ("shipped map, cell-steps", cs),
+                   ("ORACLE (perfect memory), episodes", oep),
+                   ("ORACLE (perfect memory), cell-steps", ocs)):
+        out.append("   %-34s %6d %12.1f %8s"
+                   % (lbl, v, 1000.0 * v / steps, "PASS" if 1000.0 * v / steps <= 1 else "FAIL"))
+    if oep:
+        out.append("   -> the shipped map produces %.2fx the oracle's phantom episodes; the oracle"
+                   % (ep / float(oep)))
+        out.append("      itself misses the target by %.0fx, so the floor is above the bar."
+                   % (1000.0 * oep / steps))
 
     allt = sorted(x for r in lat_rows for x in r[2])
     warms = sorted(r[3] for r in lat_rows if r[3] is not None)

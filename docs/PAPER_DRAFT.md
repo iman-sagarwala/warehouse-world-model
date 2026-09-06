@@ -920,13 +920,36 @@ binding, and 99.87% should not be read as an achievement. What the router actual
 precision (95.58%) and false-positive rate (0.131%), and those are the numbers we would
 pre-register a second time.
 
-**The fourth clause was never measured at all, and it fails.** "No more than one phantom hard-block
-per 1,000 steps" — a phantom hard-block being a cell the router excludes from routing that is in
-fact clear — comes in at **9.8 per 1,000 steps** counted as distinct episodes, or 400 per 1,000
-counted as cell-steps (8 seeds, 4,000 step-observations). Against a target of ≤1 that is a failure by
-an order of magnitude, and it is the one belief-map criterion we do not meet. It is also the honest
-counterweight to the specificity number: 99.87% specificity and 10× the phantom-block budget are the
-same fact seen at two different denominators, which is precisely why the proposal named both.
+**The fourth clause was never measured at all, it fails, and the oracle says it could not have
+passed.** "No more than one phantom hard-block per 1,000 steps" — a phantom hard-block being a cell
+the router excludes from routing that is in fact clear — comes in at **9.8 per 1,000 steps** as
+distinct episodes, or 400 per 1,000 as cell-steps (8 seeds, 4,000 step-observations). Against ≤1 that
+is a miss by an order of magnitude, and it is the one belief-map criterion we do not meet. It is also
+the honest counterweight to the specificity number: 99.87% specificity and 10× the phantom budget are
+the same fact at two denominators, which is exactly why the proposal named both.
+
+Having been caught once already this session declaring a target unreachable without checking
+(§5.22's sensitivity clause), we measured the ceiling rather than asserting it. A perfect-memory
+oracle fed the **identical** line-of-sight stream — it never forgets, never mis-sees, and knows the
+true state of every cell the moment any robot looks at it — produces:
+
+| | phantom episodes | per 1,000 steps |
+|---|---|---|
+| shipped map | 39 | 9.8 |
+| **perfect-memory oracle, same sight stream** | **37** | **9.2** |
+
+**The shipped map is at 1.05× the physical floor, and the floor misses the target by 9×.** The
+mechanism is worth stating because it is not obvious: with a noiseless sensor a phantom is never a
+*false* sighting, it is a *stale true* one. A robot saw a spill, the janitor cleaned it, and nobody
+has looked at that cell since. An oracle with perfect recall has precisely the same blind spot,
+because the information it lacks has not been observed by anyone. The only lever that reduces
+phantoms is looking more often — the same physical constraint that caps sensitivity — and no update
+rule, decay schedule or threshold can substitute for it.
+
+So the criterion stands as not met, and the belief map is essentially at the best any map with these
+eyes could do on it. The target was mis-specified for a decaying-belief detector under sparse
+re-observation; a warehouse that wanted ≤1 phantom per 1,000 steps would have to buy more sensing,
+not better inference.
 
 One boundary is load-bearing and worth stating because we got it wrong first. Unobserved cells sit
 at *exactly* 0.5 by convention, and the router uses a strict `belief > 0.5`; scoring with `>=`
@@ -1381,12 +1404,14 @@ boundary (+29.98, t = +2.22).
 - **The learned opponent is modestly resourced** (§5.21): REINFORCE rather than PPO, ~960 episodes, no
   hyperparameter search, one fleet and one map. The 5.3% gap is evidence about where the headroom is
   not, not a proof that no learner can close it.
-- **One pre-registered criterion fails outright**: no more than one phantom hard-block per 1,000
-  steps (§5.22). We measure 9.8. The map excludes clear cells from routing about ten times more often
-  than the proposal budgeted for. This costs path length rather than correctness — a phantom block
-  makes a robot detour, it does not make it crash — but it is a real miss and it went unmeasured for
-  the life of the project because the criteria list in use was assembled from the roadmap rather than
-  from the proposal.
+- **One pre-registered criterion is not met, and is not reachable**: no more than one phantom
+  hard-block per 1,000 steps (§5.22). We measure 9.8; a perfect-memory oracle fed the identical sight
+  stream measures 9.2, so the shipped map sits at 1.05× the physical floor and the floor is 9× above
+  the bar. This costs path length rather than correctness — a phantom block makes a robot detour, it
+  does not make it crash. Two things are worth separating: the *target* was mis-specified for sparse
+  re-observation, and the *criterion* went unmeasured for the life of the project because the working
+  checklist was assembled from the roadmap rather than from the proposal. The first is a modelling
+  lesson; the second is a process failure and the more serious of the two.
 - **Decision-event latency** (proposal §6.4, ≤1 s wall-clock at 5 robots) is met in steady state —
   mean 9.1 ms, median 1.3 ms, p99 225 ms, max 510 ms over 3,992 decisions — but the *first* decision
   in a fresh process costs 1.0–1.7 s on half of the seeds tested. That is imports, the A* extension

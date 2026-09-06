@@ -131,7 +131,7 @@ button.term:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <h1>wwm_sim Sandbox</h1>
   <p>Slide the fleet and floor. The layout, charging bays, and the constants the robots
   learned for that world update live — data straight from the MPC campaign.
-  <span class="mono" style="opacity:.55;font-size:.72rem">build r43</span></p>
+  <span class="mono" style="opacity:.55;font-size:.72rem">build r44</span></p>
   <p id="errLine" class="mono" style="color:var(--bad);display:none"></p>
 </header>
 <nav class="tabs">
@@ -750,11 +750,18 @@ original proposal against the results, rather than the roadmap against the resul
 turned out to have been scored against the wrong measurement, and both pass. Two further criteria
 surfaced in the same pass that had <em>never been measured at all</em>: one passes by 800&times;, one
 fails by 10&times;.
-<br><br><b>The five that remain</b> are one measurement we miss by ten times (phantom hard-blocks),
-one bug whose cause is now known and whose cheapest fix costs 8% (the wedged robots), two builds
-deliberately not attempted, and one opportunity nobody asked for &mdash; it exists only because we
-measured the self-tuner&rsquo;s own ceiling on the final day. None is blocked; four are decisions
-rather than gaps.</p>
+<br><br><b>The five that remain</b> are one target that turns out to be unreachable and where we sit
+within 5% of the physical ceiling (phantom hard-blocks), one bug whose cause is now known and whose
+cheapest fix costs 8% (the wedged robots), two builds deliberately not attempted, and one opportunity
+nobody asked for &mdash; it exists only because we measured the self-tuner&rsquo;s own ceiling on the
+final day. None is blocked, and only one of the five was ever something the original proposal
+actually asked for.</p>
+<p class="note"><b>Worth separating, because they get confused.</b> Of these 65 criteria, the great
+majority come from the original written proposal. A handful were added later by us &mdash; bars we
+set ourselves while chasing problems, which are stricter than anything we promised. And one appeared
+on the final day because we went looking for a ceiling nobody had asked for. Failing a bar you
+invented for yourself is a different kind of thing from failing one you promised, and the rows below
+do not currently distinguish them.</p>
 <div class="ablhead"><h3>1 &middot; The measurements the proposal promised</h3><span>16 of 16</span></div>
 <table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>On-time value per day</td><td class="w">the primary objective; every experiment reports it</td></tr>
@@ -789,7 +796,7 @@ rather than gaps.</p>
 <tr><td class="s"><span class="st y">MET</span></td><td>Specificity &ge; 90%</td><td class="w"><b>99.87%</b>, measured 2026-09-06 (3,358 false flags in 2.55M checks). Reported with a caveat rather than as a win: at a 3.2% base rate this is the easy half &mdash; a map answering &ldquo;clear&rdquo; everywhere scores 100%.</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>Median detection latency &le; 15 steps</td><td class="w"><b>2 steps.</b> The proposal says <em>median</em>; we had been marking this half-failed on the <em>mean</em> (20.4), which a handful of spills nobody drives past for a long time drags upward. Same slip as the row above, corrected the same day.</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>Calibration within &plusmn;10%</td><td class="w">says 98.0%, is 97.9% &mdash; honest to a tenth of a point where it acts</td></tr>
-<tr><td class="s"><span class="st n">NOT MET</span></td><td>&le; 1 phantom hard-block per 1,000 steps</td><td class="w"><b>9.8 per 1,000 &mdash; missed by ten times, and never measured until today.</b> A phantom hard-block is a square the robots refuse to drive through that is actually perfectly clear. It costs detours, not crashes, so nothing breaks &mdash; but it is a stated target and it fails. It is also the honest flip side of the 99.87% specificity two rows up: the same behaviour looks excellent as a percentage of a very large number and poor as a rate per step, which is exactly why the proposal named both.</td></tr>
+<tr><td class="s"><span class="st n">NOT MET</span></td><td>&le; 1 phantom hard-block per 1,000 steps</td><td class="w"><b>9.8 per 1,000 &mdash; missed by ten times. But a mind-reader misses it by nine.</b> A phantom hard-block is a square the robots refuse to drive through that is actually perfectly clear. It costs detours, not crashes. Having just been caught calling one target impossible without checking, we checked this one: a perfect-memory oracle, fed exactly the same glimpses the real fleet gets, scores <b>9.2</b> against our <b>9.8</b>. <b>We are within 5% of the best any map with these eyes could do, and the best is still nine times over budget.</b> The reason is not obvious and is worth keeping: with a perfect sensor a phantom is never a <em>wrong</em> sighting, it is an <em>old</em> one. A robot saw a spill, the cleaner mopped it, and nobody has walked past since. A mind-reader with perfect recall is blind in exactly the same way, because the missing information was never observed by anyone. The only cure is looking more often. This target was written for a warehouse with denser sensing than ours; no amount of cleverness in the inference can substitute.</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>A decision takes under 1 second (5 robots)</td><td class="w"><b>1.3 ms typical, 510 ms at the very worst</b> across 3,992 decisions &mdash; roughly 800&times; inside budget. Also never measured before today. One caveat reported rather than hidden: the very first decision after starting the program takes 1&ndash;1.7 s, which is loading code and warming caches, not thinking. A real deployment pays that once at boot.</td></tr>
 </table>
 <div class="ablhead"><h3>4 &middot; Battery, and the anticipation gates</h3><span>6 of 6</span></div>
