@@ -1404,14 +1404,38 @@ boundary (+29.98, t = +2.22).
 - **The learned opponent is modestly resourced** (§5.21): REINFORCE rather than PPO, ~960 episodes, no
   hyperparameter search, one fleet and one map. The 5.3% gap is evidence about where the headroom is
   not, not a proof that no learner can close it.
-- **One pre-registered criterion is not met, and is not reachable**: no more than one phantom
-  hard-block per 1,000 steps (§5.22). We measure 9.8; a perfect-memory oracle fed the identical sight
-  stream measures 9.2, so the shipped map sits at 1.05× the physical floor and the floor is 9× above
-  the bar. This costs path length rather than correctness — a phantom block makes a robot detour, it
-  does not make it crash. Two things are worth separating: the *target* was mis-specified for sparse
-  re-observation, and the *criterion* went unmeasured for the life of the project because the working
-  checklist was assembled from the roadmap rather than from the proposal. The first is a modelling
-  lesson; the second is a process failure and the more serious of the two.
+- **We miss one target we set ourselves at the start, and we are not going to fix it. In plain
+  terms:** the robots sometimes refuse to drive through a square that is actually clean. We said this
+  should happen at most once every 1,000 steps. It happens about ten times. Three things about that.
+
+  **(a) It is close enough, and we can prove it.** We built a cheating version of the map — one that
+  never forgets anything and is told the truth about every square the instant any robot glances at
+  it. It scores 9.2. We score 9.8. So we are within 5% of the best score anything could get with the
+  eyes these robots have, and *that* best score still misses the target nine times over. The target
+  was simply written for a warehouse with more cameras than ours. Nothing about our map is doing a
+  bad job here.
+
+  **(b) The cost is a detour, not a crash.** A phantom block makes a robot go the long way round. It
+  does not make it hit anything, drop anything or miss a deadline it would otherwise have made. Of
+  all the ways to miss a target, this is the cheap one.
+
+  **(c) Fixing it would cost time, and might cost something we care about more.** These phantoms are
+  not mistakes — they are memories. A robot saw a real spill, someone cleaned it up, and nobody has
+  walked past since to notice. The obvious fix is to make the map forget faster. But the map forgets
+  real spills on the same clock, so forgetting faster means missing more real ones: we would be
+  trading a harmless detour for a robot driving into an actual spill. That trade-off is a prediction
+  from the mechanism, not a measurement — a decay sweep scoring phantom rate and sensitivity together
+  would settle it cheaply, and we have not run one.
+
+- **The process failure behind it is the more serious half, and it is worth saying plainly.** Nobody
+  measured this for the entire life of the project. Not because it was hard — it took about twenty
+  minutes once someone looked — but because the checklist we worked from was copied out of our own
+  roadmap, and somewhere in the copying this line got dropped from the original proposal. We then
+  spent months carefully measuring everything that *was* on the list. The lesson is not "check your
+  work harder"; we did check our work. It is that **a derived checklist quietly becomes the
+  requirements**, and the only defence is to re-read the original document against the results
+  occasionally, rather than re-reading the plan against the results. Doing that once, on the last
+  day, found this miss and also found two targets we had wrongly recorded as failures for months.
 - **Decision-event latency** (proposal §6.4, ≤1 s wall-clock at 5 robots) is met in steady state —
   mean 9.1 ms, median 1.3 ms, p99 225 ms, max 510 ms over 3,992 decisions — but the *first* decision
   in a fresh process costs 1.0–1.7 s on half of the seeds tested. That is imports, the A* extension
