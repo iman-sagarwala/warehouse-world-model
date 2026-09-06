@@ -254,7 +254,8 @@ deliberately **optimistic** (no bias term). Predicting carefully to *choose*, op
 
 ## 4.1 Figures
 
-All figures are regenerated from current data by `scripts/make_paper_figures.py`. **The roadmap's
+All figures are regenerated from current data by `scripts/make_paper_figures.py`, and are
+embedded below at the point that argues them (they render inline on GitHub). **The roadmap's
 original figure list — `stream_stack`, `picker_ceiling`, `oracle_gap` — was produced in July 2026,
 before the realism audit, on a simulator ~3× too productive. Those PNGs are retained for provenance and
 must not be cited.**
@@ -776,7 +777,9 @@ is a decision-layer redesign rather than a learned component.
 
 ### 5.20 M5 — head-to-head against the simulator's own dispatcher, safety, and inner-loop validation
 
-**Figure 3** (`results/fig_benchmark.png`) is the headline result of this section.
+![Figure 3](../results/fig_benchmark.png)
+
+*Figure 3 — head-to-head against the simulator's own dispatcher, both regimes, with and without disturbances. 144 paired days per cell; the baselines run with free energy.*
 
 **Benchmarks.** Against the simulator's own dispatcher and a value-plus-urgency baseline, on 144
 paired days per regime (1,152 runs), the champion delivers 779.3 on-time value on wave days
@@ -913,12 +916,15 @@ precision 36.0% for the same map. Both are "correct" arithmetic on the same hist
 detector parks its don't-know mass on the decision boundary, the inequality is part of the metric
 definition, not an implementation detail.
 
-**Figure 4** (`results/m5_belief_curves.png`) — precision–recall, reliability, and detection-latency
-CDF, both arms overlaid.
+![Figure 4](../results/m5_belief_curves.png)
+
+*Figure 4 — the belief map graded as a forecaster: precision–recall, reliability, and the detection-latency CDF, shipped map against the one it replaced. The two latency curves lying on top of each other is the result.*
 
 ### 5.23 What prediction itself is worth
 
-**Figure 5** (`results/fig_sensing.png`) is the clearest single picture in the paper.
+![Figure 5](../results/fig_sensing.png)
+
+*Figure 5 — the prediction inversion. At generous sensor range eyes carry the value; at honest range the split inverts and memory carries it.*
 
 Finally, decomposing the sensing value isolates what prediction itself is worth. A fleet that
 routes only around hazards *currently in someone's view* (no memory) captures most of the
@@ -948,7 +954,9 @@ eliminating 100% of permanent deadlock on dense maps). Cut: five anticipation me
 hazard-guess mechanisms, five learned components, and six others (the sixth being the spare-storage
 sweep of §5.27).
 
-**Figure 6** (`results/fig_ablation.png`) renders the whole ledger as one page.
+![Figure 6](../results/fig_ablation.png)
+
+*Figure 6 — the pre-registered keep/cut ledger. Everything kept reasons about what already exists; everything cut acted on what did not.*
 
 Read as two halves, the ledger states the thesis without any prose. **Everything kept reasons about
 things that already exist** — the tasks in hand, the batteries draining, the spill somebody saw.
@@ -957,6 +965,11 @@ confirmed. The ledger is cheap to produce only because the bar was fixed before 
 is the methodological point: a 3% rule chosen afterwards would have kept several of the twenty-two.
 
 ### 5.25 Charging foresight — the sixth leg of the anticipation null, and a real finding underneath it
+
+![Figure 7](../results/fig_anticipation.png)
+
+*Figure 7 — the anticipation null. Left: damage grows monotonically with how much of the future the
+planner is given. Right: six independent channels fed the true future; none pays.*
 
 Five channels had been tested for the value of perfect information: which task to take, how far ahead
 to look, drifting hotspots, where to park idle robots, and which cells will get dirty. One remained —
@@ -1065,7 +1078,9 @@ against the fixed-constant control:
 | 50 / 200 | **838.99** | **+96.69** | **+5.86** | 137 | 5,770 | 66 |
 | 100 / 200 | 817.64 | +75.34 | +5.07 | 90 | 3,000 | **63** |
 
-**Figure 7** (`results/fig_horizon.png`) plots value against compute for the whole grid.
+![Figure 8](../results/fig_horizon.png)
+
+*Figure 8 — the tuner's cadence/horizon grid, value against compute. Horizon is the lever; cadence is not.*
 
 **Horizon is the lever; cadence is not.** Doubling the horizon at the shipped cadence is worth +39
 more value than the shipped setting and cuts strandings from 95 to 66. Halving the cadence at a fixed
