@@ -163,7 +163,11 @@ The central novelty. Everything above is polish by comparison.
       — exceeded: blind/belief/clairvoyant across five regimes; phase boundary (harmful z=−2.2 ↔
       valuable z=+2.8); capture arc 38%→83% of clairvoyant VoPI (reset map, t=+4.05).
 - [x] Rumor-map metrics: 90/90 sensitivity/specificity, latency ≤15, calibration ±10%
-      — specificity PASS (95%+); calibration PASS in the decision bins (seen-dirty +2.1pp,
+      — specificity **MEASURED 2026-09-06: 99.87%** (FPR 0.131%; TP 72,672 / FN 13,067 / FP 3,358 /
+      TN 2,550,903 over 2.55M highway cell-steps). NB the "95%+" previously recorded here was the
+      PRECISION figure (95.58%) mislabelled; specificity had never actually been measured. It passes
+      hugely, but it is the EASY half at a 3.2% base rate — "clear everywhere" scores 100%.
+      Calibration PASS in the decision bins (seen-dirty +2.1pp,
       seen-clean −4.0pp; ~96% of mass), structurally overconfident at the idle prior (chosen
       trade — base-rate prior = beta-mountain = slow detection); sensitivity 84.7% vs spec 90:
       **spec physically unattainable** — sensing ceiling is 84.9% at radius-5 occluded sight

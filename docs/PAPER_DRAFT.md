@@ -864,7 +864,14 @@ so nothing has to be held in memory.
 | Brier score (lower better) | **0.0204** | 0.0310 |
 | skill vs the base-rate reference | **+0.351** | +0.013 |
 | AUPRC (random = 0.032) | **0.367** | 0.260 |
+| sensitivity at the decision threshold | **84.76%** | 75.30% |
+| specificity at the decision threshold | **99.87%** | 99.76% |
+| precision at the decision threshold | **95.58%** | 91.45% |
+| false-positive rate | **0.131%** | 0.236% |
 | detection latency, mean / median | 20.4 / 2 | 18.8 / 1 |
+
+The confusion matrix behind the shipped column, over 2.55M highway cell-steps: TP 72,672 ·
+FN 13,067 · FP 3,358 · TN 2,550,903.
 
 **The base rate matters more than the raw Brier does.** Only **3.2%** of cells are blocked at any
 moment, so a degenerate forecaster that ignores its sensors and answers "3.2%" everywhere already
@@ -888,6 +895,23 @@ difference comes from what happens *after* the sighting, when the old map lets a
 accumulated clean-history outvote fresh evidence and forgets what it has just seen. The improvement
 was never perception — it was memory, and two coincident CDFs are the cleanest available proof,
 because they rule out the explanation a reader would otherwise assume.
+
+**On the 90/90 bar this project set itself.** The pre-registered target was 90% sensitivity *and*
+90% specificity. Specificity passes enormously — 99.87% — and we report that with a caveat rather
+than as a win, because **at a 3.2% base rate specificity is the easy half**: a map that says "clear"
+everywhere scores 100% specificity and 0% sensitivity, so the constraint was never really binding.
+The binding half is sensitivity, and it is the one that cannot be met: 84.76% against a physical
+sensing ceiling of 84.9% (§5.18). A 90/90 pair was the wrong pre-registration for a detector at this
+prevalence; the right one is the pairing we ended up reporting — sensitivity against its ceiling,
+and precision or false-positive rate, which at 95.58% and 0.131% are the numbers a router actually
+feels.
+
+One boundary is load-bearing and worth stating because we got it wrong first. Unobserved cells sit
+at *exactly* 0.5 by convention, and the router uses a strict `belief > 0.5`; scoring with `>=`
+instead sweeps the entire uninformed prior into the positive class and reports specificity 94.7% and
+precision 36.0% for the same map. Both are "correct" arithmetic on the same histogram. When a
+detector parks its don't-know mass on the decision boundary, the inequality is part of the metric
+definition, not an implementation detail.
 
 **Figure 4** (`results/m5_belief_curves.png`) — precision–recall, reliability, and detection-latency
 CDF, both arms overlaid.

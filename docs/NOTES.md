@@ -7822,3 +7822,32 @@ NB an earlier attempt at this run silently produced a STRESS run under an "ordin
 STRESS env knob patch had failed its assert inside a backgrounded shell and the script ran unpatched).
 Caught by the numbers being bit-identical to the stress arm; file deleted and re-run. Same failure
 class as the placeholder-metric catches: an arm that did not differ from its parent.
+
+### SPECIFICITY MEASURED AT LAST (user question 2026-09-06) -- and a threshold bug in the instrument
+
+USER: "what about specificity, check that, because i said 90% there as well." Correct to push: the
+90/90 bar named BOTH halves, sensitivity had been measured directly for months, and specificity
+never had. The "specificity PASS (95%+)" in TODO.md was the PRECISION figure (95.3%) mislabelled --
+note the record also uses "spec" for both *specification* and *specificity*, which is likely how it
+happened.
+Added a confusion matrix at the decision threshold to exp_m5_brier.py (which already accumulates the
+pos/neg score histograms, so this is free). MEASURED, 24 seeds, 2.55M highway cell-steps:
+  arm      sensitivity  specificity  precision   FPR      TP     FN      FP        TN
+  reset       84.76%      99.869%     95.58%   0.131%   72672  13067   3358   2550903
+  legacy      75.30%      99.764%     91.45%   0.236%   64561  21178   6038   2548223
+=> SPECIFICITY PASSES 90% BY A MILE (99.87%). Reconciles with the independent epistemic harness
+(recall 84.7%, precision 95.3%) to within rounding, which cross-validates both instruments.
+
+BUG IN MY OWN INSTRUMENT, caught by the numbers disagreeing: my first cut used bins >= 0.5 and
+reported specificity 94.741% / precision 36.04% for the SAME map. Cause: unobserved cells sit at
+EXACTLY 0.5 by convention, and believed_blocked/the router use a STRICT `b > b_hard`. A >= cut
+sweeps the entire uninformed prior into the positive class (134,328 phantom FPs vs the true 3,358).
+Both are correct arithmetic on the same histogram. LESSON: when a detector parks its don't-know mass
+ON the decision boundary, the inequality is part of the metric definition, not an implementation
+detail. Fixed to `int(0.5*NBIN)+1` with the reasoning at the call site.
+
+HONEST FRAMING ADOPTED (paper + sandbox): specificity is the EASY half at a 3.2% base rate -- "clear
+everywhere" scores 100% specificity and 0% sensitivity -- so the 90/90 pair was never really binding
+on that side, and 90/90 was the wrong pre-registration for a detector at this prevalence. The
+binding half is sensitivity, capped by physics at 84.9%. The pair worth reporting is
+sensitivity-against-its-ceiling plus precision/FPR, which is what a router actually feels.

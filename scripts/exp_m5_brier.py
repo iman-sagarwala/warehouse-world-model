@@ -105,8 +105,28 @@ if __name__ == "__main__":
         order = np.argsort(rec)
         auprc = float(np.trapz(prec[order], rec[order]))
         curves[arm] = (rec, prec, edges, P, N)
+        # CONFUSION MATRIX AT THE DECISION THRESHOLD (env.b_hard = 0.5). Added 2026-09-06 because
+        # the proposal's bar was 90/90 SENSITIVITY/SPECIFICITY and only sensitivity had ever been
+        # measured directly -- the "specificity 95%+" on record is the PRECISION figure.
+        # Specificity = TN / (TN + FP): of the cells that really are clear, how many we call clear.
+        # It is the easy half of the pair at a 3.2% base rate, and reporting it honestly matters
+        # precisely because it flatters.
+        # STRICTLY greater than 0.5, matching BetaRumorMap.believed_blocked (`b > b_hard`) and the
+        # router. This boundary is load-bearing, not pedantry: unobserved cells sit at EXACTLY 0.5
+        # by convention, so a `>=` cut sweeps the entire uninformed prior into the positive class
+        # and reports specificity 94.7% / precision 36% instead of 99.97% / 91.5%.
+        k = int(0.5 * NBIN) + 1
+        TP, FN = float(P[k:].sum()), float(P[:k].sum())
+        FP, TN = float(N[k:].sum()), float(N[:k].sum())
+        sens = TP / max(1.0, TP + FN)
+        spec = TN / max(1.0, TN + FP)
+        prec = TP / max(1.0, TP + FP)
         print("%-7s Brier %.5f  (base-rate reference %.5f -> skill %+.3f)"
               % (arm, brier, bs_ref, bss))
+        print("        at the decision threshold 0.50:  sensitivity %.2f%%  specificity %.3f%%  "
+              "precision %.2f%%" % (100 * sens, 100 * spec, 100 * prec))
+        print("        confusion: TP %d  FN %d  FP %d  TN %d   (false-positive rate %.3f%%)"
+              % (TP, FN, FP, TN, 100 * (1 - spec)))
         print("        prevalence of blocked cells %.4f%%   AUPRC %.3f  (random = %.4f)"
               % (100 * base, auprc, base))
         print("        detection latency: mean %.1f  median %.0f  (events %d, detected %d)"

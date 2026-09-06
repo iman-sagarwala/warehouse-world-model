@@ -114,7 +114,7 @@ button.term:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <h1>wwm_sim Sandbox</h1>
   <p>Slide the fleet and floor. The layout, charging bays, and the constants the robots
   learned for that world update live — data straight from the MPC campaign.
-  <span class="mono" style="opacity:.55;font-size:.72rem">build r37</span></p>
+  <span class="mono" style="opacity:.55;font-size:.72rem">build r38</span></p>
   <p id="errLine" class="mono" style="color:var(--bad);display:none"></p>
 </header>
 <nav class="tabs">
@@ -501,11 +501,19 @@ more the world model <em>is</em> the sensor.</p>
 <tr><td>skill vs always guessing the base rate</td><td class="mono"><b>+0.351</b></td><td class="mono">+0.013</td><td>the old map had almost <em>no</em> probabilistic skill</td></tr>
 <tr><td>area under precision-recall</td><td class="mono"><b>0.367</b></td><td class="mono">0.260</td><td>random guessing scores 0.032</td></tr>
 <tr><td>recall vs the physical sensing limit</td><td class="mono">84.7% / 84.9%</td><td class="mono">60.9%</td><td><b>99.8% of what any map with these eyes could know</b></td></tr>
-<tr><td>precision</td><td class="mono">95.3%</td><td class="mono">80.7%</td><td>how often a flagged cell really is blocked</td></tr>
+<tr><td>precision</td><td class="mono">95.6%</td><td class="mono">91.5%</td><td>how often a flagged cell really is blocked</td></tr>
+<tr><td>specificity</td><td class="mono">99.87%</td><td class="mono">99.76%</td><td>of the cells that really are clear, how many it calls clear &mdash; but see the note below</td></tr>
+<tr><td>false alarms</td><td class="mono">0.131%</td><td class="mono">0.236%</td><td>3,358 false flags in 2.55 million cell-checks</td></tr>
 <tr><td>calibration where it acts</td><td class="mono">says 98.0%, is 97.9%</td><td class="mono">says 95.8%, is 97.9%</td><td>honest to a tenth of a point</td></tr>
 <tr><td>detection latency (median)</td><td class="mono">2 steps</td><td class="mono">1 step</td><td><b>identical</b> &mdash; the fix was never about noticing sooner</td></tr>
 </table>
-<p class="note">What these measures actually mean, and how to read the three curves they come from, is explained under <b>Scoreboard &rarr; &ldquo;How to read those three charts&rdquo;</b>.</p>
+<p class="note">What these measures actually mean, and how to read the three curves they come from,
+is explained under <b>Scoreboard &rarr; &ldquo;How to read those three charts&rdquo;</b>.
+<b>One honest note on specificity.</b> The target we set ourselves was 90% on both sensitivity and
+specificity. Specificity comes in at 99.87% &mdash; but that is the <em>easy</em> half, and we would
+rather say so than bank it: only 3.2% of cells are ever blocked, so a map that simply answered
+&ldquo;clear&rdquo; everywhere would score 100% specificity and 0% sensitivity. The half that
+actually binds is sensitivity, and that is the one physics caps at 84.9%.</p>
 
 <div class="ablhead"><h3>4 &middot; Battery</h3><span>144 days, audited robot-by-robot</span></div>
 <table>
