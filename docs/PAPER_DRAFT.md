@@ -1000,8 +1000,32 @@ tuner that is free to lower the level, it buys the same safety at a lower standi
 different and better mechanism than the one the foresight experiment exposed. We flag that as a
 finding with one measurement behind it rather than a settled account.
 
-**Shipping gate:** stress days only, so far. Per the discipline that governed the horizon change
-(§5.26), it does not become a default until an ordinary-day re-check shows nothing regresses.
+**The ordinary-day gate refuses it, and that is the most useful part of the result.** Same protocol,
+48 paired ordinary wave days:
+
+| arm | value | vs fixed | t | vs tuner | stranded | trips/day | mean θ |
+|---|---|---|---|---|---|---|---|
+| fixed θ = 0.40 | 1052.36 | — | — | — | **0** | 50.5 | 0.400 |
+| oscillation, A = 0.10 | 1039.12 | −13.23 | −1.64 | — | 0 | 55.5 | 0.400 |
+| the self-tuner | 1061.22 | +8.86 | +2.14 | — | 0 | 51.0 | 0.411 |
+| self-tuner + oscillation | 1048.65 | −3.70 | −0.49 | **−12.57** | 0 | 48.8 | 0.256 |
+
+On an ordinary day oscillation is mildly negative on its own and *erases the tuner's edge* when
+layered on top (+8.86 → −3.70). The mechanism is legible in the stranded column: it is **zero in
+every arm**, so the safety the oscillation buys is worth nothing, and the extra charge trips (55.5
+against 50.5) are pure cost. The same mechanism is worth **+91 on a stress day and −4 on an ordinary
+one** — a swing of nearly a hundred points from the regime alone.
+
+So it must never be a default, and the right home for it is exactly the one the numbers point at:
+**a move in the tuner's set**, auditioned in forward simulation and adopted only where it pays. The
+tuner has already demonstrated it will decline moves that do not help — it auditioned the
+belief-trust knobs and kept the constants (§5.17) — and a mechanism this regime-dependent is the
+strongest argument we have for why a self-tuner is worth its compute at all: no fixed constant can
+be right for both of these days, and the tuner does not have to be.
+
+This is also the clearest vindication of the standing rule that a mechanism must be validated in the
+deployment regime. Measured only where it was discovered, oscillation looks like the largest single
+win in the project since the belief map. Measured one regime over, it is a regression.
 
 ### 5.26 The tuner's horizon was too short
 

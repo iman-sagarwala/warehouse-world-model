@@ -7798,3 +7798,27 @@ The wave regime being bit-identical in BOTH tables localises the Aug-25 simulato
 stream-only behaviour.
 All four headline margins, the paper, README, MILESTONE, ABLATION and the sandbox are now on the
 re-measured numbers. STANDING RULE ADDED: re-run the benchmark after ANY simulator change.
+
+### THETA OSCILLATION -- ORDINARY-DAY GATE REFUSES IT (2026-09-06). Verdict: a tuner move, never a default.
+
+Same protocol, 48 paired ORDINARY wave days (STRESS=0):
+  arm            value      vs fixed     t      vs mpc    stranded  trips  mean theta
+  fixed        1052.36        +0.00   +0.00        -          0      50.5    0.400
+  osc0.10      1039.12       -13.23   -1.64        -          0      55.5    0.400
+  mpc          1061.22        +8.86   +2.14        -          0      51.0    0.411
+  mpc_osc0.10  1048.65        -3.70   -0.49     -12.57        0      48.8    0.256
+FINDING: NEGATIVE on ordinary days, and it ERASES the tuner's edge when layered on (+8.86 -> -3.70).
+MECHANISM, legible in one column: STRANDED IS 0 IN EVERY ARM. The safety oscillation buys is worth
+nothing when nothing strands, so the extra trips (55.5 vs 50.5) are pure cost.
+THE SAME MECHANISM IS +91 ON A STRESS DAY AND -4 ON AN ORDINARY ONE -- a ~95-point swing from the
+regime alone. This is the sharpest vindication of the standing "validate in the deployment regime"
+rule in the project: measured only where it was discovered, oscillation looks like the biggest win
+since the belief map; one regime over it is a regression.
+VERDICT: never a default. It belongs in the TUNER'S MOVE SET, auditioned in forward simulation and
+adopted only where it pays -- precedent: the tuner auditioned the belief-trust knobs and KEPT the
+constants (2026-08-23). And it is the strongest argument yet for the self-tuner existing at all: no
+fixed constant is right for both days, and the tuner does not need one to be.
+NB an earlier attempt at this run silently produced a STRESS run under an "ordinary" filename (the
+STRESS env knob patch had failed its assert inside a backgrounded shell and the script ran unpatched).
+Caught by the numbers being bit-identical to the stress arm; file deleted and re-run. Same failure
+class as the placeholder-metric catches: an arm that did not differ from its parent.

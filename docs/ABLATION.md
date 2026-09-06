@@ -24,6 +24,7 @@ by date and the `results/*.csv` files named per row.
 | **Janitor** (earned amnesty: cleanup summoned by sightings) | changes the regime — honest sensing rises to ~100% of oracle value | 2026-08-21 |
 | **MPC self-tuner** | **~+1%/day** pooled (z = +11.2, 46 configs); +0.5% wave clean (t = +2.41); **+3.2% live-stream under disturbances (t = +3.62)** — its largest edge; 0.0% wave under disturbances | campaign + `m5_bench_current.csv` |
 | **Deadlock/flow flags** (`free_pod_return`, `picker_swap`, `station_headway`, `clash_sim`, …) | `free_pod_return` eliminated 100% of permanent deadlock on dense maps | standing env config |
+| **Threshold oscillation** — θ alternates ±0.10 every 25 steps, no forecast | **+91.2 with the tuner on stress days** (t = +3.81; +63.2 alone, matching the entire tuner at identical mean θ) but **−3.7 on ordinary days** (t = −0.49) | `exp_theta_oscillation.py`; **gated, never a default** — belongs in the tuner's move set, adopted only where it pays |
 
 **Stack total vs the simulator's own dispatcher:** +21.1% (wave) / +47.5% (stream) on clean floors;
 **+31.6% / +60.4% under disturbances** (t = 11.0 / 12.5), while paying an energy cost the

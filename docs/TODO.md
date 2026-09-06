@@ -270,14 +270,43 @@ assume the channel distinction saves it.
 ---
 
 ## Tune later (user 2026-08-23)
-- [x] **MPC cadence/horizon sweep -- DONE 2026-08-24. The horizon was too short.** 50/200 best
-      absolute (+96.7 vs fixed, t=+5.86); 100/200 best per unit compute (+75.3, t=+5.07, same
-      fork budget as shipped 50/100 which scores +57.6). Cadence barely matters. Recommend
-      100/200 pending a wave/stream re-check.
+- [x] **MPC cadence/horizon sweep -- CLOSED 2026-09-06. 100/200 ADOPTED.** Stress days: 50/200 best
+      absolute (+96.7, t=+5.86); 100/200 best per unit compute (+75.3, t=+5.07, same fork budget as
+      the shipped 50/100 which scores +57.6). Ordinary-day re-check (48 paired seeds each) came back
+      a TIE at identical compute -- wave 100/200 +8.60 (t=2.08) vs shipped +8.86 (t=2.14); stream
+      +2.47 (t=0.20) vs +4.43 (t=0.44), both inside noise. Nothing regresses, so the change is free:
+      neutral where it is not needed, +17.8 and strandings 95->63 where it is.
+- [x] **Threshold OSCILLATION built and gated (2026-09-06).** exp_theta_oscillation.py. Stress days:
+      osc alone +63.2 (matching the ENTIRE tuner, +57.6, at identical mean theta); tuner+osc +91.2
+      (t=+3.81, i.e. +33.6 ON TOP of the tuner -- a genuinely new axis). Ordinary days: -13.2 alone,
+      -3.7 with the tuner, and it ERASES the tuner's +8.9. Mechanism: 0 stranded in every ordinary
+      arm, so the safety is worthless and the extra trips are pure cost. VERDICT: never a default;
+      it belongs in the tuner's MOVE SET, adopted only where it pays. Not yet wired into m3_mpc.py.
+- [x] **Full benchmark re-measurement (2026-09-06)**, both tables, 2304 runs, after finding that
+      results/m5_bench.csv predated a 2026-08-25 simulator change. Wave bit-identical in both; every
+      live-stream value rose. Margins: +21.1% / +47.5% clean, +31.6% / +60.4% disturbed. One claim
+      corrected -- the tuner is NOT quiet under all noise: +3.2% (t=3.62) on live-stream with spills.
+      STANDING RULE ADDED: re-run the benchmark after any simulator change.
 - [ ] ~~MPC cadence/horizon sweep~~: the 50-step replan interval and 100-step rollout horizon were
   DESIGNED, never tuned (the campaign tuned the knob values inside settings, not the meta-loop).
   Sweep e.g. 25/50, 50/100, 50/200, 100/200 on stress cells where the tuner's edge is visible;
   check whether 50/100 sits on a plateau like the dispatch weights did.
+
+## Deferred with reasons (2026-09-06)
+- [ ] **Wire oscillation into `m3_mpc.py` as a move** (`osc+` / `osc-` on a 10th setting field).
+      Measured and gated above; the remaining work is plumbing plus a re-run of the campaign.
+- [ ] **Port the swap family to stock TA-RWARE.** Must be an ADAPTER over the unmodified vendored
+      package, never a patch to it -- the head-to-head's whole value rests on the baseline being
+      untouched. Multi-hour build whose failure mode is a subtly different env that silently
+      invalidates the comparison; wants a fresh session and a parity check against our fork.
+- [ ] **Idle-picker yield.** Every liveness rule that shipped works by GATING a move an agent already
+      requested; a yield rule is the first that must SYNTHESISE one, i.e. write into the referee's
+      path/action state rather than filter it. Materially riskier class of change, and the residual
+      it targets is one 92-step wait per 144 episodes -- it does not clear the project's own
+      "at 1-in-144 rarity a fix must beat the cost of re-verifying" bar.
+- [ ] **Bays non-targetable at the env level.** Prerequisite for ever making the "charger cells carry
+      no pod" rule real: today an occupied cell is the only thing hiding a bay from a controller's
+      empty-slot search, and only our controller knows about `charger_keepout` (see NOTES 2026-09-06).
 
 ## Parked / optional (protect the timeline)
 - [ ] Optuna tuning of `importance_*` vs throughput/tardiness/strandings — blocked behind M2

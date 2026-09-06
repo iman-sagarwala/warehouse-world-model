@@ -114,7 +114,7 @@ button.term:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <h1>wwm_sim Sandbox</h1>
   <p>Slide the fleet and floor. The layout, charging bays, and the constants the robots
   learned for that world update live — data straight from the MPC campaign.
-  <span class="mono" style="opacity:.55;font-size:.72rem">build r36</span></p>
+  <span class="mono" style="opacity:.55;font-size:.72rem">build r37</span></p>
   <p id="errLine" class="mono" style="color:var(--bad);display:none"></p>
 </header>
 <nav class="tabs">
@@ -561,9 +561,26 @@ for a safety setting, and it is the new default.</p>
 <p class="note">The charging test is the sharpest of the six: a <em>deliberately wrong</em> forecast
 beat the true one, and a constant threshold at the same average was worth nothing (+0.3%). So the
 gain there is not information at all &mdash; it is that <em>moving</em> the threshold triggers
-extra top-ups (22.8 charge trips/day vs 20.0), because raising a threshold causes a charge while
-lowering one merely postpones. Worth ~7% and a third of the strandings on stress days, with no
-forecast whatsoever.</p>
+extra top-ups, because raising a threshold causes a charge while lowering one merely postpones.</p>
+<div class="ablhead"><h3>&hellip;and what happened when we built it</h3><span>48 paired days per column</span></div>
+<table>
+<tr><th>charge threshold rule</th><th>stress days</th><th>ordinary days</th><th>robots stranded (stress)</th></tr>
+<tr><td>fixed at 0.40 (shipped)</td><td class="mono">742.3</td><td class="mono">1052.4</td><td class="mono">123</td></tr>
+<tr><td><b>oscillate &plusmn;0.10, no forecast at all</b></td><td class="mono"><b>805.5</b> (+63.2)</td><td class="mono">1039.1 (&minus;13.2)</td><td class="mono">80</td></tr>
+<tr><td>the self-tuner (picks a level)</td><td class="mono">799.9 (+57.6)</td><td class="mono"><b>1061.2</b> (+8.9)</td><td class="mono">95</td></tr>
+<tr><td><b>self-tuner + oscillation</b></td><td class="mono"><b>833.5</b> (+91.2)</td><td class="mono">1048.7 (&minus;3.7)</td><td class="mono">93</td></tr>
+</table>
+<p class="note">Two surprises. <b>A one-line rule that just alternates a number, with no information
+in it whatsoever, matches the entire self-tuner</b> on stress days &mdash; a controller that copies
+the whole warehouse every 50 steps and plays out candidate settings 100 steps ahead. Its average
+threshold is <em>identical</em> to the fixed rule, so the gain is the movement and nothing else. And
+it <em>stacks</em>: adding it to the tuner is worth another +33.6.
+<b>Then the ordinary-day check refused it.</b> On a normal day nothing strands in any arm, so the
+safety it buys is worthless and the extra charging trips are pure cost &mdash; it goes mildly
+negative, and it wipes out the tuner&rsquo;s own edge. The same mechanism is worth +91 on a hard day
+and &minus;4 on an easy one. So it never becomes a default; it becomes a <em>move the tuner can
+audition</em>, adopted only where it pays. Which is the best argument yet for having a self-tuner at
+all: no single constant is right for both days, and the tuner doesn&rsquo;t need one to be.</p>
 
 <div class="ablhead"><h3>7 &middot; Checks, not assumptions</h3><span></span></div>
 <table>
@@ -578,7 +595,7 @@ forecast whatsoever.</p>
 <table>
 <tr><th>item</th><th>status</th></tr>
 <tr><td>Two robots park forever on one live-stream day</td><td><b>Chased down, and it moved. STILL OPEN.</b> We found a real bug on the way: the floor grid was rebuilt from scratch every step, quietly putting back the pods we thought we had removed from the charging bays &mdash; so the warehouse was running <b>180 pods for 172 places to put them</b>, eight <em>worse</em> than the &ldquo;no spare slots&rdquo; we had diagnosed. Correcting it does fix day 125 &mdash; and breaks day 106, which used to be clean. Adding genuinely empty slots (3, then 9) changes neither. Two wedged robots in 48 days before, two after, on a different day: the fix <b>relocated</b> the failure instead of removing it, the fourth time that has happened here. And it does not ship, for a sharper reason: with the bay pods really gone, the <em>built-in dispatcher</em> starts parking pods on the charging bays (it has no notion of keep-out, our controller does) and loses 39 points &mdash; which would have widened our headline margin from +62.6% to +80.7% purely by making the opponent worse. The pod on the bay turned out to be load-bearing. So: bug documented, fix measured and shelved, item open.</td></tr>
-<tr><td>Threshold movement as a charging tactic</td><td>Measured (+7%), not built.</td></tr>
+<tr><td>Threshold movement as a charging tactic</td><td><b>Built 2026-09-06.</b> +91.2 with the tuner on stress days (t = 3.81), &minus;3.7 on ordinary days. Gated, not shipped as a default &mdash; it belongs in the tuner&rsquo;s move set. See the charging section.</td></tr>
 </table>
 </div>
 </div>
