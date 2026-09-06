@@ -1230,6 +1230,71 @@ moved your baseline, and check it in the direction that would embarrass you.* A 
 your margin by degrading the opponent is not an improvement, and it is very easy to bank one by
 accident while fixing something real.
 
+### 5.28 Closing the oracle audit: the tuner's own ceiling, and whether information composes
+
+Eleven decision channels in this paper carry a measured ceiling. Auditing that coverage at the end
+of the project found three that did not, and all three turned out to be worth measuring.
+
+**The tuner had no ceiling.** Every other mechanism is reported against a bound; the self-tuner was
+only ever reported against the thing it replaced. "+1%/day" is unanchored without knowing whether
+that is most of the available headroom or a tenth of it. `scripts/exp_tuner_ceiling.py` supplies the
+bound: every one-move neighbour of the shipped default, held fixed for a whole episode, 48 paired
+stress days, with the oracle taken as the per-seed maximum over that set chosen after the fact.
+
+| | value | vs fixed | t | stranded |
+|---|---|---|---|---|
+| shipped fixed default | 742.30 | — | — | 123 |
+| best deployable constant (`P+`, battery pessimism 1.5 → 1.8) | 808.18 | +65.88 | +3.38 | **69** |
+| **the shipped self-tuner** | 799.87 | **+57.57** | +3.23 | 95 |
+| **hindsight oracle** — best single setting *per day* | — | **+147.08** | +8.31 | — |
+
+Three things follow, and the second is not flattering.
+
+**The tuner captures 39% of the hindsight ceiling.** +57.57 against +147.08. There is 2.5× the
+tuner's own contribution still on the table for a better settings-chooser — the largest unclaimed
+headroom left anywhere in this system, and considerably larger than the assignment layer's remaining
+1.5–2%.
+
+**Against anything deployable, though, the tuner is at parity, not ahead.** A single constant —
+raising battery pessimism from 1.5 to 1.8 — scores +65.88 where the tuner scores +57.57. Paired
+directly the difference is **+8.31, t = +0.39, and the constant wins on 24 of 48 seeds**: a coin
+flip on both of this project's two instruments. The split-half is worse than the pooled number
+suggests, disagreeing in sign (evens −38.05, odds +54.67) while agreeing on `P+` as the argmax. So
+the honest statement is that **the tuner's entire measured benefit on stress days is reproducible by
+one constant, and the tuner is finding that constant rather than beating it.** That is not a failure
+— it is what a tuner should do when the right answer happens to be a constant, and it discovers it
+without being told. But it does mean +1%/day is not by itself evidence of adaptivity.
+
+**The headroom is in per-day adaptation, and nothing we have captures it.** The best deployable
+constant gets +65.88; the best per-day choice gets +147.08. That 2.2× gap is not reachable by any
+fixed setting, and the tuner — which re-decides every fifty steps and could in principle exceed the
+per-day oracle — reaches neither. Combined with §5.25, where a mechanism worth +91 on stress days is
+worth −4 on ordinary ones, the picture is consistent: **this system's settings want to vary by
+regime, the variation is worth more than any constant, and the current tuner is not the thing that
+captures it.** That is the sharpest open direction the project has.
+
+*(Two constants are bit-identical to the default on this regime — `u+` and `u-` — confirming M1's
+finding that the urgency weight is inert here, now on a third independent measurement.)*
+
+**Do the information channels compose?** The second gap. Every value-of-information result in this
+paper tested one channel alone, so the standing objection is that information might be
+complementary: future orders may only pay if you also know where the floor will be blocked. Run
+together on 48 paired live-stream days with spills, on current code:
+
+| arm | value | vs champion | t |
+|---|---|---|---|
+| champion | 755.56 | — | — |
+| + perfect knowledge of future orders | 735.63 | −19.93 | −0.92 |
+| + perfect knowledge of spills | 785.54 | **+29.98** | **+2.22** |
+| + both | 792.72 | +37.16 | +1.73 |
+
+The interaction is **+27.11 (t = +1.53)** — positive but not significant at 48 seeds. The
+anticipation null therefore *composes* rather than being an artifact of one-at-a-time testing, which
+retires the objection; but a +27 point estimate at t = 1.53 is inconclusive rather than zero, and we
+report it as such. This run also re-measures both channels on current code and reproduces both: the
+demand null (−19.93) and the genuine value of hazard clairvoyance on the hazardous side of the phase
+boundary (+29.98, t = +2.22).
+
 ---
 
 ## 6. Discussion — principles the results support
@@ -1260,6 +1325,10 @@ accident while fixing something real.
   "moving this parameter helps" — a different, cheaper, and more honest mechanism.
 - **A learner is the right control for "your baselines are heuristics".** Building the opponent that
   the reviewer would ask for costs one experiment and settles the objection either way (§5.21).
+- **Measure the ceiling of the thing you are proud of, not only of the things you cut.** The VoPI
+  discipline was applied rigorously to every mechanism we wanted to *reject* and never to the tuner
+  we wanted to keep (§5.28). It captures 39% of its own hindsight ceiling and ties a single constant
+  — neither fact would have surfaced without a bound to compare against.
 - **When a fix moves your headline, check whether it moved your baseline.** Retiring the pods from
   the charger bays was a real correctness fix that would have widened our reported margin from
   +62.6% to +80.7% — every point of it from the opponent getting worse, because an occupied cell is

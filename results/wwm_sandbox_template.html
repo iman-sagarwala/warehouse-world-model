@@ -131,7 +131,7 @@ button.term:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <h1>wwm_sim Sandbox</h1>
   <p>Slide the fleet and floor. The layout, charging bays, and the constants the robots
   learned for that world update live — data straight from the MPC campaign.
-  <span class="mono" style="opacity:.55;font-size:.72rem">build r41</span></p>
+  <span class="mono" style="opacity:.55;font-size:.72rem">build r42</span></p>
   <p id="errLine" class="mono" style="color:var(--bad);display:none"></p>
 </header>
 <nav class="tabs">
@@ -573,6 +573,43 @@ judging candidate settings before their consequences had landed.</p>
 Nothing regresses. So the change is free: it costs nothing on the days that don&rsquo;t need it and
 is worth +17.8 value and a third fewer stranded robots on the days that do. That is the right shape
 for a safety setting, and it is the new default.</p>
+
+<table>
+<tr><th>how good could the self-tuner possibly be? (stress days, 48 paired)</th><th>value</th><th>vs fixed</th><th>stranded</th></tr>
+<tr><td>shipped fixed settings</td><td class="mono">742.3</td><td class="mono">&mdash;</td><td class="mono">123</td></tr>
+<tr><td>the best single constant we found (&ldquo;be 20% more cautious about battery&rdquo;)</td><td class="mono">808.2</td><td class="mono">+65.9</td><td class="mono"><b>69</b></td></tr>
+<tr><td><b>the self-tuner as shipped</b></td><td class="mono"><b>799.9</b></td><td class="mono">+57.6</td><td class="mono">95</td></tr>
+<tr><td><b>a mind-reader picking the best settings for each day</b></td><td class="mono">&mdash;</td><td class="mono"><b>+147.1</b></td><td class="mono">&mdash;</td></tr>
+</table>
+<p class="note"><b>The most uncomfortable number in this project, and we went looking for it on
+purpose.</b> Every mechanism we wanted to <em>reject</em> was tested against a mind-reader. The
+self-tuner &mdash; the one we wanted to keep &mdash; never was. So we measured it.
+<br><br>It captures <b>39%</b> of what a mind-reader picking one setting per day would get. And
+against something you could actually ship, it is a <em>tie</em>: one fixed constant scores +65.9
+against the tuner&rsquo;s +57.6, and head-to-head that difference is a coin flip (the constant wins
+24 days out of 48). So the tuner&rsquo;s whole benefit here is reproducible by changing one number
+&mdash; it is <em>finding</em> that number rather than beating it. That is honestly what a tuner
+should do when the right answer is a constant, and it found it without being told. But it means
+&ldquo;+1% a day&rdquo; is not evidence that adapting is what pays.
+<br><br>Where the real headroom is: a constant gets +65.9, a per-day mind-reader gets +147.1. That
+gap cannot be closed by any fixed setting, and the tuner does not close it either. Read alongside the
+charging result &mdash; the same trick worth +91 on a hard day and &minus;4 on an easy one &mdash;
+the picture is consistent: <b>this warehouse wants different settings on different days, that is
+worth more than any single answer, and we have not built the thing that captures it.</b></p>
+
+<table>
+<tr><th>do the different kinds of knowledge add up? (48 days, spills on)</th><th>value</th><th>vs normal</th></tr>
+<tr><td>the shipped fleet</td><td class="mono">755.6</td><td class="mono">&mdash;</td></tr>
+<tr><td>+ knows every future order</td><td class="mono">735.6</td><td class="mono">&minus;19.9</td></tr>
+<tr><td>+ knows every spill in advance</td><td class="mono">785.5</td><td class="mono"><b>+30.0</b></td></tr>
+<tr><td>+ knows both</td><td class="mono">792.7</td><td class="mono">+37.2</td></tr>
+</table>
+<p class="note">The last open objection to the &ldquo;don&rsquo;t predict&rdquo; result was that we
+only ever tested one kind of knowledge at a time &mdash; maybe knowing the future orders only helps
+if you <em>also</em> know where the floor will be blocked. Run together, the two barely interact
+(+27 more than the sum of the parts, but not statistically solid at this sample size). The
+don&rsquo;t-predict finding survives being tested jointly. Knowing about <em>spills</em> is worth
+real value, as it always has been &mdash; that is knowledge about something that already exists.</p>
 
 <div class="ablhead"><h3>6 &middot; Does knowing the future ever pay?</h3><span>six independent tests, all no</span></div>
 <table>

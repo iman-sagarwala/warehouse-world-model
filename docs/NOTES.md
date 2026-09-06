@@ -7929,3 +7929,44 @@ LESSON, and it is the sharpest one of the session: READ THE REQUIREMENTS AGAINST
 THE PLAN AGAINST THE RESULTS. A project can carry a false failure for months while measuring
 diligently the whole time, because the number is compared against the wrong definition and nobody
 re-opens the original document.
+
+### TUNER CEILING (oracle-audit gap 2) -- the tuner captures 39%, and TIES a single constant
+
+exp_tuner_ceiling.py. The one mechanism we claim a benefit for that never had a bound. Every
+one-move neighbour of DEFAULT held fixed all day, 48 paired stress seeds; oracle = per-seed max.
+  arm                                        value    vs fixed     t    stranded
+  fixed default                             742.30      +0.00   +0.00     123
+  P+  (BAT_PESSIMISM 1.5 -> 1.8)            808.18     +65.88   +3.38      69   <- best constant
+  mpc (the shipped tuner)                   799.87     +57.57   +3.23      95
+  HINDSIGHT ORACLE (best setting per seed)      -     +147.08   +8.31       -
+  (u+ and u- are BIT-IDENTICAL to fixed -> URG_W inert here, 3rd independent confirmation of M1)
+FINDING 1: the tuner captures 39% of the hindsight-best-per-day ceiling. 2.5x its own contribution
+is still on the table -- the largest unclaimed headroom left in the system, bigger than the
+assignment layer's residual 1.5-2%.
+FINDING 2 (the uncomfortable one): against a DEPLOYABLE alternative the tuner is at PARITY, not
+ahead. P+ vs mpc paired: +8.31, t=+0.39, wins 24/48 -- a coin flip on both instruments. SPLIT-HALF
+disagrees in SIGN (evens -38.05, odds +54.67) while agreeing P+ is the argmax on both halves. So:
+the tuner's entire stress-day benefit is reproducible by ONE CONSTANT (be 20% more cautious about
+battery), and the tuner is FINDING that constant rather than beating it. Not a failure -- that is
+what a tuner should do when the right answer is a constant, and it found it unprompted -- but
+"+1%/day" is NOT by itself evidence that adaptivity pays.
+FINDING 3 (the direction): best constant +65.88, best per-day +147.08. The 2.2x gap is unreachable
+by any fixed setting and the tuner does not reach it either. With 5.25 (same mechanism +91 stress /
+-4 ordinary), the picture is consistent: SETTINGS WANT TO VARY BY REGIME, the variation is worth
+more than any constant, and the current tuner is not the thing that captures it. Sharpest open
+direction in the project.
+SAFETY NOTE: P+ strands 69 vs mpc 95 vs fixed 123 -- the best constant is also the safest arm
+tested, though subject to the same coin-flip caveat.
+
+### COMBINED INFORMATION ORACLE (gaps 3+4) -- the null COMPOSES; both channels re-measured on current code
+
+exp_oracle_combined.py, 48 paired live-stream seeds WITH spills, current stack:
+  champ 755.56 | demand -19.93 (t=-0.92) | spills +29.98 (t=+2.22) | both +37.16 (t=+1.73)
+  INTERACTION +27.11 (t=+1.53)
+The standing objection to the anticipation null was that information might be COMPLEMENTARY and
+one-at-a-time testing would miss it. Tested jointly: interaction positive but NOT significant, so
+the null composes and the objection is retired -- though +27 at t=1.53 is inconclusive, not zero,
+and is reported that way. Also re-measures both channels on post-2026-08-25 code: the demand null
+reproduces (-19.93) and hazard clairvoyance is genuinely valuable on the hazardous side of the phase
+boundary (+29.98, t=+2.22), both consistent with the pre-change numbers.
+=> ORACLE AUDIT NOW COMPLETE: 11 channels had a ceiling, 3 gaps found, all 3 measured.
