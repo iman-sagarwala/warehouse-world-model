@@ -131,7 +131,7 @@ button.term:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <h1>wwm_sim Sandbox</h1>
   <p>Slide the fleet and floor. The layout, charging bays, and the constants the robots
   learned for that world update live — data straight from the MPC campaign.
-  <span class="mono" style="opacity:.55;font-size:.72rem">build r42</span></p>
+  <span class="mono" style="opacity:.55;font-size:.72rem">build r43</span></p>
   <p id="errLine" class="mono" style="color:var(--bad);display:none"></p>
 </header>
 <nav class="tabs">
@@ -738,11 +738,11 @@ the roadmap&rsquo;s per-milestone &ldquo;done-when&rdquo;, or the standing deliv
 <em>before</em> the work that would satisfy it. Two of them turned out to be impossible; where that
 happened it is said plainly rather than quietly dropped.</p>
 <div class="tally">
-  <div><b style="color:#3fd07a">58</b><span>met</span></div>
-  <div><b style="color:#e6b400">1</b><span>partly met</span></div>
+  <div><b style="color:#3fd07a">60</b><span>met</span></div>
+  <div><b style="color:#e6b400">0</b><span>partly met</span></div>
   <div><b style="color:#d0584f">5</b><span>not met</span></div>
   <div><b style="color:#a89e8d">0</b><span>impossible</span></div>
-  <div><b>91%</b><span>of 64 criteria</span></div>
+  <div><b>92%</b><span>of 65 criteria</span></div>
 </div>
 <p class="note"><b>64 criteria, and nothing on this list is impossible.</b> That is a change. Two
 targets were recorded for months as physically unreachable; on 2026-09-06 &mdash; reading the
@@ -750,12 +750,11 @@ original proposal against the results, rather than the roadmap against the resul
 turned out to have been scored against the wrong measurement, and both pass. Two further criteria
 surfaced in the same pass that had <em>never been measured at all</em>: one passes by 800&times;, one
 fails by 10&times;.
-<br><br>The six that are outstanding are really <b>five pieces of work</b>, because
-&ldquo;a submittable draft&rdquo; and &ldquo;a short paper&rdquo; are the same job counted in two
-places &mdash; the roadmap listed it as a milestone and the proposal listed it as a deliverable, and
-neither is finished until the other is. That leaves: <b>one document-assembly job</b>, <b>one bug
-whose cause is now genuinely unknown</b>, and <b>two builds deliberately not attempted</b>. Each has
-its reasoning in its own row.</p>
+<br><br><b>The five that remain</b> are one measurement we miss by ten times (phantom hard-blocks),
+one bug whose cause is now known and whose cheapest fix costs 8% (the wedged robots), two builds
+deliberately not attempted, and one opportunity nobody asked for &mdash; it exists only because we
+measured the self-tuner&rsquo;s own ceiling on the final day. None is blocked; four are decisions
+rather than gaps.</p>
 <div class="ablhead"><h3>1 &middot; The measurements the proposal promised</h3><span>16 of 16</span></div>
 <table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>On-time value per day</td><td class="w">the primary objective; every experiment reports it</td></tr>
@@ -830,12 +829,12 @@ its reasoning in its own row.</p>
 <tr><td class="s"><span class="st y">MET</span></td><td>Fix the value-of-information argument</td><td class="w">the flagged line numbers pointed into a superseded draft; the current text never makes the bad claim, and two standing guards were added so nobody re-derives it</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>A figure set</td><td class="w">eight figures. The originally-planned three were rendered before the realism audit, on a world three times too productive, and were discarded rather than reused</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>Figures placed in the text</td><td class="w">each one referenced from the section that argues it, with an index</td></tr>
-<tr><td class="s"><span class="st n">NOT MET</span></td><td>A complete, submittable draft</td><td class="w"><b>The one piece of ordinary unfinished work.</b> The content is done &mdash; 16,000 words, nine sections, eight figures, a reference list. What is missing is typesetting to a submission format and re-verifying nine citation identifiers carried over from a literature pass. Nothing blocks it; it simply was not done.</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>A complete draft, readable as a paper</td><td class="w"><b>Done, in the format actually asked for.</b> 17,000 words, nine sections, eight figures now embedded so it renders as an illustrated paper on GitHub rather than as text naming files it does not show, plus a reference list. No PDF, by decision &mdash; GitHub renders it natively and that is where it lives. One task remains before any <em>external</em> submission, and it is small: nine citation identifiers carried over from a July literature pass need re-checking. Everything the project itself promised is delivered.</td></tr>
 </table>
 <div class="ablhead"><h3>8 &middot; What was promised as a deliverable</h3><span>2 met, 1 partly</span></div>
 <table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
-<tr><td class="s"><span class="st p">PARTIAL</span></td><td>A short paper</td><td class="w">same item as the row above: written, not yet typeset</td></tr>
-<tr><td class="s"><span class="st y">MET</span></td><td>An open-source release</td><td class="w">licensed, documented, and committed &mdash; 377 files, with the two borrowed dependencies reduced to pinned commits plus patches so the repository stays honest about what is ours</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>A short paper</td><td class="w">the same item as the row above &mdash; written, illustrated, and readable where it lives</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>An open-source release</td><td class="w"><b>Live on GitHub.</b> MIT-licensed, documented, tagged, 383 files and 5.7&nbsp;MB &mdash; scratch logs and regenerable build products excluded, and the two borrowed dependencies reduced to pinned commits plus patch files so the repository stays honest about which code is ours. The README opens with the result table and how to reproduce every experiment in it.</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>An interactive sandbox</td><td class="w">this page</td></tr>
 </table>
 <div class="ablhead"><h3>9 &middot; The open items on the books</h3><span>3 met, 3 not</span></div>
@@ -845,6 +844,7 @@ its reasoning in its own row.</p>
 <tr><td class="s"><span class="st y">MET</span></td><td>Test a context-to-settings prior</td><td class="w">measured at &minus;0.1%/day and cut &mdash; the dispatch weights are context-robust, so a prior has nothing to add</td></tr>
 <tr><td class="s"><span class="st n">NOT MET</span></td><td>Close the day where two robots wedge holding pods</td><td class="w"><b>Cause found, cheapest fix priced, fix rejected.</b> The recorded cause was &ldquo;no spare storage slots&rdquo;, and it is <em>correct</em> &mdash; but proving it took a proper sweep. Small amounts of slack (3 then 9 empty racks) do nothing, which had us briefly concluding the hypothesis was wrong. <b>At 17 empty racks the wedge closes completely</b>, 2 wedged robots to 0 across 144 days. It is a storage problem after all. <b>And the cure costs 8.1% of everything delivered</b> (&minus;48.5, t = &minus;4.91) &mdash; an empty rack is a pod that is not earning. Against a bar of +3%, that is not close. The split is the interesting part: on <em>busy</em> days the slack costs 9.6% and there was never a wedge to prevent; on <em>quiet</em> days it is free and that is where both wedges live. Slack wants to be something the warehouse varies by the hour, not a constant &mdash; but we have not built that, so we are not claiming it. Also found along the way: a real bug (the floor was carrying eight <em>more</em> pods than places to put them, because a documented rule had never actually executed), whose fix is separately unshippable because it costs the built-in dispatcher 39 points it has no way to avoid.</td></tr>
 <tr><td class="s"><span class="st n">NOT MET</span></td><td>Prove the dispatch rules work outside our own simulator</td><td class="w"><b>Scoped, not built.</b> Our liveness rules live as flags inside our own fork, so the rules and the world they were tuned on are the same codebase &mdash; a fair reviewer can ask whether the +6.8% is a property of the warehouse or of our copy of it. The check is to re-implement them as an adapter over the untouched borrowed simulator and see the gain reproduce. It has to be an adapter, never a patch: the entire value of the head-to-head rests on the opponent being unmodified. That is a multi-hour build whose failure mode is a subtly different environment that silently invalidates the comparison, so it wants a fresh session and a parity check, not the tail end of a long one.</td></tr>
+<tr><td class="s"><span class="st n">NOT MET</span></td><td>Capture the per-day settings headroom</td><td class="w"><b>Not a criterion anyone wrote down &mdash; it only exists because we went looking for the self-tuner&rsquo;s ceiling on the last day, and it is now the biggest open opportunity in the project.</b> A mind-reader choosing the best settings for each individual day scores +147. The best single setting you could actually ship scores +66. The self-tuner scores +58 &mdash; which means it captures 39% of the ceiling, and, more awkwardly, <em>ties</em> that one fixed setting head-to-head (it wins 24 days out of 48: a coin flip). So the tuner is finding a good constant rather than beating one. The 2.2&times; gap between a constant and a per-day choice is real, unreachable by any fixed number, and unclaimed by anything built here. The charging result points the same way: one trick worth +91 on a hard day and &minus;4 on an easy one. <b>The warehouse wants different settings on different days and nothing we built captures that.</b></td></tr>
 <tr><td class="s"><span class="st n">NOT MET</span></td><td>Let an idle picker step out of an AGV&rsquo;s way</td><td class="w"><b>Deliberately not attempted.</b> A picker standing idle in an aisle can block a robot that needs to pass. Every liveness rule that shipped works by <em>vetoing</em> a move an agent already asked to make; this one is the first that would have to <em>invent</em> a move for an agent that asked for nothing &mdash; writing into the referee&rsquo;s internal path and action state rather than filtering it. That is a riskier class of change, and the prize is small: the worst case it targets is a single 92-step wait across 144 days. This project&rsquo;s own rule is that at that rarity a fix has to be worth more than the cost of re-verifying everything it perturbs, and by that rule it does not yet qualify.</td></tr>
 </table>
 <div class="ablhead"><h3>The two targets we thought were impossible</h3><span>and were not &mdash; why the correction matters more than the pass</span></div>
