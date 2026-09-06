@@ -76,7 +76,7 @@ baselines skip. *(All four re-measured 2026-09-06 on current code; see `docs/NOT
 | Joint first moves / Part D windowed optimisation | −0.59 (W10) → −6.91 (W30) | the rollout already co-decides the partner in every branch |
 | Rationing reroutes on a guessed clash model | all variants negative | replaced by the *simulated* clash model, which flipped the sign and shipped |
 | Full ADG deconfliction | not built | collisions already measured at 0 (both vertex and swap) |
-| **Spare storage slots** (2% / 5% of the floor left empty) | **-11.5 / -9.8** (t = -1.56 / -1.09), and the wedge does not close | slack was the hypothesis for the last liveness defect; slack was supplied and the wedge simply moved to another seed. See the bug fix in the same row of `docs/NOTES.md` 2026-09-06 |
+| **Spare storage slots** (10% of the floor left empty) | **closes the wedge** (2 -> 0 wedged carriers, 144 paired days) but costs **-48.5 value, -8.1%, t = -4.91** | the cheapest known fix for the last liveness defect, priced and rejected: 2% / 5% were too little to test the hypothesis (-11.5 / -9.8, wedge stays) and 25% breaks it from the other side (-71.1). Split: **-9.6% on busy days where there is no wedge, +0.0% on quiet days where both wedges live** -- the slack is free exactly where it is needed. Regime-conditional slack is the implied mechanism; unmeasured, unclaimed |
 
 ---
 

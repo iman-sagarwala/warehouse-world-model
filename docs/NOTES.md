@@ -7851,3 +7851,45 @@ everywhere" scores 100% specificity and 0% sensitivity -- so the 90/90 pair was 
 on that side, and 90/90 was the wrong pre-registration for a detector at this prevalence. The
 binding half is sensitivity, capped by physics at 84.9%. The pair worth reporting is
 sensitivity-against-its-ceiling plus precision/FPR, which is what a router actually feels.
+
+### ORACLE-COVERAGE AUDIT (user question 2026-09-06) -- one channel had no ceiling, and it mattered
+
+USER: "do the comparison to the oracle in every aspect -- has that been done?"
+AUDIT. Channels WITH a measured oracle/ceiling: assignment (oracle_assign, champion within ~1.5-2%),
+future orders (VoPI -3.4% + horizon sweep), task finish time (oracle_delay, worthless), next-task/
+route (oracle_test, oracle_perroute), pickers (pickers_free, +3.74%/+1.44% cap), spill avoidance
+(clairvoyant, 5 regimes), spill sensing (perfect-memory oracle on the identical LOS stream, ceiling
+84.9%), idle positioning (2.4% teleportation ceiling), charging (true arrival preview), energy
+(free-energy ceiling), fleet ratio (exp_oracle_ratio).
+GAPS FOUND: (1) SLOT / POD-RETURN channel -- never had a ceiling, and it is exactly where the one
+unexplained wedge lives; (2) the TUNER itself -- we know tuner-vs-fixed, never tuner-vs-hindsight-
+best-settings; (3) no COMBINED oracle (all channels at once); (4) every oracle number predates the
+2026-08-25 sim change.
+
+### SLOT CEILING MEASURED -- and it OVERTURNS this session's own 5.27 verdict
+
+exp_spare_slots.py swept properly instead of at two arbitrary points. 144 paired stream seeds:
+  spare  cells   value    vs shipped     t      wedged carriers
+  0         0   602.00      +0.00     +0.00      2  (seed 125)
+  2%        3       -      -11.47     -1.56      2
+  5%        9       -       -9.79     -1.09      2
+  10%      17   553.45     -48.54     -4.91      0   <-- CLOSES COMPLETELY
+  25%      43       -      -71.10     -5.98      2   (breaks from the other side)
+=> IT IS A STORAGE-SLACK PROBLEM AFTER ALL. 2% and 5% were simply too little slack to test the
+hypothesis they existed to test, and the earlier "the fix relocates the wedge" conclusion (written
+into 5.27 earlier tonight) was an artifact of undersampling. CORRECTED.
+=> AND THE FIX IS TOO EXPENSIVE: -8.1%, t=-4.91, against a +3% bar. An empty rack is a pod not
+earning. CUT -- but now the item is "cause known, cheapest fix priced" rather than "cause unknown".
+SEED-BLOCK SPLIT (the keeper):
+  seeds 1-96  (busy)  757.80 -> 684.93   -72.87  (-9.6%, t=-5.34)   wedges 0 -> 0
+  seeds 97-144(quiet) 290.38 -> 290.50    +0.12  (+0.0%, t=+0.01)   wedges 2 -> 0
+The slack is FREE EXACTLY WHERE IT IS NEEDED and expensive exactly where it is not: both wedges are
+on quiet days, where demand does not saturate the remaining pods; busy days have no wedge and every
+empty rack is idle inventory. Implied mechanism: spare storage should be REGIME-CONDITIONAL, not a
+world constant. NOT built, NOT measured, NOT claimed.
+METHOD WARNING (3rd seed-block flip in this project, 2nd tonight): the first sweep ran on the
+held-out block by DEFAULT (97-144 = the quiet half) and read +0.12, t=+0.01 -- a free fix. Full
+range: -48.54, t=-4.91. Same code, opposite conclusion. Default seed ranges are a silent selector.
+BUG FIXED en route: exp_spare_slots.py used env var SEEDS, which m3_battery.py int()s at import --
+a comma list crashed every worker. Renamed SLOTSEEDS. Earlier runs uncontaminated (m3_battery's
+SEEDS is only consumed in its own __main__).

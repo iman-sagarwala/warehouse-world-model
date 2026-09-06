@@ -1127,12 +1127,52 @@ pervasive) and sweeping extra slack on top, on the held-out live-stream block, 4
 | + 2% spare | 3 | 278.92 | −11.47 | −1.56 | 2 (seed 106) |
 | + 5% spare | 9 | 280.60 | −9.79 | −1.09 | 2 (seed 106) |
 
-Seed 125 closes and stays closed at every slack level; **seed 106, clean under the legacy floor,
-wedges under all three corrected floors**. Adding genuinely empty slots on top changes neither the
-wedge nor the value. Two wedged carriers in 48 days before, two after, on a different day: this is
-the fourth time in this project that a rare-event fix has **relocated** the residual failure rather
-than removing it, and the cleanest instance. Slack was the hypothesis; slack was supplied; the wedge
-moved. The value column cannot arbitrate — at −7.05, t = −0.77, the arms are indistinguishable.
+Seed 125 closes; **seed 106, clean under the legacy floor, wedges under all three corrected
+floors**, and the value column cannot arbitrate at −7.05, t = −0.77. Read alone, that says the fix
+relocates the failure rather than removing it.
+
+**That reading was wrong, and the oracle audit is what caught it.** Every other decision channel in
+this paper has a measured ceiling — assignment, pickers, sensing, positioning, energy, foresight —
+but the *slot* channel never did, so we had tested two arbitrary slack levels rather than swept the
+constraint. Extending the sweep changes the answer twice over:
+
+| spare storage | cells | value | vs shipped | t | wedged carriers |
+|---|---|---|---|---|---|
+| shipped floor | 0 | 602.00 | — | — | 2 |
+| 2% | 3 | — | −11.47 | −1.56 | 2 |
+| 5% | 9 | — | −9.79 | −1.09 | 2 |
+| **10%** | 17 | 553.45 | **−48.54** | **−4.91** | **0** |
+| 25% | 43 | — | −71.10 | −5.98 | 2 |
+
+At 10% slack **the wedge closes completely** — 2 → 0 across 144 paired days, on the seed where it
+had been reproducible all along. So it *is* a storage-slack phenomenon after all; 2% and 5% were
+simply not enough slack to test the hypothesis they were built to test. At 25% it breaks again, from
+the other side: the empty racks are pods removed from the demand universe, and eventually that costs
+more than the congestion it relieves.
+
+**And the fix is far too expensive.** −48.54 on-time value, −8.1%, t = −4.91. Against a bar of +3%,
+a −8% fix for a 1-in-72 wedge is not close.
+
+The seed-block split is the part worth keeping:
+
+| | base | with 10% spare | effect | wedges |
+|---|---|---|---|---|
+| seeds 1–96 (the busy half) | 757.80 | 684.93 | **−72.87 (−9.6%, t = −5.34)** | 0 → 0 |
+| seeds 97–144 (the quiet half) | 290.38 | 290.50 | **+0.12 (+0.0%, t = +0.01)** | **2 → 0** |
+
+**The slack is free exactly where it is needed and expensive exactly where it is not.** Both wedges
+occur on quiet days, where demand does not saturate the remaining pods and seventeen empty racks
+cost nothing; on busy days there is no wedge to prevent and every empty rack is inventory that is
+not earning. That points at a mechanism worth stating — spare storage wants to be *regime-conditional
+rather than a world constant* — but we have not built or measured that, and we are not going to claim
+it on the strength of a split we did not pre-register.
+
+One methodological note, because it nearly cost us. The 48-seed sweep that produced the first verdict
+ran on the held-out block by default — seeds 97–144, the quiet half — where the same mechanism reads
+**+0.12, t = +0.01**: a free fix. On the full range it reads **−48.54, t = −4.91**. Same code, same
+mechanism, opposite conclusion, and the difference is which half of the day the seeds tile. This is
+the third time in this project that a result has flipped on a seed block, and the second time in one
+session.
 
 **Why it does not ship, and the reason is the finding.** Re-verifying the head-to-head on the
 corrected floor showed the change is not neutral between arms. On live-stream days the *baseline*
@@ -1148,7 +1188,9 @@ the pods buys realism in the diagram and an unearned margin in the table.
 
 So: the bug is documented, the `_removed_shelf_ids` mechanism stays in the simulator (the spare-slot
 sweep needs it), `setup_bays` deliberately keeps the pod with the reasoning recorded at the call
-site, the extra-slack sweep is **cut**, and the liveness item **stays open**. The generalisable
+site, the spare-slot mechanism is **cut at −8.1%** despite closing the wedge, and the liveness item
+**stays open** — now with its cause identified and its cheapest known fix priced rather than with
+its cause unknown. The generalisable
 lesson is the one we would want a reviewer to take: *when a fix moves your headline, check whether it
 moved your baseline, and check it in the direction that would embarrass you.* A change that improves
 your margin by degrading the opponent is not an improvement, and it is very easy to bank one by

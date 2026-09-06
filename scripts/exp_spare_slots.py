@@ -24,7 +24,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts"))
 
 STEPS = 500
-SEEDS = [int(x) for x in os.environ.get("SEEDS", ",".join(str(i) for i in range(97, 145))).split(",")]
+# NB: the env var is SLOTSEEDS. Plain SEEDS is claimed by m3_battery.py, which int()s it at import
+# time, so passing a comma list there crashes every worker (caught 2026-09-06).
+SEEDS = [int(x) for x in os.environ.get("SLOTSEEDS",
+                                        ",".join(str(i) for i in range(97, 145))).split(",")]
 # -1.0 = legacy floor (pre-bug-fix control); 0.0 = bays genuinely pod-free; >0 = extra slack
 FRACS = [float(x) for x in os.environ.get("FRACS", "-1.0,0.0,0.02,0.05").split(",")]
 REGIME = os.environ.get("REGIME", "stream")
