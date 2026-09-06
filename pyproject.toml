@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "warehouse-world-model"
+version = "0.0.1"
+description = "Event-driven multi-robot warehouse planner: our editable simulator + planner (Stage 0+)."
+requires-python = ">=3.9"
+
+# wwm_sim starts as a verbatim editable copy of the vendored TA-RWARE simulator
+# (task-assignment-robotic-warehouse/tarware). This is the copy WE edit to add
+# our rulebook (battery, deadlines, disturbances, partial observability). The
+# vendored tarware package is left untouched as the FIFO throughput baseline.
+[tool.setuptools]
+packages = ["wwm_sim", "wwm_sim.spaces", "wwm_sim.utils"]

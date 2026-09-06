@@ -1,0 +1,45 @@
+# --- environments & build ---------------------------------------------------
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.sandbox/
+
+# --- vendored third-party checkouts ------------------------------------------
+# Not committed: each is an upstream git repo with a small local patch. Restore
+# both with `third_party/README.md` (pinned SHA + patch file, one command each).
+task-assignment-robotic-warehouse/
+pyastar2d_TARWARE/
+
+# --- results: ignore by default, allowlist what the paper and sandbox need ----
+results/*
+!results/fig_*.png
+!results/m5_belief_curves.png
+!results/m5_bench.csv
+!results/m5_bench_disturb.csv
+!results/m5_safety.csv
+!results/champion_architecture.png
+!results/diag_realism_pass.png
+!results/agv_decision_diagram.png
+!results/wwm_sandbox_template.html
+!results/sim_data.json
+!results/mpc_campaign.csv
+!results/mpc_replay.csv
+!results/horizon_ordinary.json
+!results/spare_slots.csv
+!results/theta_oscillation.csv
+!results/.gitkeep
+
+# Everything else under results/ is a scratch log or a regenerable build product:
+#   wwm_sandbox.html  6 MB   -> scripts/run_race.py
+#   races.json        4 MB   -> scripts/run_race.py
+#   *.gif            40 MB   -> base64 copies live in the sandbox template
+#   _*.log, *.out           -> per-experiment scratch, superseded by docs/NOTES.md
+
+# --- editor / OS -------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

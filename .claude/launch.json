@@ -1,0 +1,25 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "artpreview",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5601",
+        "--directory",
+        "C:/Users/isaga/AppData/Local/Temp/claude/C--Users-isaga-Documents-warehouse-world-model/f05a93da-b063-4ffc-8747-8d9c06f9f982/scratchpad/anim"
+      ],
+      "port": 5601
+    },
+    {
+      "name": "raceapp",
+      "runtimeExecutable": "C:/Users/isaga/Documents/warehouse_world_model/.venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "scripts/race_server.py"
+      ],
+      "port": 8734
+    }
+  ]
+}

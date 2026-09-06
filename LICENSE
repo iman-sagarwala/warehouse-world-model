@@ -1,0 +1,40 @@
+MIT License
+
+Copyright (c) 2026 Warehouse World Model contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--------------------------------------------------------------------------------
+THIRD-PARTY COMPONENTS
+
+This repository vendors two third-party projects, each under its own MIT
+licence, retained verbatim in their directories:
+
+  task-assignment-robotic-warehouse/   TA-RWARE — Copyright (c) 2024 Raul Steleac
+                                       see task-assignment-robotic-warehouse/LICENSE
+  pyastar2d_TARWARE/                   pyastar2d — Copyright (c) 2020 Hendrik Weideman
+                                       see pyastar2d_TARWARE/LICENSE
+
+`wwm_sim/` began as a verbatim copy of TA-RWARE's `tarware/` package and remains
+a derivative work of it under the same licence.
+
+Benchmark data under `data/mapf/` is from the MovingAI MAPF benchmark set
+(movingai.com/benchmarks/mapf) and is redistributed under its own terms.
+Demand calibration under `data/instacart/` derives from the Instacart Online
+Grocery Shopping Dataset 2017, used under the terms Instacart published with it.
