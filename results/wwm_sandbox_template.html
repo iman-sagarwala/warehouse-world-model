@@ -108,13 +108,30 @@ button.term:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .glossary{margin-top:8px;padding-left:0;list-style:none;font-size:.85rem}
 .glossary li{margin:0 0 9px;line-height:1.5}
 .glossary b{color:var(--accent)}
+.crit{width:100%;border-collapse:collapse;font-size:.84rem;margin-top:4px}
+.crit th{text-align:left;color:var(--ink-soft);font-weight:500;font-size:.72rem;text-transform:uppercase;
+  letter-spacing:.06em;padding:6px 8px 4px 0;border-bottom:1px solid var(--line)}
+.crit td{padding:7px 10px 7px 0;border-bottom:1px solid var(--line);vertical-align:top;
+  font-family:inherit}
+.crit td.s{width:74px;white-space:nowrap;padding-right:14px}
+.crit td.w{font-size:.8rem;color:var(--ink-soft);line-height:1.45}
+.st{display:inline-block;font-size:.66rem;letter-spacing:.05em;font-weight:700;padding:2px 7px;
+  border-radius:999px}
+.st.y{background:rgba(63,208,122,.16);color:#3fd07a}
+.st.p{background:rgba(230,180,0,.16);color:#e6b400}
+.st.n{background:rgba(208,88,79,.16);color:#d0584f}
+.st.x{background:rgba(138,138,134,.18);color:#a89e8d}
+.tally{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0 4px}
+.tally div{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--panel)}
+.tally b{display:block;font-family:ui-monospace,Consolas,monospace;font-size:1.7rem;line-height:1.1}
+.tally span{font-size:.76rem;color:var(--ink-soft)}
 </style>
 <div class="wrap">
 <header>
   <h1>wwm_sim Sandbox</h1>
   <p>Slide the fleet and floor. The layout, charging bays, and the constants the robots
   learned for that world update live — data straight from the MPC campaign.
-  <span class="mono" style="opacity:.55;font-size:.72rem">build r38</span></p>
+  <span class="mono" style="opacity:.55;font-size:.72rem">build r39</span></p>
   <p id="errLine" class="mono" style="color:var(--bad);display:none"></p>
 </header>
 <nav class="tabs">
@@ -124,6 +141,7 @@ button.term:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <button id="tabFore" aria-pressed="false">Why not predict?</button>
   <button id="tabAbl" aria-pressed="false">Ablation</button>
   <button id="tabNum" aria-pressed="false">All numbers</button>
+  <button id="tabCrit" aria-pressed="false">Every criterion</button>
   <button id="tabDisc" aria-pressed="false">Results &amp; discussion</button>
   <button id="tabGuide" aria-pressed="false">How it works</button>
 </nav>
@@ -673,6 +691,134 @@ tuned run remains untested.</li>
 <li>Known loose end: one live-stream day (seed 125) ends with two robots still holding pods;
 574 of 576 runs are clean.</li>
 </ul>
+</div>
+</div>
+<div id="critView" hidden>
+<div class="card">
+<h3 style="margin-top:0">Every criterion this project set itself &mdash; and whether it was met</h3>
+<p class="note">These are not criteria invented afterwards. Each one was written down in the proposal,
+the roadmap&rsquo;s per-milestone &ldquo;done-when&rdquo;, or the standing deliverables list
+<em>before</em> the work that would satisfy it. Two of them turned out to be impossible; where that
+happened it is said plainly rather than quietly dropped.</p>
+<div class="tally">
+  <div><b style="color:#3fd07a">55</b><span>met</span></div>
+  <div><b style="color:#e6b400">2</b><span>partly met</span></div>
+  <div><b style="color:#d0584f">4</b><span>not met</span></div>
+  <div><b style="color:#a89e8d">1</b><span>impossible</span></div>
+  <div><b>90%</b><span>of everything achievable</span></div>
+</div>
+<p class="note"><b>62 criteria.</b> One is physically impossible (90% sensitivity), so 61 were
+achievable and <b>55 of those are met</b>. A second &mdash; latency under 15 steps &mdash; is half
+impossible: the median passes easily, the mean is capped by the same physics, so it is counted as
+partly met rather than as a failure or a pass.
+<br><br>The six that are outstanding are really <b>five pieces of work</b>, because
+&ldquo;a submittable draft&rdquo; and &ldquo;a short paper&rdquo; are the same job counted in two
+places &mdash; the roadmap listed it as a milestone and the proposal listed it as a deliverable, and
+neither is finished until the other is. That leaves: <b>one document-assembly job</b>, <b>one bug
+whose cause is now genuinely unknown</b>, and <b>two builds deliberately not attempted</b>. Each has
+its reasoning in its own row.</p>
+<div class="ablhead"><h3>1 &middot; The measurements the proposal promised</h3><span>16 of 16</span></div>
+<table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>On-time value per day</td><td class="w">the primary objective; every experiment reports it</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Throughput (deliveries/day)</td><td class="w">24.1 &rarr; 33.7 across arms</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Deadline hit-rate</td><td class="w">81.9% &rarr; 86.4% wave; 68.4% &rarr; 80.7% stream</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Tardiness, mean</td><td class="w">over late tasks only, per arm</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Tardiness, 95th percentile</td><td class="w">reported alongside the mean, both regimes</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Energy per task</td><td class="w">0.079&ndash;0.083; the baselines pay none of it</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Strandings</td><td class="w">0 across 2,300+ runs, audited robot-by-robot</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Collisions</td><td class="w">0 vertex and 0 swap, ~96,000 robot-steps per controller &mdash; and measured, after the first pass was caught reading a counter that did not exist</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Replans per disturbance</td><td class="w">9.0 (built-in) vs 14.3 (champion)</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Brier score</td><td class="w">0.0204 vs 0.0310 for the map it replaced</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Skill vs the base rate</td><td class="w">+0.351 vs +0.013</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Area under precision&ndash;recall</td><td class="w">0.367 against 0.032 for random guessing</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Precision and recall</td><td class="w">95.6% / 84.8% at the decision threshold</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Calibration</td><td class="w">says 98.0% blocked, is 97.9%</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Detection latency</td><td class="w">median 2 steps; measured for both maps and found identical</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>&ldquo;Every mechanism earns 3% or is cut&rdquo;</td><td class="w">the bar was fixed in advance and applied 32 times; ten kept, twenty-two cut</td></tr>
+</table>
+<div class="ablhead"><h3>2 &middot; Locking the decision core</h3><span>5 of 5</span></div>
+<table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>A tuned, frozen champion</td><td class="w">~220,000 runs of coordinate ascent</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>A scale table</td><td class="w">3 map sizes &times; 120 seeds; the advantage grows with size</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Every number written to the log</td><td class="w">docs/NOTES.md, including the dead ends</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>A split-half verdict attached to every knob</td><td class="w">the test for &ldquo;is this map real?&rdquo; &mdash; every knob came back patchwork</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Re-validated with battery and spills both live</td><td class="w">all four dispatch constants held; nothing reached the significance bar</td></tr>
+</table>
+<div class="ablhead"><h3>3 &middot; Making the spill map act</h3><span>3 met, 1 partly, 1 impossible</span></div>
+<table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>With-map vs without-map, under spills</td><td class="w">the centrepiece: 800.6 &rarr; 850.1, collisions 364 &rarr; 80, and the phase boundary mapped at both ends</td></tr>
+<tr><td class="s"><span class="st x">CAN'T</span></td><td>Sensitivity &ge; 90%</td><td class="w"><b>Physically impossible, and we can say by how much.</b> 84.76% measured against a ceiling of 84.9% &mdash; the best any map could do given where the robots actually drove. We are at 99.8% of the limit. The 90% was set before the occlusion model existed; the residual is cells nobody&rsquo;s line of sight crossed while they were dirty.</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Specificity &ge; 90%</td><td class="w"><b>99.87%</b>, measured 2026-09-06 (3,358 false flags in 2.55M checks). Reported with a caveat rather than as a win: at a 3.2% base rate this is the easy half &mdash; a map answering &ldquo;clear&rdquo; everywhere scores 100%.</td></tr>
+<tr><td class="s"><span class="st p">PARTIAL</span></td><td>Detection latency &le; 15 steps</td><td class="w">Median is <b>1&ndash;2</b> steps &mdash; passes easily. The <em>mean</em> is 20.4, dragged by the same physics as the sensitivity ceiling: a handful of spills nobody drives past for a long time. Half met, and the failing half is not fixable by a better map.</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Calibration within &plusmn;10%</td><td class="w">says 98.0%, is 97.9% &mdash; honest to a tenth of a point where it acts</td></tr>
+</table>
+<div class="ablhead"><h3>4 &middot; Battery, and the anticipation gates</h3><span>6 of 6</span></div>
+<table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>&ldquo;Charge, then task&rdquo; expressible as one plan</td><td class="w">charge-as-prefix in the candidate set</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>An emergency battery tier</td><td class="w">plus energy filtering, charge-to-need and a concurrency cap</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Strandings verified at zero</td><td class="w">0/144, audited per robot, at value parity with free energy</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Pre-positioning documented as a null</td><td class="w">three estimators, all wash-to-negative</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>The demand-drift gate actually run</td><td class="w">calibrated from real grocery orders, then cut by its own gate</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>The pre-positioning gate actually run</td><td class="w">headroom measured at 2.4% &mdash; below the bar before a line was written</td></tr>
+</table>
+<div class="ablhead"><h3>5 &middot; The one learned head</h3><span>2 of 2</span></div>
+<table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Shipped or cut by a gate fixed in advance</td><td class="w">cut: 13.5% better predictions, calibration slope 0.14, and it changed <b>zero of 68</b> decisions</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>The &ldquo;improves with use&rdquo; claim settled</td><td class="w">honestly cut, with the mechanism: the deadline rule is a step function that never consults finish time</td></tr>
+</table>
+<div class="ablhead"><h3>6 &middot; The evaluation suite</h3><span>8 of 8</span></div>
+<table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>The full metric suite</td><td class="w">all seven, none assumed</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Beat the built-in dispatcher on a clean floor</td><td class="w">+21.1% wave, +47.5% stream</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Beat it by 10% under disturbances</td><td class="w">cleared 3&ndash;6&times; over: +31.6% and +60.4%</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Solve 98% of the public MAPF benchmark</td><td class="w">100% of 1,800 scenarios</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>A consolidated keep/cut table</td><td class="w">ten shipped, twenty-two cut, each with its number and its mechanism</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Document the joint-first-moves null</td><td class="w">the rollout already co-decides the partner in every branch</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Document the collision guarantee</td><td class="w">0 by construction <em>and</em> 0 measured</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Every headline number locked on the frozen champion</td><td class="w"><b>Re-measured 2026-09-06.</b> The published table turned out to predate a simulator change by twelve days and was never re-run. 2,304 runs later: wave bit-identical, live-stream absolutes all rose, margins moved +48.9% &rarr; +47.5% and +62.3% &rarr; +60.4%. The claim held because it is a paired margin &mdash; that was luck, not method, so re-running after any simulator change is now a standing rule.</td></tr>
+</table>
+<div class="ablhead"><h3>7 &middot; The paper</h3><span>10 met, 1 not</span></div>
+<table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Positioning against the literature</td><td class="w">written properly; it had been a one-line pointer to a superseded draft</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Method</td><td class="w">the seven-step funnel, the rollout, and the one honest correction</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Results</td><td class="w">&sect;5.1 through &sect;5.27</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>The honest negatives</td><td class="w">six anticipation channels, five learned components, and the ones that embarrassed us</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Limitations</td><td class="w">sixteen, including the two process failures found this week</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Future work</td><td class="w">prioritised, with the deferred items reasoned rather than listed</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>An abstract</td><td class="w">written last, as intended</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Fix the value-of-information argument</td><td class="w">the flagged line numbers pointed into a superseded draft; the current text never makes the bad claim, and two standing guards were added so nobody re-derives it</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>A figure set</td><td class="w">eight figures. The originally-planned three were rendered before the realism audit, on a world three times too productive, and were discarded rather than reused</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Figures placed in the text</td><td class="w">each one referenced from the section that argues it, with an index</td></tr>
+<tr><td class="s"><span class="st n">NOT MET</span></td><td>A complete, submittable draft</td><td class="w"><b>The one piece of ordinary unfinished work.</b> The content is done &mdash; 16,000 words, nine sections, eight figures, a reference list. What is missing is typesetting to a submission format and re-verifying nine citation identifiers carried over from a literature pass. Nothing blocks it; it simply was not done.</td></tr>
+</table>
+<div class="ablhead"><h3>8 &middot; What was promised as a deliverable</h3><span>2 met, 1 partly</span></div>
+<table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
+<tr><td class="s"><span class="st p">PARTIAL</span></td><td>A short paper</td><td class="w">same item as the row above: written, not yet typeset</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>An open-source release</td><td class="w">licensed, documented, and committed &mdash; 377 files, with the two borrowed dependencies reduced to pinned commits plus patches so the repository stays honest about what is ours</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>An interactive sandbox</td><td class="w">this page</td></tr>
+</table>
+<div class="ablhead"><h3>9 &middot; The open items on the books</h3><span>3 met, 3 not</span></div>
+<table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Re-check the longer planning horizon</td><td class="w">done and adopted: a tie on ordinary days at identical compute, +17.8 and a third fewer stranded robots on hard days</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Build the threshold-movement tactic</td><td class="w">built. +91 with the tuner on hard days; then the ordinary-day check refused it, so it becomes a move the tuner can audition rather than a default</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Test a context-to-settings prior</td><td class="w">measured at &minus;0.1%/day and cut &mdash; the dispatch weights are context-robust, so a prior has nothing to add</td></tr>
+<tr><td class="s"><span class="st n">NOT MET</span></td><td>Close the day where two robots wedge holding pods</td><td class="w"><b>Attempted properly, and the hypothesis was wrong.</b> The recorded cause was &ldquo;no spare storage slots&rdquo;. Testing it meant first fixing a bug that had made the world quietly worse than we thought &mdash; the floor was carrying eight <em>more</em> pods than places to put them. With that corrected the failing day runs clean and <b>a different day breaks instead</b>; adding genuinely empty slots changes neither. Two wedged robots before, two after, on another day. So it is not a storage-slack problem and its real cause is now unknown. Separately, the fix cannot ship as it stands: it costs the built-in dispatcher 39 points it has no way to avoid, which would have widened our headline margin by eighteen points purely by making the opponent worse. Closing this properly needs the charging bays made off-limits at the world level first, then a fresh diagnosis.</td></tr>
+<tr><td class="s"><span class="st n">NOT MET</span></td><td>Prove the dispatch rules work outside our own simulator</td><td class="w"><b>Scoped, not built.</b> Our liveness rules live as flags inside our own fork, so the rules and the world they were tuned on are the same codebase &mdash; a fair reviewer can ask whether the +6.8% is a property of the warehouse or of our copy of it. The check is to re-implement them as an adapter over the untouched borrowed simulator and see the gain reproduce. It has to be an adapter, never a patch: the entire value of the head-to-head rests on the opponent being unmodified. That is a multi-hour build whose failure mode is a subtly different environment that silently invalidates the comparison, so it wants a fresh session and a parity check, not the tail end of a long one.</td></tr>
+<tr><td class="s"><span class="st n">NOT MET</span></td><td>Let an idle picker step out of an AGV&rsquo;s way</td><td class="w"><b>Deliberately not attempted.</b> A picker standing idle in an aisle can block a robot that needs to pass. Every liveness rule that shipped works by <em>vetoing</em> a move an agent already asked to make; this one is the first that would have to <em>invent</em> a move for an agent that asked for nothing &mdash; writing into the referee&rsquo;s internal path and action state rather than filtering it. That is a riskier class of change, and the prize is small: the worst case it targets is a single 92-step wait across 144 days. This project&rsquo;s own rule is that at that rarity a fix has to be worth more than the cost of re-verifying everything it perturbs, and by that rule it does not yet qualify.</td></tr>
+</table>
+<div class="ablhead"><h3>What physics would not allow</h3><span>one target impossible, one half-impossible &mdash; and why saying so is the point</span></div>
+<p class="note">Both are halves of one target &mdash; &ldquo;90% sensitivity, 90% specificity, latency
+under 15 steps&rdquo; &mdash; written before we knew what the physics allowed. Robots only see what
+they drive past. Given where they actually drove, the best <em>any</em> map could achieve is 84.9%
+sensitivity; ours reaches 84.76%, which is 99.8% of the attainable maximum, and the same handful of
+never-observed spills is what drags the mean latency to 20 steps. We could have quietly restated the
+target. Instead the honest report is: the number was unreachable, here is the ceiling, here is how
+close we are to it, and here is the measurement that establishes the ceiling rather than asserting
+it. A target that turns out to be impossible is a finding about the problem, and it is worth more
+than a target adjusted after the fact.</p>
+<p class="note" style="margin-top:18px">Full detail on any row lives in the <b>All numbers</b> tab,
+the <b>Ablation</b> ledger, or <span class="mono">docs/NOTES.md</span> in the repository, which
+records every experiment including the ones that failed.</p>
 </div>
 </div>
 <div id="guideView" hidden>
@@ -1393,6 +1539,7 @@ function showView(which){
   $("tabDisc").setAttribute("aria-pressed", which === "disc");
   $("tabAbl").setAttribute("aria-pressed", which === "abl");
   $("tabNum").setAttribute("aria-pressed", which === "num");
+  $("tabCrit").setAttribute("aria-pressed", which === "crit");
   $("tabGuide").setAttribute("aria-pressed", which === "guide");
   $("explorerView").hidden = which !== "explorer";
   $("raceView").hidden = which !== "race";
@@ -1401,6 +1548,7 @@ function showView(which){
   $("discView").hidden = which !== "disc";
   $("ablView").hidden = which !== "abl";
   $("numView").hidden = which !== "num";
+  $("critView").hidden = which !== "crit";
   $("guideView").hidden = which !== "guide";
   pop.hidden = true;
   if (which === "race") refreshRace();
@@ -1410,6 +1558,7 @@ $("tabFore").addEventListener("click", () => showView("fore"));
 $("tabDisc").addEventListener("click", () => showView("disc"));
 $("tabAbl").addEventListener("click", () => showView("abl"));
 $("tabNum").addEventListener("click", () => showView("num"));
+$("tabCrit").addEventListener("click", () => showView("crit"));
 $("tabGuide").addEventListener("click", () => showView("guide"));
 
 function raceTabs(on){
