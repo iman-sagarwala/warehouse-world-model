@@ -7893,3 +7893,39 @@ range: -48.54, t=-4.91. Same code, opposite conclusion. Default seed ranges are 
 BUG FIXED en route: exp_spare_slots.py used env var SEEDS, which m3_battery.py int()s at import --
 a comma list crashed every worker. Renamed SLOTSEEDS. Earlier runs uncontaminated (m3_battery's
 SEEDS is only consumed in its own __main__).
+
+### PROPOSAL RE-READ (user 2026-09-06): "have we left anything behind" -- YES, four things
+
+Until today the criteria list was assembled from ROADMAP/MILESTONE/TODO. Nobody had read the ORIGINAL
+proposal (Project_Plan_Main.docx §6, Success criteria) against the results. Doing so found four
+items, two of which reverse a standing conclusion.
+
+1. SENSITIVITY WAS SCORED AGAINST THE WRONG METRIC -- IT PASSES.
+   Proposal §6.2: "of all REAL disturbances the simulator spawns, the share the belief map detects"
+   -- PER EVENT. We have been reporting PER-CELL-STEP recall (84.76%) and calling the 90% target
+   physically unattainable against an 84.9% cell-step ceiling. Per event: 424/460 = 92.2% -> PASSES.
+   Both numbers are correct measurements of different quantities; the target was written about the
+   event one. The 84.9% ceiling claim stands as a cell-step statement and stays in the paper.
+2. LATENCY WAS SCORED AGAINST THE WRONG STATISTIC -- IT PASSES.
+   Proposal says MEDIAN detection latency <= 15. Ours is 2. Had been marked PARTIAL on the mean
+   (20.4). Same class of slip, same day.
+3. "<= 1 PHANTOM HARD-BLOCK PER 1,000 STEPS" (§6.2, second half of the specificity clause) -- NEVER
+   MEASURED, AND IT FAILS. exp_proposal_gaps.py, 8 seeds x 500 steps: 39 phantom EPISODES = 9.8 per
+   1,000 steps (target <=1, missed 10x); 1,601 phantom CELL-STEPS = 400 per 1,000. A phantom
+   hard-block is a clear cell the router excludes. Costs detours, not correctness. This is the
+   honest flip side of the 99.87% specificity: same behaviour, two denominators, which is exactly
+   why the proposal named BOTH.
+4. "DECISION-EVENT LATENCY <= 1s WALL-CLOCK, 5 ROBOTS" (§6.4) -- NEVER MEASURED, AND IT PASSES.
+   3 AGVs + 2 pickers, 3,992 steady-state decisions: mean 9.07ms, median 1.28ms, p95 11.8ms,
+   p99 224.7ms, max 510ms -> ~800x inside budget at the median. CAVEAT REPORTED not netted out: the
+   FIRST decision in a fresh process costs 1.0-1.7s on 4 of 8 seeds -- imports + the A* extension +
+   cache warm-up, i.e. start-up, not deliberation. A deployment pays it once at boot.
+
+SCORECARD: 62 -> 64 criteria. 58 met / 1 partial / 5 not met / 0 impossible. NOTHING on the list is
+impossible any more -- the two "physics caps" were metric-definition errors on our side.
+ALSO: docs/STAGE_CHECKLIST.md (last touched 2026-07-22) is stale and was about to go public saying
+"Disturbance belief map -- still unbuilt". Marked SUPERSEDED at the top, kept for provenance.
+LESSON, and it is the sharpest one of the session: READ THE REQUIREMENTS AGAINST THE RESULTS, NOT
+THE PLAN AGAINST THE RESULTS. A project can carry a false failure for months while measuring
+diligently the whole time, because the number is compared against the wrong definition and nobody
+re-opens the original document.

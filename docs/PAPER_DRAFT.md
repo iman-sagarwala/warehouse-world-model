@@ -707,9 +707,12 @@ regimes: cells in any robot's sight read exact truth (a noiseless look leaves no
 estimate), and everything else is an explicit prediction decaying toward ignorance. This made
 the decision bin *exactly* calibrated (stated 98.0% blocked vs observed 97.9%) while leaving
 every routing decision unchanged; the residual overconfidence lives only in the idle prior,
-the documented price of fast detection. The original 90% sensitivity target is provably
-unattainable — the sensing ceiling given real trajectories is 84.9%, and the map sits at 99.8%
-of it. **Third, the fix composes with planning.** The update-rule repair carries through the
+the documented price of fast detection. Per **cell-step**, recall is 84.7% against a sensing
+ceiling of 84.9% given real trajectories — 99.8% of what any map with these eyes could know. An
+earlier version of this section read that as proving the proposal's 90% sensitivity target
+unattainable. **That was a metric error on our side, corrected in §5.22**: the proposal defines
+sensitivity per *disturbance event*, not per cell-step, and on its own definition the map detects
+**92.2%** of spawned disturbances and passes. **Third, the fix composes with planning.** The update-rule repair carries through the
 model-predictive layer almost additively (+26.4 through the self-tuner vs +28.8 through fixed
 constants), and the tuner's own edge *halved* on the repaired map (+4.4 → +2.1, adoptions
 45 → 33): the tuner is a compensator, and it correctly goes quiet as the world's defaults
@@ -899,15 +902,31 @@ accumulated clean-history outvote fresh evidence and forgets what it has just se
 was never perception — it was memory, and two coincident CDFs are the cleanest available proof,
 because they rule out the explanation a reader would otherwise assume.
 
-**On the 90/90 bar this project set itself.** The pre-registered target was 90% sensitivity *and*
-90% specificity. Specificity passes enormously — 99.87% — and we report that with a caveat rather
-than as a win, because **at a 3.2% base rate specificity is the easy half**: a map that says "clear"
-everywhere scores 100% specificity and 0% sensitivity, so the constraint was never really binding.
-The binding half is sensitivity, and it is the one that cannot be met: 84.76% against a physical
-sensing ceiling of 84.9% (§5.18). A 90/90 pair was the wrong pre-registration for a detector at this
-prevalence; the right one is the pairing we ended up reporting — sensitivity against its ceiling,
-and precision or false-positive rate, which at 95.58% and 0.131% are the numbers a router actually
-feels.
+**On the 90/90 bar this project set itself — and a correction we owe the reader.** The
+pre-registered target was 90% sensitivity, 90% specificity, median detection latency under 15 steps,
+and no more than one phantom hard-block per 1,000 steps. For most of this project the first of those
+was reported as *failed and physically unattainable*, on the grounds that per-cell-step recall is
+84.76% against an 84.9% ceiling. Re-reading the proposal against the measurements rather than the
+other way round shows that comparison was against the wrong quantity. The proposal defines
+sensitivity as *"of all real disturbances the simulator spawns, the share the belief map detects"* —
+**per event**. Measured that way the map detects **424 of 460 spawned disturbances, 92.2%**, and the
+criterion **passes**. The same slip had marked the latency clause as half-failed on a mean of 20.4
+steps when the proposal asks for a **median**, which is **2**.
+
+So the honest scoreline on the 90/90 pair is that both halves pass, and the interesting caveat is a
+different one: **at a 3.2% base rate, specificity is the easy half.** A map answering "clear"
+everywhere scores 100% specificity and 0% sensitivity, so that side of the pair was never really
+binding, and 99.87% should not be read as an achievement. What the router actually feels is
+precision (95.58%) and false-positive rate (0.131%), and those are the numbers we would
+pre-register a second time.
+
+**The fourth clause was never measured at all, and it fails.** "No more than one phantom hard-block
+per 1,000 steps" — a phantom hard-block being a cell the router excludes from routing that is in
+fact clear — comes in at **9.8 per 1,000 steps** counted as distinct episodes, or 400 per 1,000
+counted as cell-steps (8 seeds, 4,000 step-observations). Against a target of ≤1 that is a failure by
+an order of magnitude, and it is the one belief-map criterion we do not meet. It is also the honest
+counterweight to the specificity number: 99.87% specificity and 10× the phantom-block budget are the
+same fact seen at two different denominators, which is precisely why the proposal named both.
 
 One boundary is load-bearing and worth stating because we got it wrong first. Unobserved cells sit
 at *exactly* 0.5 by convention, and the router uses a strict `belief > 0.5`; scoring with `>=`
@@ -1293,6 +1312,17 @@ accident while fixing something real.
 - **The learned opponent is modestly resourced** (§5.21): REINFORCE rather than PPO, ~960 episodes, no
   hyperparameter search, one fleet and one map. The 5.3% gap is evidence about where the headroom is
   not, not a proof that no learner can close it.
+- **One pre-registered criterion fails outright**: no more than one phantom hard-block per 1,000
+  steps (§5.22). We measure 9.8. The map excludes clear cells from routing about ten times more often
+  than the proposal budgeted for. This costs path length rather than correctness — a phantom block
+  makes a robot detour, it does not make it crash — but it is a real miss and it went unmeasured for
+  the life of the project because the criteria list in use was assembled from the roadmap rather than
+  from the proposal.
+- **Decision-event latency** (proposal §6.4, ≤1 s wall-clock at 5 robots) is met in steady state —
+  mean 9.1 ms, median 1.3 ms, p99 225 ms, max 510 ms over 3,992 decisions — but the *first* decision
+  in a fresh process costs 1.0–1.7 s on half of the seeds tested. That is imports, the A* extension
+  and cache warm-up, not deliberation; a deployed system would pay it once at boot. Reported rather
+  than netted out.
 - **The forecaster grading is narrow** (§5.22): 24 seeds, one disturbance rate, highway cells only.
   The metrics are stable at 4.8M predictions per arm, but they characterise this hazard process rather
   than disturbance forecasting in general.

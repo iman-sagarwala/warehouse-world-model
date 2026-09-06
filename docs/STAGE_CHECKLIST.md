@@ -1,5 +1,12 @@
 # Build Checklist — Warehouse World Model
 
+> **SUPERSEDED (2026-09-06).** This file was last maintained 2026-07-22 and its unchecked boxes are
+> stale, not open: the belief map it calls "still unbuilt" shipped in M2, the benchmarks it lists as
+> pending were completed in M5, and the knob sweeps it queues were finished in M1. The live records
+> are `docs/ROADMAP.md` (milestones and done-when), `docs/TODO.md` (working checklist) and
+> `docs/NOTES.md` (the running log). Kept for provenance.
+
+
 Progress tracker following the plan's build order (each stage is the next
 stage's baseline). `[x]` done · `[~]` in progress · `[ ]` not started.
 

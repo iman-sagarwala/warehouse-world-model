@@ -131,7 +131,7 @@ button.term:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <h1>wwm_sim Sandbox</h1>
   <p>Slide the fleet and floor. The layout, charging bays, and the constants the robots
   learned for that world update live — data straight from the MPC campaign.
-  <span class="mono" style="opacity:.55;font-size:.72rem">build r40</span></p>
+  <span class="mono" style="opacity:.55;font-size:.72rem">build r41</span></p>
   <p id="errLine" class="mono" style="color:var(--bad);display:none"></p>
 </header>
 <nav class="tabs">
@@ -701,16 +701,18 @@ the roadmap&rsquo;s per-milestone &ldquo;done-when&rdquo;, or the standing deliv
 <em>before</em> the work that would satisfy it. Two of them turned out to be impossible; where that
 happened it is said plainly rather than quietly dropped.</p>
 <div class="tally">
-  <div><b style="color:#3fd07a">55</b><span>met</span></div>
-  <div><b style="color:#e6b400">2</b><span>partly met</span></div>
-  <div><b style="color:#d0584f">4</b><span>not met</span></div>
-  <div><b style="color:#a89e8d">1</b><span>impossible</span></div>
-  <div><b>90%</b><span>of everything achievable</span></div>
+  <div><b style="color:#3fd07a">58</b><span>met</span></div>
+  <div><b style="color:#e6b400">1</b><span>partly met</span></div>
+  <div><b style="color:#d0584f">5</b><span>not met</span></div>
+  <div><b style="color:#a89e8d">0</b><span>impossible</span></div>
+  <div><b>91%</b><span>of 64 criteria</span></div>
 </div>
-<p class="note"><b>62 criteria.</b> One is physically impossible (90% sensitivity), so 61 were
-achievable and <b>55 of those are met</b>. A second &mdash; latency under 15 steps &mdash; is half
-impossible: the median passes easily, the mean is capped by the same physics, so it is counted as
-partly met rather than as a failure or a pass.
+<p class="note"><b>64 criteria, and nothing on this list is impossible.</b> That is a change. Two
+targets were recorded for months as physically unreachable; on 2026-09-06 &mdash; reading the
+original proposal against the results, rather than the roadmap against the results &mdash; both
+turned out to have been scored against the wrong measurement, and both pass. Two further criteria
+surfaced in the same pass that had <em>never been measured at all</em>: one passes by 800&times;, one
+fails by 10&times;.
 <br><br>The six that are outstanding are really <b>five pieces of work</b>, because
 &ldquo;a submittable draft&rdquo; and &ldquo;a short paper&rdquo; are the same job counted in two
 places &mdash; the roadmap listed it as a milestone and the proposal listed it as a deliverable, and
@@ -747,10 +749,12 @@ its reasoning in its own row.</p>
 <div class="ablhead"><h3>3 &middot; Making the spill map act</h3><span>3 met, 1 partly, 1 impossible</span></div>
 <table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>With-map vs without-map, under spills</td><td class="w">the centrepiece: 800.6 &rarr; 850.1, collisions 364 &rarr; 80, and the phase boundary mapped at both ends</td></tr>
-<tr><td class="s"><span class="st x">CAN'T</span></td><td>Sensitivity &ge; 90%</td><td class="w"><b>Physically impossible, and we can say by how much.</b> 84.76% measured against a ceiling of 84.9% &mdash; the best any map could do given where the robots actually drove. We are at 99.8% of the limit. The 90% was set before the occlusion model existed; the residual is cells nobody&rsquo;s line of sight crossed while they were dirty.</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Sensitivity &ge; 90%</td><td class="w"><b>92.2%</b> &mdash; 424 of 460 real spills detected. <b>We had this scored wrong for months.</b> The proposal asks what share of <em>spills</em> get caught; we had been reporting what share of blocked <em>squares</em> get caught at every instant (84.76%), which is a far harsher question, and calling the target physically impossible on that basis. Both numbers are real, they just answer different questions, and the target was written about the first one. Corrected 2026-09-06 by reading the proposal against the results instead of the other way round.</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>Specificity &ge; 90%</td><td class="w"><b>99.87%</b>, measured 2026-09-06 (3,358 false flags in 2.55M checks). Reported with a caveat rather than as a win: at a 3.2% base rate this is the easy half &mdash; a map answering &ldquo;clear&rdquo; everywhere scores 100%.</td></tr>
-<tr><td class="s"><span class="st p">PARTIAL</span></td><td>Detection latency &le; 15 steps</td><td class="w">Median is <b>1&ndash;2</b> steps &mdash; passes easily. The <em>mean</em> is 20.4, dragged by the same physics as the sensitivity ceiling: a handful of spills nobody drives past for a long time. Half met, and the failing half is not fixable by a better map.</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Median detection latency &le; 15 steps</td><td class="w"><b>2 steps.</b> The proposal says <em>median</em>; we had been marking this half-failed on the <em>mean</em> (20.4), which a handful of spills nobody drives past for a long time drags upward. Same slip as the row above, corrected the same day.</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>Calibration within &plusmn;10%</td><td class="w">says 98.0%, is 97.9% &mdash; honest to a tenth of a point where it acts</td></tr>
+<tr><td class="s"><span class="st n">NOT MET</span></td><td>&le; 1 phantom hard-block per 1,000 steps</td><td class="w"><b>9.8 per 1,000 &mdash; missed by ten times, and never measured until today.</b> A phantom hard-block is a square the robots refuse to drive through that is actually perfectly clear. It costs detours, not crashes, so nothing breaks &mdash; but it is a stated target and it fails. It is also the honest flip side of the 99.87% specificity two rows up: the same behaviour looks excellent as a percentage of a very large number and poor as a rate per step, which is exactly why the proposal named both.</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>A decision takes under 1 second (5 robots)</td><td class="w"><b>1.3 ms typical, 510 ms at the very worst</b> across 3,992 decisions &mdash; roughly 800&times; inside budget. Also never measured before today. One caveat reported rather than hidden: the very first decision after starting the program takes 1&ndash;1.7 s, which is loading code and warming caches, not thinking. A real deployment pays that once at boot.</td></tr>
 </table>
 <div class="ablhead"><h3>4 &middot; Battery, and the anticipation gates</h3><span>6 of 6</span></div>
 <table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
@@ -806,16 +810,19 @@ its reasoning in its own row.</p>
 <tr><td class="s"><span class="st n">NOT MET</span></td><td>Prove the dispatch rules work outside our own simulator</td><td class="w"><b>Scoped, not built.</b> Our liveness rules live as flags inside our own fork, so the rules and the world they were tuned on are the same codebase &mdash; a fair reviewer can ask whether the +6.8% is a property of the warehouse or of our copy of it. The check is to re-implement them as an adapter over the untouched borrowed simulator and see the gain reproduce. It has to be an adapter, never a patch: the entire value of the head-to-head rests on the opponent being unmodified. That is a multi-hour build whose failure mode is a subtly different environment that silently invalidates the comparison, so it wants a fresh session and a parity check, not the tail end of a long one.</td></tr>
 <tr><td class="s"><span class="st n">NOT MET</span></td><td>Let an idle picker step out of an AGV&rsquo;s way</td><td class="w"><b>Deliberately not attempted.</b> A picker standing idle in an aisle can block a robot that needs to pass. Every liveness rule that shipped works by <em>vetoing</em> a move an agent already asked to make; this one is the first that would have to <em>invent</em> a move for an agent that asked for nothing &mdash; writing into the referee&rsquo;s internal path and action state rather than filtering it. That is a riskier class of change, and the prize is small: the worst case it targets is a single 92-step wait across 144 days. This project&rsquo;s own rule is that at that rarity a fix has to be worth more than the cost of re-verifying everything it perturbs, and by that rule it does not yet qualify.</td></tr>
 </table>
-<div class="ablhead"><h3>What physics would not allow</h3><span>one target impossible, one half-impossible &mdash; and why saying so is the point</span></div>
-<p class="note">Both are halves of one target &mdash; &ldquo;90% sensitivity, 90% specificity, latency
-under 15 steps&rdquo; &mdash; written before we knew what the physics allowed. Robots only see what
-they drive past. Given where they actually drove, the best <em>any</em> map could achieve is 84.9%
-sensitivity; ours reaches 84.76%, which is 99.8% of the attainable maximum, and the same handful of
-never-observed spills is what drags the mean latency to 20 steps. We could have quietly restated the
-target. Instead the honest report is: the number was unreachable, here is the ceiling, here is how
-close we are to it, and here is the measurement that establishes the ceiling rather than asserting
-it. A target that turns out to be impossible is a finding about the problem, and it is worth more
-than a target adjusted after the fact.</p>
+<div class="ablhead"><h3>The two targets we thought were impossible</h3><span>and were not &mdash; why the correction matters more than the pass</span></div>
+<p class="note">For most of this project two targets were written up as unreachable: 90% of spills
+detected, and detection latency under 15 steps. The reasoning looked sound &mdash; robots only see
+what they drive past, so given where they actually drove the best <em>any</em> map could do is 84.9%,
+and we sit at 84.76%, or 99.8% of that. All of that is still true. It just does not answer the
+question the proposal asked. The proposal asks what fraction of <em>spills</em> the map catches, not
+what fraction of blocked <em>squares</em> it is holding at any instant; on spills the map catches
+<b>92.2%</b>. And it asks for a <em>median</em> latency, which is 2 steps, not the mean, which is 20.
+<br><br>Both pass. But the useful part is not the pass &mdash; it is that a project can carry a false
+failure for months while measuring diligently the whole time, because the number was compared against
+the wrong definition and nobody re-read the original document. The same pass turned up two criteria
+that had never been measured at all. <b>Read the requirements against the results, not the plan
+against the results.</b></p>
 <p class="note" style="margin-top:18px">Full detail on any row lives in the <b>All numbers</b> tab,
 the <b>Ablation</b> ledger, or <span class="mono">docs/NOTES.md</span> in the repository, which
 records every experiment including the ones that failed.</p>
