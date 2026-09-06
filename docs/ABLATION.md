@@ -22,12 +22,12 @@ by date and the `results/*.csv` files named per row.
 | **Battery management** (funnel filter, charge-to-need, concurrency cap, emergency drop, picker enforcement) | value-neutral (784.5 vs 784.0 free-energy) and **0 stranded / 0 frozen in 144 audited days** | M3; judged on the hard constraint, not the 3% bar |
 | **Dedicated charger bays** (shelf-free, fleet-independent) | enabling infrastructure; no standalone value claim | M3 + user realism rules |
 | **Janitor** (earned amnesty: cleanup summoned by sightings) | changes the regime — honest sensing rises to ~100% of oracle value | 2026-08-21 |
-| **MPC self-tuner** | **~+1%/day** pooled (z = +11.2, 46 configs); +0.5% wave at 144 seeds (t = +2.41); **0 under disturbances** | campaign + `m5_bench.csv`; kept for tail risk (stress days) |
+| **MPC self-tuner** | **~+1%/day** pooled (z = +11.2, 46 configs); +0.5% wave clean (t = +2.41); **+3.2% live-stream under disturbances (t = +3.62)** — its largest edge; 0.0% wave under disturbances | campaign + `m5_bench_current.csv` |
 | **Deadlock/flow flags** (`free_pod_return`, `picker_swap`, `station_headway`, `clash_sim`, …) | `free_pod_return` eliminated 100% of permanent deadlock on dense maps | standing env config |
 
-**Stack total vs the simulator's own dispatcher:** +21% (wave) / +49% (stream) on clean floors;
-**+31.6% / +62.3% under disturbances** (t = 11.0 / 11.8), while paying an energy cost the
-baselines skip.
+**Stack total vs the simulator's own dispatcher:** +21.1% (wave) / +47.5% (stream) on clean floors;
+**+31.6% / +60.4% under disturbances** (t = 11.0 / 12.5), while paying an energy cost the
+baselines skip. *(All four re-measured 2026-09-06 on current code; see `docs/NOTES.md`.)*
 
 ---
 

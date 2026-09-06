@@ -11,7 +11,7 @@ Against TA-RWARE's own dispatcher, on 144 paired days per regime:
 | | wave days | live-stream days |
 |---|---|---|
 | clean floor | **+21.1%** (t = 9.1) | **+47.5%** (t = 12.4) |
-| with disturbances | **+31.6%** (t = 11.0) | **+62.3%** (t = 11.8) |
+| with disturbances | **+31.6%** (t = 11.0) | **+60.4%** (t = 12.5) |
 
 …while paying an energy cost the baselines skip, at **zero** strandings across 2,300+ runs and
 **zero** measured collisions (vertex and swap) over ~96,000 robot-steps per controller.

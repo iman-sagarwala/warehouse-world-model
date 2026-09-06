@@ -34,6 +34,7 @@ STEPS = 500
 SEEDS = [int(x) for x in os.environ.get("M5SEEDS", ",".join(str(i) for i in range(1, 49))).split(",")]
 ARMS = os.environ.get("ARMS", "fixed,osc0.07,osc0.10,mpc,mpc_osc0.10").split(",")
 OSCP = int(os.environ.get("OSCP", "25"))        # half-period, matching the foresight cadence
+STRESS = os.environ.get("STRESS", "1") == "1"   # 1 = stress days (charging binds), 0 = ordinary
 OUT = os.environ.get("OUT", "results/theta_oscillation.csv")
 FIELDS = ["arm", "seed", "onv", "stranded", "charge_trips", "theta_mean"]
 
@@ -51,7 +52,7 @@ def one(job):
     import m3_mpc as M
     from record_race import build
 
-    env, ctrl = build("large-8-6", seed, stress=True)
+    env, ctrl = build("large-8-6", seed, stress=STRESS)
     use_mpc = arm.startswith("mpc")
     amp = _amp(arm)
     cur = M.DEFAULT
@@ -124,7 +125,8 @@ if __name__ == "__main__":
         sd = st.pstdev(d) * (n / (n - 1)) ** 0.5 if n > 1 else 0.0
         return m, (m / (sd / n ** 0.5) if sd else 0.0)
 
-    print("THETA OSCILLATION -- stress days, %d paired seeds, half-period %d steps\n" % (n, OSCP))
+    print("THETA OSCILLATION -- %s days, %d paired seeds, half-period %d steps\n"
+          % ("stress" if STRESS else "ordinary", n, OSCP))
     print("%-14s %9s %10s %8s %10s %9s %8s"
           % ("arm", "value", "vs fixed", "t", "vs mpc", "stranded", "trips"))
     for a in ARMS:

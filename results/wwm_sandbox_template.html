@@ -114,7 +114,7 @@ button.term:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <h1>wwm_sim Sandbox</h1>
   <p>Slide the fleet and floor. The layout, charging bays, and the constants the robots
   learned for that world update live — data straight from the MPC campaign.
-  <span class="mono" style="opacity:.55;font-size:.72rem">build r35</span></p>
+  <span class="mono" style="opacity:.55;font-size:.72rem">build r36</span></p>
   <p id="errLine" class="mono" style="color:var(--bad);display:none"></p>
 </header>
 <nav class="tabs">
@@ -191,10 +191,10 @@ value-and-urgency rule without imagination. Note both baselines run with <em>fre
 <tr><th>the same test, but with spills on the floor</th><th>value</th><th>vs the built-in dispatcher</th></tr>
 <tr><td>FIFO (built-in), wave days</td><td class="mono">580.6</td><td class="mono">&mdash;</td></tr>
 <tr><td><b>champion</b>, wave days</td><td class="mono"><b>764.0</b></td><td class="mono"><b>+31.6%</b></td></tr>
-<tr><td>FIFO (built-in), live-stream days</td><td class="mono">302.4</td><td class="mono">&mdash;</td></tr>
-<tr><td><b>champion</b>, live-stream days</td><td class="mono"><b>490.8</b></td><td class="mono"><b>+62.3%</b></td></tr>
+<tr><td>FIFO (built-in), live-stream days</td><td class="mono">338.9</td><td class="mono">&mdash;</td></tr>
+<tr><td><b>champion</b>, live-stream days</td><td class="mono"><b>543.5</b></td><td class="mono"><b>+60.4%</b></td></tr>
 </table>
-<p class="note">The gap <em>grows</em> when the floor gets hazardous (from +21%/+49% on clean
+<p class="note">The gap <em>grows</em> when the floor gets hazardous (from +21%/+47% on clean
 floors), because the baselines have no memory of spills and no way to recover from wedged robots.
 The original goal for this test was &ldquo;beat the built-in dispatcher by 10% under
 disturbances&rdquo;; it came in at three to six times that. Both tardiness measures and the
@@ -454,13 +454,15 @@ value per 500-step day.</p>
 <tr><td>wave days, clean floor</td><td class="mono">643.5</td><td class="mono">684.8</td><td class="mono"><b>779.3</b></td><td class="mono">782.9</td></tr>
 <tr><td>live-stream, clean floor</td><td class="mono">408.0</td><td class="mono">542.4</td><td class="mono"><b>602.0</b></td><td class="mono">607.2</td></tr>
 <tr><td>wave days, with spills</td><td class="mono">580.6</td><td class="mono">659.7</td><td class="mono"><b>764.0</b></td><td class="mono">764.1</td></tr>
-<tr><td>live-stream, with spills</td><td class="mono">302.4</td><td class="mono">434.8</td><td class="mono"><b>490.8</b></td><td class="mono">491.7</td></tr>
+<tr><td>live-stream, with spills</td><td class="mono">338.9</td><td class="mono">467.4</td><td class="mono"><b>543.5</b></td><td class="mono">560.7</td></tr>
 </table>
 <p class="note">Champion over the built-in dispatcher: <b>+21.1%</b> and <b>+47.5%</b> on clean
-floors (t = 9.1, 12.4); <b>+31.6%</b> and <b>+62.3%</b> with spills (t = 11.0, 11.8). The
+floors (t = 9.1, 12.4); <b>+31.6%</b> and <b>+60.4%</b> with spills (t = 11.0, 12.5). The
 baselines run with free energy &mdash; only our controllers pay for charging &mdash; so these are
-understatements. Self-tuner: +0.5% wave (t = 2.41), +0.9% stream (t = 1.08), <b>0.0% with
-spills</b> (t &lt; 0.3) &mdash; hazard noise drowns its comparisons.</p>
+understatements. Self-tuner: +0.5% wave (t = 2.41), +0.9% stream (t = 1.08), <b>0.0% on wave days with
+spills</b> (t = 0.06) but <b>+3.2% on live-stream days with spills</b> (t = 3.62) &mdash; its biggest
+win anywhere. Where the world keeps changing, re-deciding the settings every 50 steps pays; where the
+whole day is known at the start and the fixed constants are already near-right, it correctly abstains.</p>
 
 <table>
 <tr><th>learned dispatcher (48 held-out days, same information)</th><th>value</th></tr>

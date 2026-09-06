@@ -96,7 +96,7 @@ detection latency. Every mechanism must earn **≥3% or be cut**.
 
 **Results so far.** Against TA-RWARE's own dispatcher on 144 paired days, the planner delivers
 **+21.1%** (wave) and **+47.5%** (live-stream) on clean floors, rising to **+31.6%** and
-**+62.3%** once disturbances are active (t = 9–12) — while paying an energy cost the baselines
+**+60.4%** once disturbances are active (t = 9–13) — while paying an energy cost the baselines
 skip. Safety is absolute rather than statistical: **zero strandings** across 2,300+ runs and
 **zero collisions** (vertex and swap, measured directly over ~96,000 robot-steps per controller).
 Full battery physics costs nothing (784.5 with management vs 784.0 with free energy). The belief

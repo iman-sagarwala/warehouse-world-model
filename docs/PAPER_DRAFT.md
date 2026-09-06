@@ -9,8 +9,8 @@
 
 > **Updated 2026-09-05 (M5 closed).** The headline is no longer an in-house comparison. Against
 > **TA-RWARE's own dispatcher**, on 144 paired days per regime, the planner is worth **+21.1%**
-> (wave) and **+47.5%** (live-stream) on clean floors, rising to **+31.6%** and **+62.3%** once
-> disturbances are active (t = 9.1–12.4) — while paying an energy cost the baselines skip. A
+> (wave) and **+47.5%** (live-stream) on clean floors, rising to **+31.6%** and **+60.4%** once
+> disturbances are active (t = 9.1–12.5) — while paying an energy cost the baselines skip. A
 > policy-gradient dispatcher given identical information loses to the hand-built rules by 5.3%.
 > **Ten mechanisms shipped, twenty-two measured and cut** (`docs/ABLATION.md`).
 
@@ -33,8 +33,8 @@ supply. The method's value comes not from the plan — obeying the whole imagine
 applied to every imagined completion.
 
 Against **TA-RWARE's own dispatcher**, on 144 paired days per regime, the planner is worth **+21.1%**
-(wave) and **+47.5%** (live-stream) on clean floors and **+31.6%** / **+62.3%** once disturbances are
-active (t = 9.1–12.4), while paying an energy cost the baselines skip. Safety is absolute rather than
+(wave) and **+47.5%** (live-stream) on clean floors and **+31.6%** / **+60.4%** once disturbances are
+active (t = 9.1–12.5), while paying an energy cost the baselines skip. Safety is absolute rather than
 statistical: **zero strandings** across 2,300+ runs and **zero collisions** of either vertex or swap
 type, measured directly over ~96,000 robot-steps per controller, with the inner-loop planner solving
 100% of 1,800 MovingAI MAPF scenarios. A policy-gradient dispatcher trained on 960 days with
@@ -792,9 +792,9 @@ on wave (t = 2.41, clearing the significance bar at this sample size) and +0.9% 
 live-stream regime, in significance.
 
 Repeating the comparison with disturbances active — the condition the benchmark was specified
-for — widens every margin: 764.0 versus 580.6 (FIFO) and 659.7 (Rush) on wave days, 490.8 versus
-302.4 and 434.8 on stream, i.e. **+31.6% and +62.3% over the simulator's own dispatcher**
-(t = 11.0 and 11.8), with better deadline hit rates and lower tardiness at both the mean and the
+for — widens every margin: 764.0 versus 580.6 (FIFO) and 659.7 (Rush) on wave days, 543.5 versus
+338.9 and 467.4 on stream, i.e. **+31.6% and +60.4% over the simulator's own dispatcher**
+(t = 11.0 and 12.5), with better deadline hit rates and lower tardiness at both the mean and the
 95th percentile. The belief map and the repair layer are worth *more* precisely when the floor is
 hazardous, which is the strongest available evidence that the decision layer's advantage is not
 an artifact of a clean world. Two auxiliary results complete the suite. Collisions, measured
@@ -803,10 +803,18 @@ and swap type for every controller across 96,000 agent-steps per arm; replans pe
 from 9.0 (FIFO) to 14.3 (champion), and the champion's higher replan rate is the mechanism paying
 off, since it also yields the lowest stuck-time. And the inner-loop planner reproduces the
 MovingAI benchmark cleanly: 1,800 scenarios solved at 100% (bar 98%), optimal on the warehouse
-and empty maps against four-connected ground truth. One honest asymmetry appears under noise: the
-self-tuner's edge, real on clean floors, falls to zero once forks must sample stochastic spill
-futures (+0.0% and +0.2%, t < 0.3) — the hazard noise swamps the difference between candidate
-settings, and the tuner correctly abstains rather than chasing it.
+and empty maps against four-connected ground truth. The self-tuner's behaviour under noise is more
+interesting than we first reported. On wave days with disturbances its edge does collapse to nothing
+(+0.0%, t = 0.06): the forks now sample stochastic spill futures, the hazard noise swamps the
+difference between candidate settings, and the tuner correctly abstains rather than chasing it. But
+on *live-stream* days with disturbances it is worth **+3.2% (t = +3.62)** — its largest measured
+edge anywhere, against +0.5% and +0.9% on clean floors. The two conditions differ in what there is
+to find: a wave day is fully known at t = 0 and the champion's fixed constants are already near
+optimal for it, whereas a live-stream day under hazards keeps changing what the right settings are,
+and re-deciding them every fifty steps pays. Imagination earns its keep where the world moves, and
+abstains where it does not — which is the same lesson as §5.26's horizon, arrived at from the other
+direction. *(An earlier draft reported the tuner as quiet in both disturbed regimes, +0.0% / +0.2%;
+that came from the pre-2026-08-25 benchmark table and did not survive re-measurement.)*
 
 ### 5.21 A learned dispatcher, given exactly the same information
 
@@ -957,12 +965,43 @@ constant-high threshold does (23.5 trips for only +2.5%). Desynchronisation was 
 the explanation: the varying arm clusters charge starts *more* (3.8 vs 2.5 within three steps) at
 identical concurrency.
 
-Actionable, and not yet built: at the shipped fixed threshold the fleet is *under*-charging on stress
-days (123 strandings). A time-varying threshold recovers ~7% of value and a third of the strandings
-with no forecast whatsoever — a natural addition to the tuner's move set, which already owns θ, as an
-**oscillation rather than a level**. (A live defect surfaced en route and was fixed:
-`sim_dashboard.py:210` raised `KeyError` when a charge decision preempted a returning mission; since
-the MPC retunes θ every 50 steps this was a production crash risk, not an experiment artefact.)
+(A live defect surfaced en route and was fixed: `sim_dashboard.py:210` raised `KeyError` when a
+charge decision preempted a returning mission; since the MPC retunes θ every 50 steps this was a
+production crash risk, not an experiment artefact.)
+
+**Built, and it is the largest single mechanism found since the belief map.** The result above was
+obtained through a forecast-shaped wrapper, which leaves open whether the effect survives when the
+forecast machinery is removed entirely. `scripts/exp_theta_oscillation.py` implements the mechanism
+directly — θ alternates by ±A every 25 steps around whatever level is current, reading no state and
+consulting nothing — and races it against the shipped self-tuner, which already owns θ as a *level*
+via its `th+`/`th-` moves. Stress days, 48 paired seeds:
+
+| arm | value | vs fixed | t | vs tuner | stranded | charge trips/day | mean θ |
+|---|---|---|---|---|---|---|---|
+| fixed θ = 0.40 (shipped) | 742.30 | — | — | — | 123 | 103.9 | 0.400 |
+| oscillation, A = 0.07 | 801.95 | +59.66 | +2.91 | — | **72** | 113.2 | 0.400 |
+| oscillation, A = 0.10 | 805.49 | +63.20 | +2.68 | — | 80 | 111.8 | 0.400 |
+| the self-tuner (θ as a level) | 799.87 | +57.57 | +3.23 | — | 95 | 106.2 | 0.393 |
+| **self-tuner + oscillation** | **833.49** | **+91.19** | **+3.81** | **+33.62** | 93 | 100.7 | 0.289 |
+
+Two things fall out. First, **a rule with no information in it matches the entire self-tuner**:
++63.2 against +57.6, from one line that alternates a number, versus a controller that deep-copies the
+whole warehouse every fifty steps and simulates candidate settings a hundred steps forward. The mean
+θ is identical to the fixed arm by construction (0.400), so the gain is movement and nothing else.
+Second, **it composes**: layering oscillation on the tuner is worth a further +33.6, so the two are
+not competing for the same effect and oscillation is a genuinely new axis rather than a cheaper route
+to the level the tuner would have found. That is the answer to the question the experiment was built
+to settle — it belongs in the move set.
+
+The combined arm also shows what the asymmetry buys. It settles at a mean θ of **0.289**, far below
+the shipped 0.400, and still strands 93 against the tuner's 95 — but on *fewer* charge trips (100.7
+against 106.2). Oscillation therefore does not simply buy safety by charging more; run on top of a
+tuner that is free to lower the level, it buys the same safety at a lower standing cost, which is a
+different and better mechanism than the one the foresight experiment exposed. We flag that as a
+finding with one measurement behind it rather than a settled account.
+
+**Shipping gate:** stress days only, so far. Per the discipline that governed the horizon change
+(§5.26), it does not become a default until an ordinary-day re-check shows nothing regresses.
 
 ### 5.26 The tuner's horizon was too short
 
@@ -1172,8 +1211,8 @@ accident while fixing something real.
 
 ## 8. Conclusion + Future Work
 Against the simulator's own dispatcher the decision layer is worth **+21.1%** on wave days and
-**+47.5%** on live-stream days with a clean floor, and **+31.6%** / **+62.3%** once disturbances are
-active (t = 9.1–12.4, 144 paired days per cell, 2,304 runs) — while paying an energy cost the
+**+47.5%** on live-stream days with a clean floor, and **+31.6%** / **+60.4%** once disturbances are
+active (t = 9.1–12.5, 144 paired days per cell, 2,304 runs) — while paying an energy cost the
 baselines skip. The liveness layer is worth a further **+6.8%** on the dense map while taking
 permanent deadlock from **51% of episodes to zero**, and the safety claims are measured rather than
 assumed: **zero strandings** in 2,300+ runs, **zero** vertex and swap collisions over ~96,000

@@ -7744,3 +7744,57 @@ simulator change. Margins are paired within a run so the CLAIM is safe, but ever
 §5.20 is provisional. Full 1152-run re-measurement on current code launched
 (results/m5_bench_current.csv). Logged as a limitation in the paper; this is exactly the failure mode
 the realism audit was supposed to retire, and it recurred procedurally rather than technically.
+
+### THETA OSCILLATION BUILT (2026-09-06) -- the "measured but not built" item, and it is big
+
+exp_theta_oscillation.py. The 2026-08-24 finding came through a forecast-shaped wrapper; this
+implements the mechanism DIRECTLY (theta alternates +/-A every 25 steps around whatever level is
+current; reads no state, consults nothing) and races it against the shipped tuner, which already
+owns theta as a LEVEL via th+/th-. Stress days, 48 paired seeds:
+  arm                 value   vs fixed     t     vs mpc   stranded  trips/day  mean theta
+  fixed theta=0.40   742.30     +0.00   +0.00       -       123      103.9      0.400
+  osc A=0.07         801.95    +59.66   +2.91       -        72      113.2      0.400
+  osc A=0.10         805.49    +63.20   +2.68       -        80      111.8      0.400
+  mpc (tuner)        799.87    +57.57   +3.23       -        95      106.2      0.393
+  mpc + osc A=0.10   833.49    +91.19   +3.81    +33.62      93      100.7      0.289
+FINDING 1: A ONE-LINE RULE WITH ZERO INFORMATION MATCHES THE ENTIRE SELF-TUNER (+63.2 vs +57.6).
+Mean theta identical to fixed by construction (0.400) -- the gain is movement, nothing else. The
+tuner deep-copies the warehouse every 50 steps and simulates 100 forward; the oscillator alternates
+a number.
+FINDING 2: IT COMPOSES. +33.6 ON TOP of the tuner (t=+3.81 overall) => not the same effect, a
+genuinely new axis => it belongs in the move set. That was the question the experiment existed to
+settle.
+FINDING 3 (one measurement, flagged as such): the combined arm settles at mean theta 0.289, FAR
+below the shipped 0.400, strands 93 vs the tuner's 95, and does it on FEWER trips (100.7 vs 106.2).
+So on top of a tuner free to lower the level, oscillation buys the same safety at a LOWER standing
+cost -- a different mechanism from the trips-ratchet the foresight experiment exposed (osc alone
+does ratchet: 113.2 / 111.8 vs 103.9). Do not over-claim; one measurement.
+Best strandings: A=0.07 cuts 123 -> 72 (-41%).
+GATE: stress-day only so far. Ordinary-day re-check running before it becomes a default, same
+discipline that governed the horizon change.
+
+### FULL BENCHMARK RE-MEASUREMENT (2026-09-06): both tables, 2304 runs, on current code
+
+CLEAN (results/m5_bench_current.csv, 1152 runs):
+  WAVE    fifo 643.5 | rush 684.8 | champ 779.3 | mpc 782.9   -- BIT-IDENTICAL to the Aug-24 table
+  STREAM  fifo 408.0 | rush 542.4 | champ 602.0 | mpc 607.2   -- every value up 40-55
+  champ vs fifo: wave +21.1% (t=9.13, unchanged) | stream +47.5% (t=12.41, was +48.9%)
+  mpc vs champ:  wave +0.5% (t=2.41, unchanged)  | stream +0.9% (t=1.08, WAS +1.7% t=1.90)
+DISTURBED (results/m5_bench_disturb_current.csv, 1152 runs):
+  WAVE    fifo 580.6 | rush 659.7 | champ 764.0 | mpc 764.1   -- unchanged
+  STREAM  fifo 338.9 | rush 467.4 | champ 543.5 | mpc 560.7   -- every value up ~36-70
+  champ vs fifo: wave +31.6% (t=10.95, unchanged) | stream +60.4% (t=12.54, was +62.3%)
+  mpc vs champ:  wave +0.0% (t=0.06)              | stream +3.2% (t=+3.62)  <-- NEW, SIGNIFICANT
+
+CLAIM CORRECTED: "the tuner goes quiet under noise (+0.0%/+0.2%, t<0.3)" is only HALF true. It holds
+on WAVE with disturbances (+0.0%, t=0.06). On LIVE-STREAM with disturbances the tuner is worth
++3.2% (t=+3.62) -- its LARGEST measured edge anywhere, bigger than either clean-floor number. The
+two conditions differ in what there is to find: a wave day is fully known at t=0 and the fixed
+constants are already near-optimal for it; a live-stream day under hazards keeps changing what the
+right settings are, so re-deciding every 50 steps pays. Imagination earns its keep where the world
+MOVES and abstains where it does not -- the same lesson as the horizon result, from the other side.
+The old claim came from the pre-2026-08-25 table and did not survive re-measurement.
+The wave regime being bit-identical in BOTH tables localises the Aug-25 simulator change to
+stream-only behaviour.
+All four headline margins, the paper, README, MILESTONE, ABLATION and the sandbox are now on the
+re-measured numbers. STANDING RULE ADDED: re-run the benchmark after ANY simulator change.
