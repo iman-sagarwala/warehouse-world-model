@@ -12,7 +12,7 @@
 > (wave) and **+48.9%** (live-stream) on clean floors, rising to **+31.6%** and **+62.3%** once
 > disturbances are active (t = 9.1–11.8) — while paying an energy cost the baselines skip. A
 > policy-gradient dispatcher given identical information loses to the hand-built rules by 5.3%.
-> **Ten mechanisms shipped, twenty-one measured and cut** (`docs/ABLATION.md`).
+> **Ten mechanisms shipped, twenty-two measured and cut** (`docs/ABLATION.md`).
 
 ---
 
@@ -21,7 +21,7 @@
 - "Honest About the Present, Silent About the Future"
 - "What a Warehouse Planner Cannot Learn: Six Negative Results and One That Pays"
 
-## Abstract (write last)
+## Abstract
 In a multi-robot warehouse with per-task deadlines and values, the objective is **on-time value** — a
 late delivery banks zero — and the hard question is *"will this task finish before its deadline?"* We
 present a lightweight, interpretable **decision-layer world model**: for each free robot the planner
@@ -47,7 +47,7 @@ true future *before* building it. Six independent channels come back null or neg
 mechanism: per-task delay prediction, demand foresight (harmful, and monotonically worse with
 horizon), idle pre-positioning, hazard-location prediction, execution-layer priority, and charging
 foresight — where a *scrambled* forecast beat the true one, exposing the real mechanism as threshold
-*movement* rather than information. Ten mechanisms shipped and twenty-one were cut against a bar fixed
+*movement* rather than information. Ten mechanisms shipped and twenty-two were cut against a bar fixed
 in advance; the two halves separate cleanly into reasoning about what already exists and acting on
 what does not.
 
@@ -78,7 +78,7 @@ argue such audits should be routine, because most of our own earlier findings di
 4. **The belief map graded as a probabilistic forecaster** — Brier, skill, AUPRC, reliability and
    detection latency — which separates "useful to route on" from "honest as numbers" (§5.22).
 5. **A realism audit methodology** and the finding that our own pre-audit results largely did not
-   survive it (§3, §7), plus a **pre-registered keep/cut ledger** of all 31 mechanisms (§5.24).
+   survive it (§3, §7), plus a **pre-registered keep/cut ledger** of all 32 mechanisms (§5.24).
 
 ---
 
@@ -252,7 +252,7 @@ deliberately **optimistic** (no bias term). Predicting carefully to *choose*, op
 
 ---
 
-## 4b. Figures
+## 4.1 Figures
 
 All figures are regenerated from current data by `scripts/make_paper_figures.py`. **The roadmap's
 original figure list — `stream_stack`, `picker_ceiling`, `oracle_gap` — was produced in July 2026,
@@ -903,7 +903,7 @@ by construction.
 
 `docs/ABLATION.md` collects every mechanism ever built for this project and judges it against the
 standing rule — **≥3% or cut**, on paired seeds, with safety mechanisms judged on the hard constraints
-instead of on value. The count is **ten shipped, twenty-one measured and cut**.
+instead of on value. The count is **ten shipped, twenty-two measured and cut**.
 
 Shipped: the board rollout (**−7.2% if removed**, t = −30.6, the largest single mechanism effect in
 the project), value-rate picker sequencing, belief-map routing (**+6.2%** under spills, 800.6 → 850.1,
@@ -912,7 +912,8 @@ prediction split, battery management (value-neutral at 784.5 vs 784.0 with free 
 / 0 frozen across 144 audited days), dedicated charger bays, the janitor, the MPC self-tuner
 (~+1%/day pooled, z = +11.2 across 46 configs), and the deadlock/flow flags (`free_pod_return` alone
 eliminating 100% of permanent deadlock on dense maps). Cut: five anticipation mechanisms, six
-hazard-guess mechanisms, five learned components, and five others.
+hazard-guess mechanisms, five learned components, and six others (the sixth being the spare-storage
+sweep of §5.27).
 
 **Figure 6** (`results/fig_ablation.png`) renders the whole ledger as one page.
 
@@ -920,7 +921,7 @@ Read as two halves, the ledger states the thesis without any prose. **Everything
 things that already exist** — the tasks in hand, the batteries draining, the spill somebody saw.
 **Everything cut tried to act on something that did not exist yet**, or on a guess no observation had
 confirmed. The ledger is cheap to produce only because the bar was fixed before the experiments, which
-is the methodological point: a 3% rule chosen afterwards would have kept several of the twenty-one.
+is the methodological point: a 3% rule chosen afterwards would have kept several of the twenty-two.
 
 ### 5.25 Charging foresight — the sixth leg of the anticipation null, and a real finding underneath it
 
@@ -987,8 +988,83 @@ fewest strandings of any cell tested.
 The mechanism is the very failure the horizon exists to prevent, merely mis-sized: a charge round-trip
 plus its productive tail does not fit inside 100 steps, so the shipped tuner was scoring candidate
 settings before their cost or their benefit had landed. The rollouts were never wrong; they were
-short. **Recommendation: 100/200 as the new default** (+3.5% over shipped on stress days at equal
-compute), pending an ordinary-day re-check, since this cell is stress-only.
+short.
+
+**The ordinary-day re-check.** Because that grid was measured only where charging binds, we re-ran it
+on ordinary wave days, 48 paired seeds, against the same fixed-constant control:
+
+| cadence / horizon | value | vs fixed | t | imagined steps/day |
+|---|---|---|---|---|
+| fixed (no MPC) | 1052.36 | — | — | 0 |
+| **50 / 100 (shipped)** | 1061.22 | +8.86 | +2.14 | 3,000 |
+| 100 / 200 | 1060.96 | +8.60 | +2.08 | 3,000 |
+| 50 / 200 | 1064.61 | +12.25 | +2.92 | 6,008 |
+
+Repeating it on ordinary live-stream days puts every cell inside the noise — fixed 840.81, shipped
++4.43 (t = +0.44), 100/200 +2.47 (t = +0.20), 50/200 +10.50 (t = +0.90) — which is the same verdict
+in a weaker instrument: on a day where charging does not bind, the tuner has little to find and the
+horizon does not matter either way.
+
+On an ordinary wave day the longer horizon is **neutral** — 100/200 and the shipped 50/100 are
+indistinguishable (+8.60 vs +8.86) at identical compute — and doubling the fork budget buys a further
++3.4 (t = +2.92). Nothing regresses in either regime. Combined with the stress grid, where 100/200 is worth +17.8 over
+the shipped setting for the same compute and cuts strandings from 95 to 63, the case is a free one:
+**adopt 100/200**. It costs nothing on the days that do not need it and pays on the days that do,
+which is the correct shape for a safety-relevant parameter.
+
+
+### 5.27 The last liveness defect: a silent bug, a fix that relocates it, and why the fix does not ship
+
+One live-stream day (seed 125) wedged two carriers for the last hundred steps of the episode; 574 of
+576 benchmark runs were clean. The diagnosis on record was structural — the floor has no spare
+storage, so an AGV holding a pod can find every legal slot occupied. Auditing that in order to build
+the fix turned up something else first, and the something else is the more useful result.
+
+**The bug.** `_recalc_grid()` rebuilds the whole occupancy grid from `env.shelfs` at the end of
+*every* step. `setup_bays()` — which implements the standing world rule that a charger cell carries
+no pod — cleared those pods straight out of the `SHELVES` layer, and the next step silently put them
+back. The rule had therefore never been in force during any run we ever measured, and the floor was
+worse than the diagnosis said: 180 storage cells, 8 of them charger bays excluded from the champion's
+drop selection, so the *intended* floor is **172 pods for 172 legal slots** — exactly zero slack —
+while the floor we actually ran was **180 pods for 172 legal slots**, negative slack of eight.
+
+**The fix works, and relocates the failure.** Retiring those pods properly (a `_removed_shelf_ids`
+set that `_recalc_grid` honours; `env.shelfs` cannot be mutated, because `shelfs[id − 1]` indexing is
+pervasive) and sweeping extra slack on top, on the held-out live-stream block, 48 paired seeds:
+
+| floor | spare cells | value | vs legacy | t | frozen carriers |
+|---|---|---|---|---|---|
+| legacy (180 pods / 172 slots) | 0 | 290.38 | — | — | 2 (seed 125) |
+| pods retired (172 / 172, zero slack as documented) | 0 | 283.34 | −7.05 | −0.77 | **2 (seed 106)** |
+| + 2% spare | 3 | 278.92 | −11.47 | −1.56 | 2 (seed 106) |
+| + 5% spare | 9 | 280.60 | −9.79 | −1.09 | 2 (seed 106) |
+
+Seed 125 closes and stays closed at every slack level; **seed 106, clean under the legacy floor,
+wedges under all three corrected floors**. Adding genuinely empty slots on top changes neither the
+wedge nor the value. Two wedged carriers in 48 days before, two after, on a different day: this is
+the fourth time in this project that a rare-event fix has **relocated** the residual failure rather
+than removing it, and the cleanest instance. Slack was the hypothesis; slack was supplied; the wedge
+moved. The value column cannot arbitrate — at −7.05, t = −0.77, the arms are indistinguishable.
+
+**Why it does not ship, and the reason is the finding.** Re-verifying the head-to-head on the
+corrected floor showed the change is not neutral between arms. On live-stream days the *baseline*
+moved: FIFO fell 39 points while the champion moved +13, so our reported margin would have widened
+from **+62.6% to +80.7%** — an eighteen-point gain banked entirely from the opponent getting worse.
+The mechanism is plain once seen. An occupied cell is what makes a charger bay invisible to a
+controller's empty-slot search; `charger_keepout` is a champion-side notion that the vendored
+dispatcher has no equivalent of. With the pods genuinely gone, FIFO starts parking pods on charger
+bays and the champion does not. **The pod on the bay was load-bearing, and the rule it violated was
+cosmetic.** Making the world match its stated rule therefore requires first making bays
+non-targetable at the *environment* level, for every controller equally; until that exists, retiring
+the pods buys realism in the diagram and an unearned margin in the table.
+
+So: the bug is documented, the `_removed_shelf_ids` mechanism stays in the simulator (the spare-slot
+sweep needs it), `setup_bays` deliberately keeps the pod with the reasoning recorded at the call
+site, the extra-slack sweep is **cut**, and the liveness item **stays open**. The generalisable
+lesson is the one we would want a reviewer to take: *when a fix moves your headline, check whether it
+moved your baseline, and check it in the direction that would embarrass you.* A change that improves
+your margin by degrading the opponent is not an improvement, and it is very easy to bank one by
+accident while fixing something real.
 
 ---
 
@@ -1020,6 +1096,11 @@ compute), pending an ordinary-day re-check, since this cell is stress-only.
   "moving this parameter helps" — a different, cheaper, and more honest mechanism.
 - **A learner is the right control for "your baselines are heuristics".** Building the opponent that
   the reviewer would ask for costs one experiment and settles the objection either way (§5.21).
+- **When a fix moves your headline, check whether it moved your baseline.** Retiring the pods from
+  the charger bays was a real correctness fix that would have widened our reported margin from
+  +62.6% to +80.7% — every point of it from the opponent getting worse, because an occupied cell is
+  what hides a bay from a controller that has no notion of keep-out (§5.27). Re-run the baseline
+  after any world change, and look first in the direction that would embarrass you.
 - **Size a lookahead against the duration of the decision it must judge.** The tuner's horizon was
   shorter than a charge round-trip, so it scored settings before their consequences landed (§5.26) —
   the failure the horizon exists to prevent, arrived at by mis-sizing rather than by omission.
@@ -1047,11 +1128,20 @@ compute), pending an ordinary-day re-check, since this cell is stress-only.
   reported with disturbances active, and the margins are *larger* there. Battery remains at
   compressed scale (1,500-step discharge vs the real ~21,600) with the charge:discharge ratio
   preserved — the absolute timescale, not the trade-off structure, is the unrealistic part.
+- **The headline benchmark table has a provenance gap.** `results/m5_bench.csv` was produced on
+  2026-08-24; `wwm_sim/warehouse.py` changed on 2026-08-25. Re-running the same seeds on current code
+  gives materially different absolute values (stream FIFO 494.8 → 524.5 on seeds 1–24), so the table
+  as published is measured against a simulator one commit behind. The *margins* are the claim and
+  they are paired within each run, but the absolute numbers must be re-locked before submission; a
+  full 1,152-run re-measurement on current code is in flight. **Treat every absolute value in §5.20
+  as provisional until that lands.** The root cause is procedural — the benchmark was not re-run
+  after a simulator change — and is exactly the failure mode §3's audit was supposed to retire.
 - **One open liveness defect** (§5.20, seed 125, live-stream): two carriers frozen for the last 100
-  steps under both champion and tuner — 574 of 576 runs clean. Diagnosed, not patched: the floor has
-  **zero spare storage slots** (172 pods for 172 non-charger slots), so a robot holding a pod can have
-  nowhere to put it. Real warehouses keep slack for exactly this reason; the fix is a world-constant
-  change and is being left for a deliberate decision rather than slipped in before the deadline.
+  steps under both champion and tuner — 574 of 576 runs clean. **Chased down in §5.27 and still open.** The
+  structural diagnosis (no spare storage) was tested by supplying slack, and the wedge relocated to
+  another seed rather than closing; the audit did turn up a real bug — the "charger cells carry no
+  pod" rule was silently inert — but correcting it handicaps the vendored baseline, so it does not
+  ship. The wedge is therefore *not* a storage-slack phenomenon, and its actual mechanism is unknown.
 - **The learned opponent is modestly resourced** (§5.21): REINFORCE rather than PPO, ~960 episodes, no
   hyperparameter search, one fleet and one map. The 5.3% gap is evidence about where the headroom is
   not, not a proof that no learner can close it.
@@ -1119,6 +1209,18 @@ validation, a learned baseline, forecaster metrics, and a pre-registered keep/cu
    on stress days, not built.
 7. **Assemble the paper and the figure set**; then the open-source release.
 8. **Port the swap family to stock TA-RWARE** — external validity for §5.13's dispatch rules.
+   *Scoped but not built.* The port must be an adapter that applies our dispatch rules on top of the
+   unmodified vendored package, never a patch to it: the whole evidential value of the head-to-head
+   rests on the baseline being untouched. That is a multi-hour build whose failure mode is a subtly
+   different environment that silently invalidates the comparison, so it wants a fresh session and a
+   parity check against our fork before it is trusted.
+9. **Idle-picker yield** — deliberately deferred, and the reason is worth recording. Every liveness
+   rule that shipped (§5.13) works by *gating a move an agent already requested*; a yield rule is the
+   first that must *synthesise* a move for an agent that requested nothing, which means writing into
+   the referee's path and action state rather than filtering it. That is a materially riskier class
+   of change, and the prize is small: the residual it targets is one 92-step rendezvous wait per 144
+   episodes. By this project's own rule — at 1-in-144 rarity a fix must beat the cost of re-verifying
+   — it does not currently clear the bar to build.
 (The former fleet-ratio-grid item is absorbed: the §5.17 campaign covered 30 size×fleet cells and
 answered the ratio question for both the weights — robust — and the thresholds — context-bound.)
 

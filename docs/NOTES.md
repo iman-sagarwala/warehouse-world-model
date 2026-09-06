@@ -7669,3 +7669,78 @@ fires, no horizontal overflow.
   Conclusion rewritten; next-steps list re-prioritised (M5 closed; horizon 200, spare slots,
   threshold oscillation, figures, release).
 Backups of both pre-edit files are in this session's scratchpad.
+
+### OVERNIGHT SESSION 2026-09-06: M6 pass, the bay-pod bug, and a staleness catch
+
+USER: "do all of these while i sleep, no permission asks, update sandbox + paper as needed, unless
+some features that we knowingly cancel interfere." Working the 11-not-met / 5-partial checklist.
+
+CLOSED (no compute):
+- PAPER §2 Related Work WRITTEN (was a one-line pointer to the pre-realism draft): world models
+  learned vs known, rollout/ADP/MPC lineage, the objective gap in warehouse sims, learned decision
+  layers (Dehghan NeurADP learns value-to-go, the legitimate lever; we show DELAY is the one that
+  can't be), MAPF/PIBT/PIWTP, forecast verification (Brier/Murphy) applied to a robot belief map,
+  Howard VoPI used as a BUILD GATE, demand realism.
+- PAPER §9 REFERENCES added; verified classics separated from the 2026-07-16 lit-pass identifiers
+  that still need re-checking.
+- The "fix the VoPI-gated arguments at lines ~419/~439" TODO: line refs were stale (pre-realism
+  draft). The current draft never re-derives the bad bound. Added two standing METHODS GUARDS to
+  the §5 preamble instead: (a) day-list - stream is CAPACITY not information, never a VoPI bound
+  (+70 -> +142.9 once workload-matched is the tell); (b) pre-`exogenous=True` comparisons are only
+  partially paired.
+- FIGURES: the roadmap's list (stream_stack / picker_ceiling / oracle_gap) is PRE-REALISM (Jul 24-25,
+  world 3x too productive) -- must not be cited. Wrote scripts/make_paper_figures.py: 5 new figures
+  from current data (benchmark, anticipation, sensing inversion, ablation ledger, horizon), palette
+  validated for CVD (adjacent dE 9.1 / normal-vision 22.9; two slots under 3:1 so every bar carries
+  a direct label). Figure index added as PAPER §4b.
+- RELEASE PREP: .gitignore (results allowlisted; 1341 files -> 17), LICENSE (MIT + the two vendored
+  MIT projects + MovingAI/Instacart terms), README rewritten, third_party/README.md with pinned SHAs
+  (tarware 6109c33, pyastar2d ff9257d) + exported local patches. git init + initial commit, 377
+  files, 5.71 MiB packed. NOT PUSHED -- publishing is the user's call.
+- TODO.md reconciled (M5 ticks, M6 status).
+
+MPC HORIZON -- ORDINARY-DAY RE-CHECK DONE, 100/200 ADOPTED. 48 paired seeds each:
+  wave:   fixed 1052.36 | 50/100 +8.86 (t=2.14) | 100/200 +8.60 (t=2.08) | 50/200 +12.25 (t=2.92)
+  stream: fixed  840.81 | 50/100 +4.43 (t=0.44) | 100/200 +2.47 (t=0.20) | 50/200 +10.50 (t=0.90)
+VERDICT: on ordinary days the longer horizon is a TIE at identical compute (nothing regresses); on
+stress days it is +17.8 and strandings 95 -> 63. Free win, correct shape for a safety parameter.
+
+### THE BAY-POD BUG (2026-09-06) -- real bug, measured fix, DELIBERATELY NOT SHIPPED
+
+Chasing the seed-125 wedge. `_recalc_grid()` rebuilds the SHELVES layer from `env.shelfs` at the END
+OF EVERY STEP, so `setup_bays()`'s pod-strip was undone on step 1. The USER RULE 2026-08-14 ("charger
+cells have no shelf") has NEVER been in force in any run we have ever measured. Accounting: 180
+storage cells, 8 charger bays (keepout for drops) -> intended 172 pods / 172 slots (zero slack, which
+is what the diagnosis said); ACTUAL 180 pods / 172 slots = NEGATIVE slack of eight.
+Fixed via `env._removed_shelf_ids`, honoured by _recalc_grid (env.shelfs untouched -- `shelfs[id-1]`
+indexing is pervasive). exp_spare_slots.py, 48 paired stream seeds, held-out block:
+  floor                          spare  value    vs legacy    t      frozen
+  legacy (180 pods / 172 slots)     0   290.38     +0.00    +0.00    2 (seed 125)
+  pods retired (172/172)            0   283.34     -7.05    -0.77    2 (SEED 106)
+  + 2% spare                        3   278.92    -11.47    -1.56    2 (seed 106)
+  + 5% spare                        9   280.60     -9.79    -1.09    2 (seed 106)
+FINDING 1: the fix RELOCATES the wedge (125 closes, 106 opens). 4th time a rare-event fix has
+relocated rather than removed. Extra slack changes nothing -> slack was the hypothesis, slack was
+supplied, the wedge moved. The wedge is NOT a storage-slack phenomenon; its mechanism is unknown.
+FINDING 2 (the important one): re-verifying the head-to-head on the corrected floor showed the change
+is NOT NEUTRAL BETWEEN ARMS. On stream, FIFO fell 39 while champ moved +13, widening our margin
++62.6% -> +80.7% -- eighteen points banked ENTIRELY from the opponent getting worse. Mechanism: an
+occupied cell is what hides a bay from a controller's empty-slot search; `charger_keepout` is a
+champion-side notion the vendored FIFO has no equivalent of, so with the pods really gone FIFO parks
+pods on charger bays and we don't. THE POD ON THE BAY WAS LOAD-BEARING; the rule it violated was
+cosmetic. Making the world match the rule needs bays non-targetable at the ENV level for everyone
+first. Until then: bug documented, `_removed_shelf_ids` mechanism kept (spare-slot sweep needs it),
+setup_bays deliberately keeps the pod with the reasoning at the call site, extra-slack sweep CUT,
+liveness item STAYS OPEN. New discussion principle: when a fix moves your headline, check whether it
+moved your BASELINE, and check in the direction that would embarrass you.
+
+### STALENESS CATCH (2026-09-06): the headline benchmark table is one commit behind
+
+Re-running m5_bench seeds 1-24 on current code does NOT reproduce results/m5_bench.csv (stream fifo
+494.82 -> 524.52). Cause is NOT tonight's edits (the _recalc_grid change is inert while
+_removed_shelf_ids is empty, verified): m5_bench.csv is dated 2026-08-24 00:47 and
+wwm_sim/warehouse.py changed 2026-08-25 20:12. The published table was never re-run after that
+simulator change. Margins are paired within a run so the CLAIM is safe, but every absolute value in
+§5.20 is provisional. Full 1152-run re-measurement on current code launched
+(results/m5_bench_current.csv). Logged as a limitation in the paper; this is exactly the failure mode
+the realism audit was supposed to retire, and it recurred procedurally rather than technically.

@@ -77,7 +77,62 @@ def setup_bays(env, n=None):
     env._charger_bays = set(bays)
     env._charger_bay_ids = stripped
     env.charger_keepout = set(bays)
+    # 2026-09-06 -- DELIBERATELY NOT retired from _recalc_grid, and the reason is the finding.
+    # The strip above is undone at the end of the very first step, because _recalc_grid rebuilds
+    # the SHELVES layer from env.shelfs. So the "charger cells have no pod" rule (2026-08-14) has
+    # never been in force during a run. Retiring the pods properly (env._removed_shelf_ids) was
+    # built and measured, and it is WORSE, because the pod is load-bearing: an occupied cell is
+    # what makes a bay invisible to every controller's empty-slot search. `charger_keepout` only
+    # protects the champion's own slot_divert; the vendored FIFO baseline has no such notion, so
+    # with the pods genuinely gone FIFO starts dropping pods onto charger bays and loses 39 value
+    # on stream -- inflating our margin 62.6% -> 80.7% by handicapping the opponent. Making the
+    # world match the stated rule therefore requires making bays non-targetable at the ENV level
+    # first. Until that exists, the pod stays and the rule is cosmetic. See docs/NOTES.md
+    # 2026-09-06 and PAPER_DRAFT.md 5.27.
     return bays
+
+
+def setup_spare_slots(env, frac=0.0):
+    """Leave a fraction of storage slots EMPTY, so the floor has somewhere to put a pod.
+
+    Diagnosed 2026-08-24 (seed 125, live-stream): the layout gives every non-highway cell a
+    pod, and setup_bays then strips exactly the bay cells and marks them keepout -- so usable
+    slots == pods, with zero slack. An AGV holding a pod can therefore find every legal slot
+    occupied and wedge. Real warehouses hold slack for exactly this reason.
+
+    This strips `frac` of the remaining pods on an even stride (deterministic, so every seed
+    faces the same floor) and records their ids in `env._spare_slot_ids` for the demand model
+    to drop. Bay cells are excluded, and spares are NOT added to `charger_keepout` -- being a
+    legal drop target is the entire point. `frac=0.0` is a no-op and reproduces the old floor
+    bit-for-bit. Call AFTER setup_bays() and BEFORE building the DemandModel.
+    """
+    from wwm_sim.warehouse import CollisionLayers as _CL
+    env._spare_slot_ids = set()
+    env._spare_slots = set()
+    if not frac:
+        return set()
+    bays = set(getattr(env, "_charger_bays", ()) or ())
+    goals = set(env.goals)
+    cells = sorted((x, y) for (y, x) in env.action_id_to_coords_map.values()
+                   if (x, y) not in bays and (x, y) not in goals
+                   and int(env.grid[_CL.SHELVES, y, x]))
+    n = int(round(frac * len(cells)))
+    if n <= 0:
+        return set()
+    stride = len(cells) / float(n)                 # even spread, never clustered in one aisle
+    picks = [cells[min(len(cells) - 1, int(i * stride))] for i in range(n)]
+    stripped, spare = set(), set()
+    for (x, y) in picks:
+        sid = int(env.grid[_CL.SHELVES, y, x])
+        if not sid:
+            continue
+        env.grid[_CL.SHELVES, y, x] = 0
+        stripped.add(sid)
+        spare.add((x, y))
+    env._spare_slot_ids = stripped
+    env._spare_slots = spare
+    env._removed_shelf_ids = set(getattr(env, "_removed_shelf_ids", set())) | stripped
+    return spare
 
 
 # TUNER v2 (USER 2026-08-16): champion decision weights join the candidate space -- their M1

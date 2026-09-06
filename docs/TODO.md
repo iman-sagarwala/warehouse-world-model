@@ -215,13 +215,14 @@ assume the channel distinction saves it.
 - [ ] Train fleet-level pace model (LightGBM, state-conditional day-pacing)
 - [ ] Calibration gate: ship only if ≥15% better than the formula AND calibrated — else report as cut
 
-## M5 — Evaluation + benchmarks
-- [ ] Metric suite: throughput, deadline-hit-rate, tardiness (mean + p95), energy/task, strandings,
-      collisions, replans/disturbance
-- [ ] TA-RWARE head-to-head (≥ FIFO clean; target +10% under disturbances)
-- [ ] MovingAI MAPF inner-loop sanity (≥98%) — plumbing validation only
-- [ ] Consolidated ablation table — every mechanism ≥3% or cut
-- [ ] Lock every headline number on the frozen champion
+## M5 — Evaluation + benchmarks  ⟵ CLOSED 2026-08-24 (roadmap done-when met)
+- [x] Metric suite: throughput, deadline-hit-rate, tardiness (mean + p95), energy/task, strandings,
+      collisions, replans/disturbance — all seven measured, none assumed
+- [x] TA-RWARE head-to-head (≥ FIFO clean; target +10% under disturbances) — cleared 3–6× over
+- [x] MovingAI MAPF inner-loop sanity (≥98%) — 100% solved
+- [x] Consolidated ablation table — every mechanism ≥3% or cut → `docs/ABLATION.md`, 10 shipped / 21 cut
+- [x] Lock every headline number on the frozen champion — done for the champion; the *tuner* numbers
+      move if the 200-step horizon is adopted (see "Tune later"), so those are quoted at 50/100
 
 ## M5 — Evaluation (IN PROGRESS 2026-08-24)
 - [x] Safety metrics MEASURED (exp_m5_safety.py): 0 vertex + 0 swap collisions for all 4 arms
@@ -231,19 +232,40 @@ assume the channel distinction saves it.
 - [x] Metric suite + benchmark table: 1152 runs (fifo/rush/champ/mpc x wave/stream x 144 seeds),
       results/m5_bench.csv. Champion +21.1% over FIFO (wave), +48.9% (stream); 0 stranded in all
       1152; MPC +0.5% wave (t=+2.41) / +1.7% stream (t=+1.90).
-- [~] TA-RWARE head-to-head UNDER DISTURBANCES (the roadmap's stated target) -- running,
-      results/m5_bench_disturb.csv
+- [x] TA-RWARE head-to-head UNDER DISTURBANCES (the roadmap's stated target) -- DONE, 1152 runs,
+      results/m5_bench_disturb.csv. Champion +31.6% wave (t=10.95) / +62.3% stream (t=11.81) over
+      the vendored FIFO -- the ">=FIFO clean, +10% under disturbances" bar cleared 3-6x. Margins
+      are LARGER than on clean floors. New finding: the tuner goes quiet under hazard noise
+      (+0.0% / +0.2%, t<0.3) and correctly abstains.
 - [x] MovingAI MAPF inner-loop sanity -- PASS: 1800 benchmark cases, 100% solved (bar 98%);
       100% optimal on the warehouse + empty maps, 91% on random clutter (+0.22 steps mean,
       a loose pyastar2d heuristic for 4-connected moves; no effect on aisle layouts)
-- [ ] Consolidated ablation table (every mechanism >=3% or cut; incl. this week's negatives)
-- [ ] OPEN: seed 125 stream freezes 2 carriers under champ AND mpc (574/576 runs clean) --
-      same forensic method as the M3 freeze work
+- [x] Consolidated ablation table (every mechanism >=3% or cut; incl. this week's negatives)
+      -- docs/ABLATION.md, ten shipped / twenty-one cut; rendered as results/fig_ablation.png
+- [x] **CLOSED 2026-09-06: seed 125 stream freezes 2 carriers.** Root cause was NOT the layout
+      constant. `_recalc_grid()` runs at the end of every step and rebuilt the SHELVES layer from
+      `env.shelfs`, silently restoring pods that `setup_bays` had stripped -- so the USER RULE
+      2026-08-14 "charger cells have no shelf" was inert during every run ever measured, and the
+      floor carried 180 pods for 175 legal drop cells (NEGATIVE slack, not zero). Fixed with an
+      `env._removed_shelf_ids` set honoured by `_recalc_grid` (env.shelfs untouched, because
+      `shelfs[id-1]` indexing is pervasive). See exp_spare_slots.py for the paired re-measurement
+      and the extra-slack sweep on top of it.
 
-## M6 — Paper
-- [ ] `PAPER_DRAFT.md`: positioning, method, results, honest negatives, limitations, future work
-- [ ] **Fix the VoPI-gated arguments at PAPER_DRAFT.md lines ~419 and ~439** (see M1 VoPI item)
-- [ ] Figures: stream_stack, picker_ceiling, oracle_gap, rumor-map reliability diagram, ablation table
+## M6 — Paper  (IN PROGRESS 2026-09-06)
+- [x] `PAPER_DRAFT.md`: positioning (§2 written properly, no longer a pointer to the pre-realism
+      draft), method, results through §5.26, honest negatives, limitations, future work
+- [x] **VoPI-gated arguments fixed.** The line refs were stale (they pointed into the pre-realism
+      draft). The current draft never re-derives the invalid bound; two standing methods guards were
+      added to the §5 preamble instead: (a) the day-list − stream gap is CAPACITY, not information,
+      and is never a VoPI bound; (b) comparisons predating `exogenous=True` are only partially paired.
+- [x] References section added (§9) — verified classics separated from the 2026-07-16 literature
+      pass, whose identifiers still need re-checking before submission
+- [x] Figures — **the roadmap's list was stale**: `stream_stack`, `picker_ceiling` and `oracle_gap`
+      were rendered in July 2026, BEFORE the realism audit, on a world ~3× too productive. They must
+      not be cited. Replaced by `scripts/make_paper_figures.py`, which regenerates a validated
+      eight-figure set from current data (see §4b of the draft).
+- [ ] Assemble to a submittable format (LaTeX/PDF) and re-verify the §2 citation identifiers
+- [ ] Abstract is written but marked "write last" — re-read once the draft stops moving
 
 ---
 

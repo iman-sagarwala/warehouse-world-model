@@ -1,0 +1,58 @@
+[
+ {
+  "regime": "wave",
+  "cell": "fixed",
+  "value": 1052.36,
+  "diff": 0.0,
+  "t": 0.0
+ },
+ {
+  "regime": "wave",
+  "cell": "50/100",
+  "value": 1061.22,
+  "diff": 8.86,
+  "t": 2.14
+ },
+ {
+  "regime": "wave",
+  "cell": "100/200",
+  "value": 1060.96,
+  "diff": 8.6,
+  "t": 2.08
+ },
+ {
+  "regime": "wave",
+  "cell": "50/200",
+  "value": 1064.61,
+  "diff": 12.25,
+  "t": 2.92
+ },
+ {
+  "regime": "stream",
+  "cell": "fixed",
+  "value": 840.81,
+  "diff": 0.0,
+  "t": 0.0
+ },
+ {
+  "regime": "stream",
+  "cell": "50/100",
+  "value": 845.23,
+  "diff": 4.43,
+  "t": 0.44
+ },
+ {
+  "regime": "stream",
+  "cell": "100/200",
+  "value": 843.28,
+  "diff": 2.47,
+  "t": 0.2
+ },
+ {
+  "regime": "stream",
+  "cell": "50/200",
+  "value": 851.31,
+  "diff": 10.5,
+  "t": 0.9
+ }
+]

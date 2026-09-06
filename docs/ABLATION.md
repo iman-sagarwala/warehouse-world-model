@@ -75,12 +75,13 @@ baselines skip.
 | Joint first moves / Part D windowed optimisation | −0.59 (W10) → −6.91 (W30) | the rollout already co-decides the partner in every branch |
 | Rationing reroutes on a guessed clash model | all variants negative | replaced by the *simulated* clash model, which flipped the sign and shipped |
 | Full ADG deconfliction | not built | collisions already measured at 0 (both vertex and swap) |
+| **Spare storage slots** (2% / 5% of the floor left empty) | **-11.5 / -9.8** (t = -1.56 / -1.09), and the wedge does not close | slack was the hypothesis for the last liveness defect; slack was supplied and the wedge simply moved to another seed. See the bug fix in the same row of `docs/NOTES.md` 2026-09-06 |
 
 ---
 
 ## Summary
 
-**Ten mechanisms shipped; twenty-one measured and cut.** The kept set shares one property — every
+**Ten mechanisms shipped; twenty-two measured and cut.** The kept set shares one property — every
 one of them reasons about *things that already exist* (current tasks, current batteries, spills
 someone has seen). The cut set shares the opposite one: each tried to act on something that did
 not exist yet, or on a guess no observation had confirmed.

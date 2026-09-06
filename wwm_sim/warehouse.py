@@ -693,8 +693,14 @@ class Warehouse(gym.Env):
         self.grid.fill(0)
 
         carried_shelf_ids = {agent.carrying_shelf.id for agent in self.agents if agent.carrying_shelf}
+        # Pods retired from the world (charger bays, deliberate spare slots). BUG FIX 2026-09-06:
+        # callers used to clear these straight out of the SHELVES layer, which this method silently
+        # undid on the very next step -- so `setup_bays`'s shelf-free bays never actually existed
+        # during a run, and the floor carried 180 pods for 175 legal drop cells. `env.shelfs` itself
+        # is never mutated, because `shelfs[id - 1]` indexing is pervasive.
+        removed = getattr(self, "_removed_shelf_ids", None)
         for shelf in self.shelfs:
-            if shelf.id not in carried_shelf_ids:
+            if shelf.id not in carried_shelf_ids and not (removed and shelf.id in removed):
                 self.grid[CollisionLayers.SHELVES, shelf.y, shelf.x] = shelf.id
         for agent in self.agents:
             layer = CollisionLayers.PICKERS if agent.type == AgentType.PICKER else CollisionLayers.AGVS
@@ -1958,6 +1964,9 @@ class Warehouse(gym.Env):
 
         # Set seed
         self.seed(seed)
+
+        # Pods retired from the world; repopulated by setup_bays / setup_spare_slots after reset.
+        self._removed_shelf_ids = set()
 
         # Make the shelfs
         self.shelfs = [
