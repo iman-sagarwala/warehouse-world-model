@@ -389,13 +389,14 @@ captions above the table.*
 | # | Type | Content | Section | Status |
 |---|---|---|---|---|
 | Fig. 1 | Diagram | Four coupled decisions on one floor plan | §1.1 | **to draw** |
-| Fig. 2 | Chart | The realism audit: cost of each corrected constant | §2.1 | exists |
-| Fig. 3 | Diagram | The seven-step funnel, annotated | §2.2.1 | exists |
+| Fig. 2 | Chart | The realism audit: cost of each corrected constant | §2.1 | **rebuild** |
+| Fig. 3 | Diagram | The funnel, the rollout, and the tuner loop | §2.2.1 | **rebuild** |
 | Fig. 4 | Chart | Benchmark, both regimes, ± disturbances | §3.1 | exists |
 | Fig. 5 | Chart | Horizon damage + six anticipation channels | §3.4 | exists |
 | Fig. 6 | Chart | PR / reliability / detection-latency CDF | §3.6 | exists |
 | Fig. 7 | Chart | Sensing-radius inversion | §3.7 | exists |
 | Fig. 8 | Chart | The keep/cut ledger | §3.8 | exists |
+| Fig. 9 | Chart | Tuner cadence/horizon grid | §3.9 | exists |
 | Table 1 | Table | Corrected world constants, old → new, source, cost | §2.1 | **to build** |
 | Table 2 | Table | The 24 decision features, grouped, with units | §2.1 | **to build** |
 | Table 3 | Table | Metric suite and pre-registered targets | §2.4 | **to build** |
@@ -418,3 +419,9 @@ captions above the table.*
   makeable/doomed tier, phantom hard-block.
 - Where a result was corrected, say so in the text rather than silently publishing the corrected
   number — three of §4.3's items are corrections of this paper's own earlier claims.
+
+
+---
+
+Build specifications for every figure and table — the claim each must make, its data source, form,
+required annotations and a draft caption — are in [`docs/FIGURE_SPECS.md`](FIGURE_SPECS.md).
