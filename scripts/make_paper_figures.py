@@ -101,11 +101,12 @@ def fig_benchmark():
                        edgecolor=SURFACE, linewidth=1.4)          # 2px surface gap
                 ax.text(x, v + 12, "%.0f" % v, ha="center", va="bottom",
                         fontsize=7.6, color=INK2)                  # relief: direct labels
-        # the headline margin, champion vs the vendored dispatcher: a bracket clear of the labels
+        # the headline margin: the SHIPPED system (rules + tuner) against the vendored dispatcher.
+        # Bracketing `champ` here would contradict the text, which leads with the shipped arm.
         for gi, regime in enumerate(("wave", "stream")):
-            f, c = src[("fifo", regime)], src[("champ", regime)]
+            f, c = src[("fifo", regime)], src[("mpc", regime)]
             top = max(src[(k, regime)] for k, _l, _c in arms) + 78
-            x0, x1 = gi * 5, gi * 5 + 2
+            x0, x1 = gi * 5, gi * 5 + 3
             ax.plot([x0, x0, x1, x1], [top - 16, top, top, top - 16],
                     color=INK3, lw=1.0, zorder=5, solid_joinstyle="miter")
             ax.text((x0 + x1) / 2, top + 12, "+%.1f%%" % (100 * (c - f) / f),
@@ -118,8 +119,8 @@ def fig_benchmark():
     axes[0].set_ylabel("on-time value per day")
     axes[0].legend(handles=[Patch(facecolor=c, label=l) for _k, l, c in arms],
                    loc="upper center", bbox_to_anchor=(1.03, -0.12), ncol=4)
-    fig.suptitle("144 paired days per cell; the baselines run with free energy",
-                 y=1.03, fontsize=8.6, color=INK2)
+    fig.suptitle("144 paired days per cell; margins are for the shipped system (rules + self-tuner); "
+                 "the baselines run with free energy", y=1.03, fontsize=8.6, color=INK2)
     save(fig, "fig_benchmark.png")
 
 
