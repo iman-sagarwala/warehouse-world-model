@@ -131,7 +131,7 @@ button.term:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <h1>wwm_sim Sandbox</h1>
   <p>Slide the fleet and floor. The layout, charging bays, and the constants the robots
   learned for that world update live — data straight from the MPC campaign.
-  <span class="mono" style="opacity:.55;font-size:.72rem">build r47</span></p>
+  <span class="mono" style="opacity:.55;font-size:.72rem">build r48</span></p>
   <p id="errLine" class="mono" style="color:var(--bad);display:none"></p>
 </header>
 <nav class="tabs">
@@ -242,7 +242,7 @@ understated the system by up to five points under spills; the tuner is part of t
 optional extra. These are the
 <b>2026-09-06 re-measurement</b>: the earlier table had been produced before a simulator change and
 never re-run, which left the live-stream absolutes 40&ndash;55 points low. Wave was unaffected, and the
-margin barely moved (+48.9% &rarr; +47.5%) because it is a paired comparison &mdash; but the numbers
+margin barely moved (+48.9% &rarr; +47.5%, both for the tuner-off arm) because it is a paired comparison &mdash; but the numbers
 were wrong for twelve days, and re-running the benchmark on every simulator change is now the rule. The safety
 columns matter as much as the value: across all 1,152 runs our controllers stranded
 <b>zero</b> robots, while the baselines repeatedly wedge robots holding pods. The self-tuner adds
@@ -824,8 +824,8 @@ do not currently distinguish them.</p>
 <div class="ablhead"><h3>6 &middot; The evaluation suite</h3><span>8 of 8</span></div>
 <table class="crit"><tr><th>status</th><th>criterion</th><th>evidence, or why not</th></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>The full metric suite</td><td class="w">all seven, none assumed</td></tr>
-<tr><td class="s"><span class="st y">MET</span></td><td>Beat the built-in dispatcher on a clean floor</td><td class="w">+21.1% wave, +47.5% stream</td></tr>
-<tr><td class="s"><span class="st y">MET</span></td><td>Beat it by 10% under disturbances</td><td class="w">cleared 3&ndash;6&times; over: +31.6% and +60.4%</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Beat the built-in dispatcher on a clean floor</td><td class="w"><b>+21.7% wave, +48.8% stream</b> &mdash; for the shipped fleet, rules and self-tuner together. With the tuner switched off: +21.1% and +47.5%.</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Beat it by 10% under disturbances</td><td class="w">cleared 3&ndash;6&times; over: <b>+31.6% and +65.4%</b> for the shipped fleet. The live-stream cell is the system&rsquo;s best number anywhere, and the one where the self-tuner contributes most.</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>Solve 98% of the public MAPF benchmark</td><td class="w">100% of 1,800 scenarios</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>A consolidated keep/cut table</td><td class="w">ten shipped, twenty-two cut, each with its number and its mechanism</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>Document the joint-first-moves null</td><td class="w">the rollout already co-decides the partner in every branch</td></tr>

@@ -1410,7 +1410,9 @@ boundary (+29.98, t = +2.22).
   (`results/m5_bench_current.csv`, 2026-09-06) resolves it: **wave is bit-identical** (643.5 / 684.8 /
   779.3 / 782.9), while every live-stream value rose by 40–55 points — FIFO 368.0 → 408.0, champion
   547.8 → 602.0 — so the live-stream margin moves **+48.9% → +47.5%** (t = 12.4) and the tuner's
-  live-stream edge falls from +1.7% (t = 1.90) to +0.9% (t = 1.08), i.e. below the bar. All numbers
+  live-stream edge falls from +1.7% (t = 1.90) to +0.9% (t = 1.08), i.e. below the bar. *(Those two
+  margins are the tuner-ablated arm, which is what the table quoted at the time; the shipped system's
+  equivalent figures are +48.8% clean and +65.4% under disturbances.)* All numbers
   in this paper are the re-measured ones. The claim survived because it is a *paired* margin, but
   the near-miss is the point: nothing in our process forced a re-run after a simulator change, and
   the absolute values were wrong for twelve days. Re-running the benchmark on every simulator commit
