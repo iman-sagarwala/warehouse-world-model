@@ -966,7 +966,7 @@ episodes = **960 training days** on seeds 1–96.
 
 #### Table 2 — the 24 features, and who gets to see them
 
-The negative result above is only a fair test if the learner was not starved. It was not: the
+The negative result that follows is only a fair test if the learner was not starved. It was not: the
 dispatcher network receives the assembler's feature dictionary verbatim, over the identical candidate
 shortlist produced by stages 1–5, at the identical decision points. The last two columns of Table 2
 are therefore identical all the way down, and that identity *is* the table's content.
