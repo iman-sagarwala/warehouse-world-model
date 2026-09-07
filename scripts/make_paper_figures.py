@@ -401,23 +401,20 @@ def fig_coupled():
     xs, ys = path(congested, +0.17)
     ax.plot(xs, ys, color=C2, lw=2.6, ls=(0, (3.6, 2.0)), zorder=5, solid_capstyle="round")
 
-    for p in ((8, 7), (10, 7), (11, 7)):
+    # The three robots sit on the far half of the busy leg, leaving the near half free for that
+    # route's own label -- the label has to sit in the road, not in a key somewhere else.
+    for p in ((10, 7), (11, 7), (12, 7)):
         ax.add_patch(Circle(c(*p), .30, fc=INK3, ec=SURFACE, lw=1.0, zorder=7))
 
-    # Both routes start at the robot and end at the same pod, so they are named in a key below
-    # the floor rather than in labels on it: the aisles are too narrow to hold legible text.
-    def route_key(row, col, dash, name, dist, note):
-        y = 26.95 + row * 1.40
-        ax.plot([0.5, 2.4], [y, y], color=col, lw=2.6, zorder=6,
-                ls=(0, (3.6, 2.0)) if dash else "solid", solid_capstyle="round")
-        ax.text(2.9, y, "%s  ·  %d m" % (name, dist), fontsize=8.4, fontweight="bold",
-                color=col, va="center", zorder=6)
-        ax.text(7.9, y, note, fontsize=8.0, color=INK2, va="center", zorder=6)
+    def road_label(x, y, col, text, filled):
+        """A name plate laid in the road: the route runs under it and out the other side."""
+        ax.text(x, y, text, fontsize=7.0, fontweight="bold", ha="center", va="center",
+                color=SURFACE if filled else col, zorder=10,
+                bbox=dict(boxstyle="round,pad=0.26", fc=col if filled else SURFACE,
+                          ec=col, lw=1.2))
 
-    route_key(0, C2, True, "SHORT", 13, "crosses the aisle three robots are already in")
-    route_key(1, INK2, False, "LONG", 21, "eight metres further, and empty")
-    ax.text(0.5, 25.70, "TWO ROUTES TO THE SAME POD", fontsize=7.4, color=INK3,
-            va="center", fontweight="bold", zorder=6)
+    road_label(7.28, 7.50, C2, "SHORT · 13 m", True)
+    road_label(8.80, 14.50, INK2, "LONG · 21 m", False)
 
     # ---- (1) two candidate pods ---------------------------------------------------------------
     ax.add_patch(Rectangle((7, 9), 1, 1, fc=C3, alpha=.32, ec=C3, lw=1.9, zorder=3))
@@ -444,7 +441,7 @@ def fig_coupled():
 
     # ---- numbered badges ----------------------------------------------------------------------
     for n, (px, py), tgt in ((1, (10.6, 10.6), (13.3, 4.9)),
-                             (2, (8.1, 12.3), (9.4, 14.3)),
+                             (2, (7.8, 12.1), (8.70, 14.22)),
                              (3, (2.2, 10.4), (4.3, 10.3)),
                              (4, (11.0, 5.4), (9.7, 7.2))):
         ax.add_patch(FancyArrowPatch((px, py), tgt, arrowstyle="-|>", mutation_scale=9,
@@ -452,7 +449,7 @@ def fig_coupled():
         ax.add_patch(Circle((px, py), .60, fc=INK, ec=SURFACE, lw=1.4, zorder=11))
         ax.text(px, py, str(n), ha="center", va="center", color=SURFACE,
                 fontsize=9.2, fontweight="bold", zorder=12)
-    ax.add_patch(FancyArrowPatch((10.6, 10.6), (8.15, 9.6), arrowstyle="-|>", mutation_scale=9,
+    ax.add_patch(FancyArrowPatch((10.6, 10.6), (8.05, 10.02), arrowstyle="-|>", mutation_scale=9,
                                  color=INK3, lw=1.0, shrinkA=10, shrinkB=4, zorder=8))
 
     # ---- scale bar ------------------------------------------------------------------------------
@@ -461,8 +458,8 @@ def fig_coupled():
         ax.plot([xx, xx], [22.3, 22.9], color=INK2, lw=1.2, zorder=5)
     ax.text(6.2, 22.6, "5 m   (one cell = 1 m)", va="center", fontsize=7.4, color=INK2, zorder=5)
 
-    ax.set_xlim(-0.5, W + 2.3)
-    ax.set_ylim(H + 4.0, -0.7)
+    ax.set_xlim(-0.5, W + 1.3)
+    ax.set_ylim(H + 0.7, -0.7)
     ax.set_aspect("equal")
     ax.axis("off")
 
