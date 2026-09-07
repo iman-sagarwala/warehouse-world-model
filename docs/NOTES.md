@@ -8029,3 +8029,47 @@ CONSEQUENCES:
     sightings identically and so should trade against sensitivity -- reasoning, untested, labelled.
 KEEPING the rest_prior parameter: it is a correct generalisation, defaults to the old behaviour, and
 the null is worth having on record so nobody re-derives the hypothesis and assumes it works.
+
+### WHY THE REST_PRIOR DIAL IS INERT -- measured, closing the loop (2026-09-06)
+
+The rest_prior sweep moved nothing (phantoms 7.2->7.1, sensitivity 92.2->92.4, value bit-identical,
+debris hits 39->39 in every arm). Inferred cause was "phantoms are resolved by re-observation before
+the 263-step lapse can fire". MEASURED IT instead of leaving it as reasoning. 24 seeds, shipped map:
+  86 phantom episodes | duration median 14 steps, p75 46, p90 136, p99 221, MAX 221
+  episodes lasting >263 steps (the only regime the dial can act in): 0 of 86 = 0.0%
+=> COMPLETE EXPLANATION. The dial is not a weak lever on a real trade-off; it is a lever attached to
+nothing. No phantom ever survives long enough unobserved for the decay target to matter -- somebody
+always drives past first, median after 14 steps.
+=> CONSEQUENCE FOR THE LIMITATION: "no impact on anything" is now the correct and complete statement
+for this dial -- not on phantoms, not on sensitivity, not on value, not on collisions. And the
+phantoms-vs-sensitivity TRADE-OFF WAS NEVER ENGAGED, so it remains untested rather than disproven.
+The levers that would engage it are the decay RATE and the reset STRENGTH (26:1), both of which act
+on fresh sightings too.
+=> ALSO A REASSURING CHARACTERISATION worth keeping: the map's hallucinations are SHORT. Median 14
+steps, none beyond 221, all ended by observation. It does not hold false blocks; it holds them
+briefly and self-corrects by looking. Cross-check: 86 episodes / 24 seeds / 500 steps = 7.2 per
+1,000, matching the sweep exactly.
+
+### FRAMING ERROR FIXED (user 2026-09-06): the headline was the champion with the TUNER ABLATED
+
+USER: "our whole JOB was to be champ + self-tuner... we were always meant to be comparing against
+champion + self tuner since that WAS the champ." Correct, and it was a systemic error: every headline
+in the paper, README, MILESTONE, ABLATION and the sandbox quoted `champ` (fixed constants) and
+reported `mpc` as a separate increment. The shipped champion is `m3mpc`.
+ALSO FOUND: the MARL head-to-head had NEVER been run against the shipped system. marl_dispatch.py's
+evaluate() compares marl vs champ only -- so the project's own flagship comparison (world model vs
+learner) was measured against the tuner-ablated arm for twelve days. Wrote exp_marl_vs_shipped.py
+(3 arms, persists per-seed values; the original persisted only the model + a printed summary).
+RE-RUN, held-out seeds 97-144, 48 paired days:
+  marl 368.20 | champ 388.75 | SHIPPED (mpc) 389.42
+  shipped beats the learner +21.21 (+5.8%), t=+5.66, 34 wins/48   <- WE WIN, comfortably
+  champ    beats the learner +20.54 (+5.6%), t=+5.57, 34 wins/48
+  tuner adds +0.67 over fixed constants here (t=+0.86) -- seeds 97-144 are the QUIET diurnal half
+  where charging does not bind, consistent with 5.20 (+0.5% clean wave, +3.2% stream+spills).
+HEADLINE NUMBERS CORRECTED EVERYWHERE (shipped system vs vendored FIFO, 144 paired days):
+  clean      wave +21.7% (t=9.30)   stream +48.8% (t=12.20)
+  disturbed  wave +31.6% (t=10.85)  stream +65.4% (t=13.02)   <- best number in the project
+  (tuner-ablated, for the ablation: +21.1 / +47.5 / +31.6 / +60.4)
+The stream+spills cell moves the most (+60.4 -> +65.4) because that is exactly where the tuner earns
+its keep. Leading with the ablated arm understated the system by up to five points, in the one
+condition the benchmark was specified for.

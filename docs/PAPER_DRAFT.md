@@ -7,12 +7,14 @@
 > **Headline was: +11.83% on-time value over the strongest heuristic, t=+4.14, 486 paired seeds
 > (= 3 simulated days) on a warehouse whose every constant is either calibrated or declared.**
 
-> **Updated 2026-09-05 (M5 closed).** The headline is no longer an in-house comparison. Against
-> **TA-RWARE's own dispatcher**, on 144 paired days per regime, the planner is worth **+21.1%**
-> (wave) and **+47.5%** (live-stream) on clean floors, rising to **+31.6%** and **+60.4%** once
-> disturbances are active (t = 9.1–12.5) — while paying an energy cost the baselines skip. A
-> policy-gradient dispatcher given identical information loses to the hand-built rules by 5.3%.
-> **Ten mechanisms shipped, twenty-two measured and cut** (`docs/ABLATION.md`).
+> **Updated 2026-09-06.** The headline is no longer an in-house comparison, and it is now quoted
+> for the **shipped** system — the rules *plus* the model-predictive self-tuner (`m3mpc`), which is
+> what the champion actually is. Against **TA-RWARE's own dispatcher**, on 144 paired days per
+> regime: **+21.7%** (wave) and **+48.8%** (live-stream) on clean floors, rising to **+31.6%** and
+> **+65.4%** once disturbances are active (t = 9.3–13.0) — while paying an energy cost the baselines
+> skip. A policy-gradient dispatcher given identical information loses to it by **5.8%**
+> (t = −5.66). **Ten mechanisms shipped, twenty-two measured and cut** (`docs/ABLATION.md`).
+> *Earlier drafts led with the tuner ablated, which understated the system by up to five points.*
 
 ---
 
@@ -32,9 +34,10 @@ supply. The method's value comes not from the plan — obeying the whole imagine
 — but from constant re-planning anchored to one honest correction: a **live measured pace bias**
 applied to every imagined completion.
 
-Against **TA-RWARE's own dispatcher**, on 144 paired days per regime, the planner is worth **+21.1%**
-(wave) and **+47.5%** (live-stream) on clean floors and **+31.6%** / **+60.4%** once disturbances are
-active (t = 9.1–12.5), while paying an energy cost the baselines skip. Safety is absolute rather than
+Against **TA-RWARE's own dispatcher**, on 144 paired days per regime, the shipped system — rules plus
+the self-tuner — is worth **+21.7%** (wave) and **+48.8%** (live-stream) on clean floors and
+**+31.6%** / **+65.4%** once disturbances are active (t = 9.3–13.0), while paying an energy cost the
+baselines skip. Safety is absolute rather than
 statistical: **zero strandings** across 2,300+ runs and **zero collisions** of either vertex or swap
 type, measured directly over ~96,000 robot-steps per controller, with the inner-loop planner solving
 100% of 1,800 MovingAI MAPF scenarios. A policy-gradient dispatcher trained on 960 days with
@@ -68,9 +71,9 @@ argue such audits should be routine, because most of our own earlier findings di
 **on-time value**, not throughput. A late delivery banks **zero**.
 
 **Contributions.**
-1. **A rollout sequencer** for task choice, worth **+21.1% / +47.5%** over the simulator's own
-   dispatcher on clean floors and **+31.6% / +62.3%** under disturbances (§5.20), at **zero**
-   strandings and **zero** measured collisions.
+1. **A rollout sequencer plus a model-predictive tuner** — the shipped system — worth
+   **+21.7% / +48.8%** over the simulator's own dispatcher on clean floors and **+31.6% / +65.4%**
+   under disturbances (§5.20), at **zero** strandings and **zero** measured collisions.
 2. **Six negative results with mechanisms**, obtained cheaply via a VoPI discipline (§5.3, §5.5,
    §5.19, §5.25), including one where a *scrambled* forecast outperformed the true one.
 3. **A learned opponent, not a straw one**: a policy-gradient dispatcher with identical inputs and
@@ -785,10 +788,13 @@ is a decision-layer redesign rather than a learned component.
 *Figure 3 — head-to-head against the simulator's own dispatcher, both regimes, with and without disturbances. 144 paired days per cell; the baselines run with free energy.*
 
 **Benchmarks.** Against the simulator's own dispatcher and a value-plus-urgency baseline, on 144
-paired days per regime (1,152 runs), the champion delivers 779.3 on-time value on wave days
-versus 643.5 for FIFO and 684.8 for Rush (+21.1% and +13.8%; t = 9.1 and 9.2), and 602.0 on
-live-stream days versus 408.0 and 542.4 (+47.5% and +11.0%; t = 12.4 and 5.3) — clearing the
-pre-registered "at least FIFO, target +10%" bar in both regimes. The margins are conservative:
+paired days per regime (1,152 runs), the **shipped system** — the rules with the self-tuner live —
+delivers 782.9 on-time value on wave days versus 643.5 for FIFO and 684.8 for Rush (**+21.7%** and
++14.3%; t = 9.30 and 9.40), and 607.2 on live-stream days versus 408.0 and 542.4 (**+48.8%** and
++11.9%; t = 12.20 and 5.36) — clearing the pre-registered "at least FIFO, target +10%" bar in both
+regimes. With the tuner ablated the same arms read 779.3 and 602.0, which is the number earlier
+drafts quoted as the headline; the tuner is part of the system, not an optional extra, so the
+ablated figure belongs in the ablation and not in the abstract. The margins are conservative:
 the baselines run without battery physics, so they pay no charging cost while the champion does.
 The safety columns are as important as the value columns: across all 1,152 runs the champion and
 its self-tuning variant stranded zero robots, and wedged carriers appear only once (a single
@@ -798,10 +804,11 @@ on wave (t = 2.41, clearing the significance bar at this sample size) and +0.9% 
 live-stream regime, in significance.
 
 Repeating the comparison with disturbances active — the condition the benchmark was specified
-for — widens every margin: 764.0 versus 580.6 (FIFO) and 659.7 (Rush) on wave days, 543.5 versus
-338.9 and 467.4 on stream, i.e. **+31.6% and +60.4% over the simulator's own dispatcher**
-(t = 11.0 and 12.5), with better deadline hit rates and lower tardiness at both the mean and the
-95th percentile. The belief map and the repair layer are worth *more* precisely when the floor is
+for — widens every margin: 764.1 versus 580.6 (FIFO) and 659.7 (Rush) on wave days, 560.7 versus
+338.9 and 467.4 on stream, i.e. **+31.6% and +65.4% over the simulator's own dispatcher**
+(t = 10.85 and 13.02), with better deadline hit rates and lower tardiness at both the mean and the
+95th percentile. The live-stream margin under hazards is the system's best number anywhere, and it
+is precisely the cell where the tuner contributes most (+17.1, t = +3.62). The belief map and the repair layer are worth *more* precisely when the floor is
 hazardous, which is the strongest available evidence that the decision layer's advantage is not
 an artifact of a clean world. Two auxiliary results complete the suite. Collisions, measured
 rather than assumed (the first pass silently read a nonexistent counter), are zero of both vertex
@@ -839,13 +846,26 @@ learning locomotion and is known to trail greedy heuristics at this fleet size; 
 candidates isolates the decision layer, which is the claim actually under test.
 
 It learns — mean episode value rises from 895 to ≈930 over the 40 iterations. On held-out seeds
-97–144, evaluated greedily: **champion 388.75 vs learned 368.20, −5.3% (t = −5.57, 7 wins in 48)**.
-Placed among the others on the identical seeds: FIFO 357.30 < **MARL 368.20** < Rush 370.24 <
-champion 388.75 < champion + tuner 389.42. The learned policy therefore **beats the simulator's own
-dispatcher and ties the value-plus-urgency rule** — it is a real opponent, not a broken one — and
-still loses to the rules. This is §5.9's flatness result seen from the other side: the decision layer
+97–144, evaluated greedily and paired: **the shipped system 389.42 vs the learner 368.20 — the
+learner loses by 5.8% (t = −5.66, and it wins only 14 of 48 days)**. Against the champion with the
+tuner ablated the gap is 5.3% (t = −5.57). Placed among the others on the identical seeds:
+FIFO 357.30 < **MARL 368.20** < Rush 370.24 < champion 388.75 < **shipped system 389.42**. The
+learned policy therefore **beats the simulator's own dispatcher and ties the value-plus-urgency
+rule** — it is a real opponent, not a broken one — and still loses to the rules.
+
+*(The original 2026-08-24 evaluation compared the learner only to the tuner-ablated champion, so the
+project's own headline comparison had never actually been run against the system it ships. Re-run
+2026-09-06 as `scripts/exp_marl_vs_shipped.py`, which persists per-seed values; the earlier eval
+persisted only the trained model and a printed summary.)* This is §5.9's flatness result seen from the other side: the decision layer
 is near-maximal for this information set, and a policy-gradient learner with identical inputs cannot
 find headroom the rules leave behind.
+
+One nuance in that comparison deserves stating: on these held-out seeds the tuner contributes only
++0.67 over fixed constants (t = +0.86). Seeds 97–144 tile the quiet half of the diurnal cycle, where
+charging does not bind and there is little for imagination to find — consistent with §5.20, where the
+tuner is worth +0.5% on clean wave days and +3.2% on live-stream days under hazards. So the shipped
+system wins this head-to-head, and on these particular days it is the rollout rather than the tuner
+that wins it.
 
 The caveats are stated because the claim is a negative one: REINFORCE rather than PPO, ~960 episodes,
 no hyperparameter search, one fleet and one map. A tuned PPO with 10–100× the budget might close or
@@ -1475,9 +1495,9 @@ boundary (+29.98, t = +2.22).
   to both sides of each comparison, not a bias toward either.
 
 ## 8. Conclusion + Future Work
-Against the simulator's own dispatcher the decision layer is worth **+21.1%** on wave days and
-**+47.5%** on live-stream days with a clean floor, and **+31.6%** / **+60.4%** once disturbances are
-active (t = 9.1–12.5, 144 paired days per cell, 2,304 runs) — while paying an energy cost the
+Against the simulator's own dispatcher the shipped system — rules plus self-tuner — is worth
+**+21.7%** on wave days and **+48.8%** on live-stream days with a clean floor, and **+31.6%** /
+**+65.4%** once disturbances are active (t = 9.3–13.0, 144 paired days per cell, 2,304 runs) — while paying an energy cost the
 baselines skip. The liveness layer is worth a further **+6.8%** on the dense map while taking
 permanent deadlock from **51% of episodes to zero**, and the safety claims are measured rather than
 assumed: **zero strandings** in 2,300+ runs, **zero** vertex and swap collisions over ~96,000

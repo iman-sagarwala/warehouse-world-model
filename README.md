@@ -6,12 +6,13 @@ forward under the fleet's own physics, and commits only the first move — re-pl
 decision point. The dynamics are *written down* rather than learned (AlphaZero/MPC sense, not
 Dreamer), so learning is reserved for what the rules cannot supply.
 
-Against TA-RWARE's own dispatcher, on 144 paired days per regime:
+Against TA-RWARE's own dispatcher, on 144 paired days per regime — the shipped system, rules plus
+the self-tuner:
 
 | | wave days | live-stream days |
 |---|---|---|
-| clean floor | **+21.1%** (t = 9.1) | **+47.5%** (t = 12.4) |
-| with disturbances | **+31.6%** (t = 11.0) | **+60.4%** (t = 12.5) |
+| clean floor | **+21.7%** (t = 9.3) | **+48.8%** (t = 12.2) |
+| with disturbances | **+31.6%** (t = 10.9) | **+65.4%** (t = 13.0) |
 
 …while paying an energy cost the baselines skip, at **zero** strandings across 2,300+ runs and
 **zero** measured collisions (vertex and swap) over ~96,000 robot-steps per controller.

@@ -26,9 +26,10 @@ by date and the `results/*.csv` files named per row.
 | **Deadlock/flow flags** (`free_pod_return`, `picker_swap`, `station_headway`, `clash_sim`, …) | `free_pod_return` eliminated 100% of permanent deadlock on dense maps | standing env config |
 | **Threshold oscillation** — θ alternates ±0.10 every 25 steps, no forecast | **+91.2 with the tuner on stress days** (t = +3.81; +63.2 alone, matching the entire tuner at identical mean θ) but **−3.7 on ordinary days** (t = −0.49) | `exp_theta_oscillation.py`; **gated, never a default** — belongs in the tuner's move set, adopted only where it pays |
 
-**Stack total vs the simulator's own dispatcher:** +21.1% (wave) / +47.5% (stream) on clean floors;
-**+31.6% / +60.4% under disturbances** (t = 11.0 / 12.5), while paying an energy cost the
-baselines skip. *(All four re-measured 2026-09-06 on current code; see `docs/NOTES.md`.)*
+**Stack total vs the simulator's own dispatcher**, quoted for the SHIPPED system (rules + tuner,
+`m3mpc`): **+21.7% (wave) / +48.8% (stream)** on clean floors; **+31.6% / +65.4% under
+disturbances** (t = 9.3-13.0), while paying an energy cost the baselines skip. With the tuner
+ablated: +21.1 / +47.5 / +31.6 / +60.4. *(All re-measured 2026-09-06 on current code.)*
 
 ---
 

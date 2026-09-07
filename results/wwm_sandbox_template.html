@@ -131,7 +131,7 @@ button.term:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <h1>wwm_sim Sandbox</h1>
   <p>Slide the fleet and floor. The layout, charging bays, and the constants the robots
   learned for that world update live — data straight from the MPC campaign.
-  <span class="mono" style="opacity:.55;font-size:.72rem">build r46</span></p>
+  <span class="mono" style="opacity:.55;font-size:.72rem">build r47</span></p>
   <p id="errLine" class="mono" style="color:var(--bad);display:none"></p>
 </header>
 <nav class="tabs">
@@ -208,9 +208,9 @@ value-and-urgency rule without imagination. Note both baselines run with <em>fre
 <table>
 <tr><th>the same test, but with spills on the floor</th><th>value</th><th>vs the built-in dispatcher</th></tr>
 <tr><td>FIFO (built-in), wave days</td><td class="mono">580.6</td><td class="mono">&mdash;</td></tr>
-<tr><td><b>champion</b>, wave days</td><td class="mono"><b>764.0</b></td><td class="mono"><b>+31.6%</b></td></tr>
+<tr><td><b>shipped fleet</b>, wave days</td><td class="mono"><b>764.1</b></td><td class="mono"><b>+31.6%</b></td></tr>
 <tr><td>FIFO (built-in), live-stream days</td><td class="mono">338.9</td><td class="mono">&mdash;</td></tr>
-<tr><td><b>champion</b>, live-stream days</td><td class="mono"><b>543.5</b></td><td class="mono"><b>+60.4%</b></td></tr>
+<tr><td><b>shipped fleet</b>, live-stream days</td><td class="mono"><b>560.7</b></td><td class="mono"><b>+65.4%</b></td></tr>
 </table>
 <p class="note">The gap <em>grows</em> when the floor gets hazardous (from +21%/+47% on clean
 floors), because the baselines have no memory of spills and no way to recover from wedged robots.
@@ -234,8 +234,12 @@ lost to the hand-built rules by <b>5.3%</b>. Given identical information, there 
 left for it to find. <span style="color:var(--ink-soft)">(Caveat: a modest training budget with a
 simple algorithm; a much larger tuned run might close that gap.)</span></p>
 
-<p class="note"><b>+21% over the built-in dispatcher on wave days, +47% on live-stream days</b>
-(both far past the &plusmn;certain mark: t = 9.1 and 12.4 across 144 paired days). These are the
+<p class="note"><b>+22% over the built-in dispatcher on wave days, +49% on live-stream days</b>
+(both far past the &plusmn;certain mark: t = 9.3 and 12.2 across 144 paired days). Those are for the
+<b>full shipped fleet &mdash; the rules together with the self-tuner</b>, which is what actually runs.
+Earlier versions of this page quoted the rules with the tuner switched off (+21% / +47%), which
+understated the system by up to five points under spills; the tuner is part of the machine, not an
+optional extra. These are the
 <b>2026-09-06 re-measurement</b>: the earlier table had been produced before a simulator change and
 never re-run, which left the live-stream absolutes 40&ndash;55 points low. Wave was unaffected, and the
 margin barely moved (+48.9% &rarr; +47.5%) because it is a paired comparison &mdash; but the numbers
@@ -474,8 +478,9 @@ value per 500-step day.</p>
 <tr><td>wave days, with spills</td><td class="mono">580.6</td><td class="mono">659.7</td><td class="mono"><b>764.0</b></td><td class="mono">764.1</td></tr>
 <tr><td>live-stream, with spills</td><td class="mono">338.9</td><td class="mono">467.4</td><td class="mono"><b>543.5</b></td><td class="mono">560.7</td></tr>
 </table>
-<p class="note">Champion over the built-in dispatcher: <b>+21.1%</b> and <b>+47.5%</b> on clean
-floors (t = 9.1, 12.4); <b>+31.6%</b> and <b>+60.4%</b> with spills (t = 11.0, 12.5). The
+<p class="note">The shipped fleet (rules + self-tuner) over the built-in dispatcher: <b>+21.7%</b>
+and <b>+48.8%</b> on clean floors (t = 9.3, 12.2); <b>+31.6%</b> and <b>+65.4%</b> with spills
+(t = 10.9, 13.0). With the tuner switched off: +21.1 / +47.5 / +31.6 / +60.4. The
 baselines run with free energy &mdash; only our controllers pay for charging &mdash; so these are
 understatements. Self-tuner: +0.5% wave (t = 2.41), +0.9% stream (t = 1.08), <b>0.0% on wave days with
 spills</b> (t = 0.06) but <b>+3.2% on live-stream days with spills</b> (t = 3.62) &mdash; its biggest
@@ -491,7 +496,10 @@ whole day is known at the start and the fixed constants are already near-right, 
 <tr><td>champion + self-tuner</td><td class="mono">389.4</td></tr>
 </table>
 <p class="note">The learned policy beat the built-in dispatcher and matched the urgency rule, but
-lost to the rules by <b>5.3%</b> (t = &minus;5.57, 7 wins in 48).</p>
+lost to the <b>shipped fleet by 5.8%</b> (t = &minus;5.66, winning only 14 days out of 48); against
+the rules with the tuner switched off, 5.3%. <b>We won this one comfortably.</b> Note the original
+2026-08-24 comparison was run against the tuner-switched-off arm, so the contest against the system
+we actually ship had never been run until 2026-09-06.</p>
 
 <div class="ablhead"><h3>2 &middot; Seeing and remembering</h3><span>48 paired days with spills</span></div>
 <table>
