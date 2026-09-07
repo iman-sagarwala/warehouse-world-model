@@ -74,8 +74,12 @@ argue such audits should be routine, because most of our own earlier findings di
 
 *Figure 1. The four decisions one free robot couples. Which task to take, which route to take, whether
 to charge first, and what the fleet cannot see are each a literature of their own; answering "what
-next?" settles all four at once, and the coupling between them is what this paper is about. The floor
-is the shipped dense layout read off the simulator, not a sketch: 16 x 25 cells, one metre each.*
+next?" settles all four at once, and the coupling between them is what this paper is about. Each
+question's small panel shows that layer alone over a ghosted floor — every one of them reads
+comfortably by itself, which is the point; only the large panel, with all four switched on together,
+is the problem the planner is given. The floor is the shipped dense layout read off the simulator,
+not a sketch: 16 × 25 cells, one metre each, aisles every third column and cross-aisles at
+y = 0, 7, 14 and 21–23.*
 
 **Contributions.**
 1. **A rollout sequencer plus a model-predictive tuner** — the shipped system — worth

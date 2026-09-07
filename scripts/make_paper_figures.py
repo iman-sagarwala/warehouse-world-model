@@ -345,21 +345,23 @@ def fig_coupled():
     vertical aisles every third column, cross-aisles at y = 0, 7, 14 and 21-23, three pick stations
     on the bottom row, eight charger bays. One cell is one metre.
 
-    The figure is built in named layers, lowest first, and nothing is drawn out of order:
+    The floor is drawn by ONE function, `floor(ax, show, ...)`, which paints a named subset of the
+    layers in a fixed order:
 
-        L_RACK   racks and the floor outline
-        L_ZONE   the reachable-charge disc
-        L_CELL   stations, bays, candidate pods, the spill
-        L_ROUTE  the two routes
-        L_MARK   robots and belief outlines
-        L_LEAD   badge leader arrows
-        L_BADGE  the numbered badges
-        L_PLATE  route name plates and the two pod tags
+        rack    racks and the floor outline          routes  the two routes
+        zone    the reachable-charge disc            robot   the deciding robot and its gauge
+        cells   stations and charger bays            badges  the numbered leaders
+        tasks   the two candidate pods               plates  route name plates and pod tags
+        belief  the spill, and the phantom
 
-    The two routes are disjoint. They share their first cell and their last and touch nowhere
-    else, which is possible only because the target pod at (14, 6) has two aisle faces -- the
-    cross-aisle above it and the right-hand aisle beside it. Every object type is named once in
-    the key across the top, so the floor itself carries almost no text.
+    The large panel asks for everything. Each of the four questions on the right also gets its own
+    small panel showing that question's layer ALONE, over a ghosted floor. That is the figure's
+    argument made visible: each layer is a literature of its own and reads perfectly well by itself;
+    only the large panel, where they are all switched on at once, shows what has to be decided.
+
+    The two routes are disjoint. They share their first cell and their last and touch nowhere else,
+    which is possible only because the target pod at (14, 6) has two aisle faces -- the cross-aisle
+    above it and the right-hand aisle beside it.
     """
     from matplotlib.patches import Rectangle, Circle, FancyArrowPatch
 
@@ -377,6 +379,10 @@ def fig_coupled():
     SPILL = (10, 7)         # a real obstruction, on the busy leg
     PHANTOM = (3, 17)       # believed blocked, actually clear
     OTHERS = [(11, 7), (12, 7), (13, 7)]
+    BAY = (4, 10)           # the nearest charger to the deciding robot
+
+    busy = [HOME, (6, 7), (14, 7), FAR]
+    clear = [HOME, (6, 14), (15, 14), (15, 6), FAR]
 
     def is_hw(x, y):
         return x in aisle_x or y in cross_y
@@ -384,110 +390,114 @@ def fig_coupled():
     def c(x, y):
         return (x + .5, y + .5)
 
-    fig = plt.figure(figsize=(12.6, 8.4))
-    kx = fig.add_axes([0.014, 0.850, 0.976, 0.140])     # object key, across the top
-    ax = fig.add_axes([0.010, 0.015, 0.348, 0.810])     # the floor
-    tx = fig.add_axes([0.392, 0.015, 0.600, 0.810])     # the four questions
+    def metres(pts):
+        return sum(abs(a[0] - b[0]) + abs(a[1] - b[1]) for a, b in zip(pts, pts[1:]))
+
+    M_BUSY, M_CLEAR = metres(busy), metres(clear)
+
+    # ------------------------------------------------------------------ one floor, many subsets
+    def floor(ax, show, ghost=False, crop=None):
+        """Paint the named layers, lowest first. `ghost` fades the racks so a single layer reads."""
+        rack_fc = "#efeade" if ghost else RACK
+        rack_ec = "#e5dfd0" if ghost else RACK_E
+        for y in range(H):
+            for x in range(W):
+                if not is_hw(x, y) and (x, y) not in (NEAR, FAR):
+                    ax.add_patch(Rectangle((x, y), 1, 1, fc=rack_fc, ec=rack_ec, lw=.5,
+                                           zorder=L_RACK))
+        ax.add_patch(Rectangle((0, 0), W, H, fc="none", ec=GRID, lw=1.1, zorder=L_CELL + 1))
+
+        if "zone" in show:
+            ax.add_patch(Circle(c(*HOME), 3.1, fc=C4, alpha=.07 if not ghost else .12, ec=C4,
+                                lw=1.2, ls=(0, (1.6, 2.0)), zorder=L_ZONE))
+        if "cells" in show:
+            for p in stations:
+                ax.add_patch(Rectangle(p, 1, 1, fc=C1, ec=SURFACE, lw=.7, zorder=L_CELL))
+            for p in bays:
+                ax.add_patch(Rectangle(p, 1, 1, fc=SURFACE, ec=C4, lw=1.5, zorder=L_CELL))
+        if "bay" in show:
+            ax.add_patch(Rectangle(BAY, 1, 1, fc=SURFACE, ec=C4, lw=1.8, zorder=L_CELL))
+        if "tasks" in show:
+            for p in (NEAR, FAR):
+                ax.add_patch(Rectangle(p, 1, 1, fc=C3, alpha=.55 if ghost else .32, ec=C3,
+                                       lw=2.4 if ghost else 1.9, zorder=L_CELL))
+        if "belief" in show:
+            ax.add_patch(Rectangle(SPILL, 1, 1, fc=BAD, alpha=.85, ec="none", zorder=L_CELL))
+            for p in (SPILL, PHANTOM):
+                ax.add_patch(Rectangle((p[0] - .1, p[1] - .1), 1.2, 1.2, fc="none", ec=BAD,
+                                       lw=1.6, ls=(0, (2.2, 1.6)), zorder=L_MARK))
+        if "routes" in show:
+            for pts, col, dashed in ((busy, C2, True), (clear, INK2, False)):
+                xy = [c(*p) for p in pts]
+                (ax_, ay_), (bx_, by_) = xy[-2], xy[-1]      # stop at the face, not the centre
+                xy[-1] = (bx_ + (0.48 if ax_ > bx_ else -0.48 if ax_ < bx_ else 0),
+                          by_ + (0.48 if ay_ > by_ else -0.48 if ay_ < by_ else 0))
+                ax.plot([p[0] for p in xy], [p[1] for p in xy], color=col,
+                        lw=2.8 if not ghost else 2.4,
+                        ls=(0, (3.6, 2.0)) if dashed else "solid", zorder=L_ROUTE,
+                        solid_capstyle="round", dash_capstyle="round")
+            for p in OTHERS:
+                ax.add_patch(Circle(c(*p), .30, fc=INK3, ec=SURFACE, lw=1.0, zorder=L_MARK))
+        if "robot" in show:
+            ax.add_patch(Circle(c(*HOME), .44, fc=INK, ec=SURFACE, lw=1.7, zorder=L_MARK + 1))
+        if "gauge" in show:
+            ax.add_patch(Rectangle((4.50, 11.15), 1.60, .42, fc=SURFACE, ec=INK3, lw=.8,
+                                   zorder=L_MARK + 1))
+            ax.add_patch(Rectangle((4.54, 11.19), 1.60 * .38, .34, fc=C4, ec="none",
+                                   zorder=L_MARK + 2))
+            ax.text(4.30, 11.36, "38%", ha="right", va="center", fontsize=7.2, color=INK2,
+                    zorder=L_MARK + 2, fontfamily="monospace")
+        if "badges" in show:
+            for n, at, tgt in ((1, (13.15, 9.65), (8.08, 9.65)),
+                               (2, (8.6, 12.3), (9.75, 14.02)),
+                               (3, (2.4, 10.5), (4.30, 10.50)),
+                               (4, (11.3, 4.5), (10.55, 7.00))):
+                ax.add_patch(FancyArrowPatch(at, tgt, arrowstyle="-|>", mutation_scale=9,
+                                             color=INK3, lw=1.0, shrinkA=10, shrinkB=3,
+                                             zorder=L_LEAD))
+                ax.add_patch(Circle(at, .60, fc=INK, ec=SURFACE, lw=1.4, zorder=L_BADGE))
+                ax.text(at[0], at[1], str(n), ha="center", va="center", color=SURFACE,
+                        fontsize=9.2, fontweight="bold", zorder=L_BADGE + 1)
+            ax.add_patch(FancyArrowPatch((13.15, 9.65), (14.20, 7.02), arrowstyle="-|>",
+                                         mutation_scale=9, color=INK3, lw=1.0, shrinkA=10,
+                                         shrinkB=3, zorder=L_LEAD))
+        if "plates" in show:
+            def plate(x, y, col, text, filled):
+                ax.text(x, y, text, fontsize=7.2, fontweight="bold", ha="center", va="center",
+                        color=SURFACE if filled else col, zorder=L_PLATE,
+                        bbox=dict(boxstyle="round,pad=0.30", fc=col if filled else SURFACE,
+                                  ec=col, lw=1.3))
+            plate(7.28, 7.50, C2, "SHORT · %d m" % M_BUSY, True)
+            plate(10.00, 14.50, INK2, "LONG · %d m" % M_CLEAR, False)
+            ax.text(7.15, 8.42, "near · low value", fontsize=7.2, color=C3, ha="left",
+                    va="center", zorder=L_PLATE)
+            ax.text(13.90, 4.35, "far · high value,\ndue soon", fontsize=7.2, color=C3,
+                    ha="center", va="center", zorder=L_PLATE, linespacing=1.4)
+        if "scale" in show:
+            ax.plot([0.6, 5.6], [22.6, 22.6], color=INK2, lw=1.6, solid_capstyle="butt",
+                    zorder=L_PLATE)
+            for xx in (0.6, 5.6):
+                ax.plot([xx, xx], [22.3, 22.9], color=INK2, lw=1.2, zorder=L_PLATE)
+            ax.text(6.2, 22.6, "5 m   (one cell = 1 m)", va="center", fontsize=7.4, color=INK2,
+                    zorder=L_PLATE)
+
+        x0, x1, y0, y1 = crop or (-0.6, W + 1.0, -0.6, H + 0.6)
+        ax.set_xlim(x0, x1)
+        ax.set_ylim(y1, y0)
+        ax.set_aspect("equal")
+        ax.axis("off")
+
+    fig = plt.figure(figsize=(12.8, 9.4))
+    kx = fig.add_axes([0.013, 0.856, 0.978, 0.132])     # object key, across the top
+    ax = fig.add_axes([0.008, 0.014, 0.330, 0.818])     # the whole floor, every layer on
+    tx = fig.add_axes([0.368, 0.014, 0.624, 0.818])     # the four questions
     for a in (kx, tx):
         a.axis("off")
         a.set_xlim(0, 1)
         a.set_ylim(0, 1)
 
-    # ================================================================ layer 1: racks and outline
-    for y in range(H):
-        for x in range(W):
-            if not is_hw(x, y) and (x, y) not in (NEAR, FAR):
-                ax.add_patch(Rectangle((x, y), 1, 1, fc=RACK, ec=RACK_E, lw=.5, zorder=L_RACK))
-    ax.add_patch(Rectangle((0, 0), W, H, fc="none", ec=GRID, lw=1.1, zorder=L_CELL + 1))
-
-    # ================================================================ layer 2: the reachable disc
-    ax.add_patch(Circle(c(*HOME), 3.1, fc=C4, alpha=.07, ec=C4, lw=1.2,
-                        ls=(0, (1.6, 2.0)), zorder=L_ZONE))
-
-    # ================================================================ layer 3: cells that matter
-    for p in stations:
-        ax.add_patch(Rectangle(p, 1, 1, fc=C1, ec=SURFACE, lw=.7, zorder=L_CELL))
-    for p in bays:
-        ax.add_patch(Rectangle(p, 1, 1, fc=SURFACE, ec=C4, lw=1.5, zorder=L_CELL))
-    for p in (NEAR, FAR):
-        ax.add_patch(Rectangle(p, 1, 1, fc=C3, alpha=.32, ec=C3, lw=1.9, zorder=L_CELL))
-    ax.add_patch(Rectangle(SPILL, 1, 1, fc=BAD, alpha=.85, ec="none", zorder=L_CELL))
-
-    # ================================================================ layer 5: the two routes
-    # Disjoint by construction: the busy one runs east along the y = 7 cross-aisle and turns down
-    # into the pod's top face; the clear one runs south, east along y = 14, then north up the
-    # x = 15 aisle to the pod's right face. They meet only at the robot and at the pod.
-    busy = [HOME, (6, 7), (14, 7), FAR]
-    clear = [HOME, (6, 14), (15, 14), (15, 6), FAR]
-
-    def draw(pts, col, dashed):
-        """Draw the route, stopping at the face of the last cell rather than its centre."""
-        xy = [c(*p) for p in pts]
-        (ax_, ay_), (bx_, by_) = xy[-2], xy[-1]
-        xy[-1] = (bx_ + (0.48 if ax_ > bx_ else -0.48 if ax_ < bx_ else 0),
-                  by_ + (0.48 if ay_ > by_ else -0.48 if ay_ < by_ else 0))
-        ax.plot([p[0] for p in xy], [p[1] for p in xy], color=col, lw=2.8,
-                ls=(0, (3.6, 2.0)) if dashed else "solid", zorder=L_ROUTE,
-                solid_capstyle="round", dash_capstyle="round")
-
-    def metres(pts):
-        return sum(abs(a[0] - b[0]) + abs(a[1] - b[1]) for a, b in zip(pts, pts[1:]))
-
-    draw(busy, C2, True)
-    draw(clear, INK2, False)
-
-    # ================================================================ layer 7: robots, beliefs
-    for p in OTHERS:
-        ax.add_patch(Circle(c(*p), .30, fc=INK3, ec=SURFACE, lw=1.0, zorder=L_MARK))
-    for p in (SPILL, PHANTOM):
-        ax.add_patch(Rectangle((p[0] - .1, p[1] - .1), 1.2, 1.2, fc="none", ec=BAD, lw=1.6,
-                               ls=(0, (2.2, 1.6)), zorder=L_MARK))
-    ax.add_patch(Circle(c(*HOME), .44, fc=INK, ec=SURFACE, lw=1.7, zorder=L_MARK + 1))
-    ax.add_patch(Rectangle((4.50, 11.15), 1.60, .42, fc=SURFACE, ec=INK3, lw=.8,
-                           zorder=L_MARK + 1))
-    ax.add_patch(Rectangle((4.54, 11.19), 1.60 * .38, .34, fc=C4, ec="none", zorder=L_MARK + 2))
-    ax.text(4.30, 11.36, "38%", ha="right", va="center", fontsize=7.2, color=INK2,
-            zorder=L_MARK + 2, fontfamily="monospace")
-
-    # ================================================================ layers 8 & 11: the badges
-    for n, at, tgt in ((1, (13.15, 9.65), (8.08, 9.65)),
-                       (2, (8.6, 12.3), (9.75, 14.02)),
-                       (3, (2.4, 10.5), (4.30, 10.50)),
-                       (4, (11.3, 4.5), (10.55, 7.00))):
-        ax.add_patch(FancyArrowPatch(at, tgt, arrowstyle="-|>", mutation_scale=9, color=INK3,
-                                     lw=1.0, shrinkA=10, shrinkB=3, zorder=L_LEAD))
-        ax.add_patch(Circle(at, .60, fc=INK, ec=SURFACE, lw=1.4, zorder=L_BADGE))
-        ax.text(at[0], at[1], str(n), ha="center", va="center", color=SURFACE, fontsize=9.2,
-                fontweight="bold", zorder=L_BADGE + 1)
-    ax.add_patch(FancyArrowPatch((13.15, 9.65), (14.20, 7.02), arrowstyle="-|>",
-                                 mutation_scale=9, color=INK3, lw=1.0, shrinkA=10, shrinkB=3,
-                                 zorder=L_LEAD))
-
-    # ================================================================ layer 13: plates and tags
-    def plate(x, y, col, text, filled):
-        ax.text(x, y, text, fontsize=7.2, fontweight="bold", ha="center", va="center",
-                color=SURFACE if filled else col, zorder=L_PLATE,
-                bbox=dict(boxstyle="round,pad=0.30", fc=col if filled else SURFACE,
-                          ec=col, lw=1.3))
-
-    plate(8.15, 7.50, C2, "SHORT · %d m" % metres(busy), True)
-    plate(10.00, 14.50, INK2, "LONG · %d m" % metres(clear), False)
-    ax.text(7.15, 8.42, "near · low value", fontsize=7.2, color=C3, ha="left",
-            va="center", zorder=L_PLATE)
-    ax.text(13.90, 4.35, "far · high value,\ndue soon", fontsize=7.2, color=C3,
-            ha="center", va="center", zorder=L_PLATE, linespacing=1.4)
-
-    # scale bar, in the empty cross-aisle band at y = 21-23
-    ax.plot([0.6, 5.6], [22.6, 22.6], color=INK2, lw=1.6, solid_capstyle="butt", zorder=L_PLATE)
-    for xx in (0.6, 5.6):
-        ax.plot([xx, xx], [22.3, 22.9], color=INK2, lw=1.2, zorder=L_PLATE)
-    ax.text(6.2, 22.6, "5 m   (one cell = 1 m)", va="center", fontsize=7.4, color=INK2,
-            zorder=L_PLATE)
-
-    ax.set_xlim(-0.6, W + 1.0)
-    ax.set_ylim(H + 0.6, -0.6)
-    ax.set_aspect("equal")
-    ax.axis("off")
+    floor(ax, {"zone", "cells", "tasks", "belief", "routes", "robot", "gauge", "badges",
+               "plates", "scale"})
 
     # ==================================================== the key: every object named, up top
     kx.text(0, 0.955, "WHAT IS ON THE FLOOR", fontsize=7.6, fontweight="bold", color=INK3,
@@ -498,7 +508,7 @@ def fig_coupled():
     ROWY = (0.610, 0.360, 0.110)
 
     def swatch(kind, x, y, col):
-        """Draw one key mark at (x, y) in key-axes coordinates. Marks are 0.030 wide."""
+        """One key mark at (x, y) in key-axes coordinates. Marks are 0.030 wide."""
         if kind == "rect":
             kx.add_patch(Rectangle((x, y - .048), .030, .096, fc=col[0], ec=col[1], lw=1.3,
                                    transform=kx.transAxes, clip_on=False))
@@ -506,6 +516,7 @@ def fig_coupled():
             kx.add_patch(Rectangle((x, y - .048), .030, .096, fc="none", ec=col[1], lw=1.5,
                                    ls=(0, (2.0, 1.4)), transform=kx.transAxes, clip_on=False))
         elif kind in ("disc", "disc_s"):
+            # Circle() in this wide, short axes renders as an ellipse; markers stay round.
             kx.plot([x + .015], [y], transform=kx.transAxes, marker="o", clip_on=False,
                     ms=13 if kind == "disc" else 9, mfc=col[0], mec=col[1], mew=1.4)
         elif kind == "zone":
@@ -528,9 +539,9 @@ def fig_coupled():
         (2, 1, "zone", (C4, C4), "reach of 38% charge", "beyond it, no charger"),
         (3, 1, "dashed", (None, BAD), "believed blocked", "nothing actually there"),
         (0, 2, "rect", (BAD, BAD), "spill, really there", "and correctly believed in"),
-        (1, 2, "dash", (None, C2), "SHORT route · %d m" % metres(busy), "through the spill"),
-        (2, 2, "solid", (None, INK2), "LONG route · %d m" % metres(clear),
-         "%d m further, and empty" % (metres(clear) - metres(busy))),
+        (1, 2, "dash", (None, C2), "SHORT route · %d m" % M_BUSY, "through the spill"),
+        (2, 2, "solid", (None, INK2), "LONG route · %d m" % M_CLEAR,
+         "%d m further, and empty" % (M_CLEAR - M_BUSY)),
     ]
     for col, row, kind, cols, name, note in ITEMS:
         x, y = COLX[col], ROWY[row]
@@ -540,40 +551,52 @@ def fig_coupled():
         kx.text(x + .046, y - .062, note, transform=kx.transAxes, fontsize=8.0, color=INK2,
                 va="center")
 
-    # ==================================================== the four questions
+    # ==================================================== the four questions, each with its layer
     tx.text(0, 0.995, "One robot has just come free.", transform=tx.transAxes,
             fontsize=15.5, fontweight="bold", color=INK, va="top")
-    tx.text(0, 0.930, "Answering “what next?” settles four questions at once. Each has "
-                      "a literature of its own;\nthe coupling between them does not.",
-            transform=tx.transAxes, fontsize=10.2, color=INK2, va="top", linespacing=1.5)
+    tx.text(0, 0.932, "Answering “what next?” settles four questions at once. Each layer below "
+                      "reads perfectly well on its own, and each\nhas a literature of its own. "
+                      "Only the floor on the left, with all four switched on together, is the "
+                      "problem.",
+            transform=tx.transAxes, fontsize=10.0, color=INK2, va="top", linespacing=1.55)
 
     items = [
-        (0.760, 1, "Which task", C3,
-         "A near pod worth little, or a distant pod worth much whose deadline is\n"
-         "close. A late delivery banks nothing, so the choice is neither distance\n"
-         "nor value but value that still arrives in time."),
-        (0.535, 2, "Which route", C2,
-         "Both paths reach the same pod, and share no ground in between. The\n"
-         "short one crosses an aisle three robots are already in; the long one is\n"
-         "clear. What a route costs depends on what every other robot was just told."),
-        (0.310, 3, "Whether to charge first", C4,
-         "At 38% this robot can reach the pod, or reach a charger, but not\n"
-         "reliably both. What binds is not a reserve threshold but whether a\n"
-         "charger is still reachable from wherever the task ends."),
-        (0.085, 4, "What it cannot see", BAD,
+        (0.762, 1, "Which task", C3, {"tasks", "robot"},
+         "A near pod worth little, or a distant pod worth much whose\n"
+         "deadline is close. A late delivery banks nothing, so the choice\n"
+         "is neither distance nor value but value that still arrives in time."),
+        (0.535, 2, "Which route", C2, {"routes", "robot"},
+         "Both paths reach the same pod and share no ground in between.\n"
+         "The short one crosses an aisle three robots are already in; the\n"
+         "long one is clear. What a route costs depends on what every\n"
+         "other robot was just told to do."),
+        (0.308, 3, "Whether to charge first", C4, {"zone", "bay", "robot"},
+         "At 38% this robot can reach the pod, or reach a charger, but\n"
+         "not reliably both. What binds is not a reserve threshold but\n"
+         "whether a charger is still reachable from wherever the task ends."),
+        (0.081, 4, "What it cannot see", BAD, {"belief", "robot"},
          "A spill sits in the short route. The fleet believes in it because\n"
-         "somebody drove past — and believes in another that was cleared, because\n"
-         "nobody has been back to look."),
+         "somebody drove past — and believes in another that was cleared,\n"
+         "because nobody has been back to look."),
     ]
-    for y, n, title, col, body in items:
-        tx.add_patch(Circle((0.022, y), 0.0165, fc=INK, ec="none", transform=tx.transAxes,
+    TW, TH = 0.115, 0.165            # layer-panel size, as a fraction of the figure
+    for ty, n, title, col, layers, body in items:
+        tx.add_patch(Circle((0.020, ty), 0.0155, fc=INK, ec="none", transform=tx.transAxes,
                             clip_on=False, zorder=5))
-        tx.text(0.022, y, str(n), transform=tx.transAxes, ha="center", va="center",
+        tx.text(0.020, ty, str(n), transform=tx.transAxes, ha="center", va="center",
                 color=SURFACE, fontsize=8.8, fontweight="bold", zorder=6)
-        tx.text(0.060, y + 0.003, title, transform=tx.transAxes, fontsize=12,
+        tx.text(0.055, ty + 0.003, title, transform=tx.transAxes, fontsize=12,
                 fontweight="bold", color=col, va="center")
-        tx.text(0.060, y - 0.083, body, transform=tx.transAxes, fontsize=9.6, color=INK2,
-                va="center", linespacing=1.65)
+        tx.text(0.055, ty - 0.088, body, transform=tx.transAxes, fontsize=9.5, color=INK2,
+                va="center", linespacing=1.62)
+        # this question's layer, alone, over a ghosted floor -- cropped to where the action is
+        cy = 0.014 + ty * 0.818
+        th = fig.add_axes([0.992 - TW, cy - TH / 2, TW, TH])
+        floor(th, layers, ghost=True, crop=(-0.3, W + 0.3, 2.0, 19.4))
+        for s in th.spines.values():
+            s.set_visible(False)
+        th.add_patch(Rectangle((-0.25, 2.05), W + 0.5, 17.3, fc="none", ec=col, lw=1.1,
+                               zorder=20, clip_on=False))
 
     save(fig, "fig_coupled.png")
 

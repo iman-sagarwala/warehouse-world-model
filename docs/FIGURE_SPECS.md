@@ -250,3 +250,10 @@ Regenerate Fig. 4 after the shipped-system re-lead so its callouts match the tex
 - One correction fell out of building Table 1: the paper described the high-disturbance arm as "10×
   the calibrated rate". The two rates actually run are 0.002/step and 0.037/step, so the multiplier is
   ≈18×. §5.6 and §5.16 now state both absolute rates.
+
+**2026-09-07, later — Fig. 1 gains a layer view without becoming several figures.** The floor is now
+painted by one function taking a set of layer names, so the composite and four single-layer panels
+come from the same code and cannot drift apart. Each question on the right carries its own panel
+showing only its layer, over a ghosted floor, cropped to where the action is. This is the figure's
+claim made visible rather than only asserted: each layer is legible alone, and only their
+superposition is hard.
