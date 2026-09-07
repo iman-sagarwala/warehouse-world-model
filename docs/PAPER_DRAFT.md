@@ -813,8 +813,15 @@ hazardous, which is the strongest available evidence that the decision layer's a
 an artifact of a clean world. Two auxiliary results complete the suite. Collisions, measured
 rather than assumed (the first pass silently read a nonexistent counter), are zero of both vertex
 and swap type for every controller across 96,000 agent-steps per arm; replans per disturbance run
-from 9.0 (FIFO) to 14.3 (champion), and the champion's higher replan rate is the mechanism paying
-off, since it also yields the lowest stuck-time. And the inner-loop planner reproduces the
+from 9.0 (FIFO) to 14.0 for the shipped system (+4.98, t = +5.53) and 14.3 with the tuner ablated.
+The higher replan rate is the belief-driven rerouting doing its job, and it is what buys the
+disturbance margins above.
+
+An earlier draft added that the champion "also yields the lowest stuck-time". That claim does not
+survive a paired test and has been withdrawn: stuck-steps per day are 293 (FIFO), 305 (Rush), 276
+(rules alone) and 299 (shipped), and **no pair separates** — the largest contrast, shipped against
+rules-alone, is t = +1.12, and rules-alone against FIFO is t = −0.37. The ranking was real in the
+means and meaningless as a difference. Replans separate; stuck-time does not. And the inner-loop planner reproduces the
 MovingAI benchmark cleanly: 1,800 scenarios solved at 100% (bar 98%), optimal on the warehouse
 and empty maps against four-connected ground truth. The self-tuner's behaviour under noise is more
 interesting than we first reported. On wave days with disturbances its edge does collapse to nothing

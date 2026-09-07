@@ -8073,3 +8073,22 @@ HEADLINE NUMBERS CORRECTED EVERYWHERE (shipped system vs vendored FIFO, 144 pair
 The stream+spills cell moves the most (+60.4 -> +65.4) because that is exactly where the tuner earns
 its keep. Leading with the ablated arm understated the system by up to five points, in the one
 condition the benchmark was specified for.
+
+### SHIPPED-ARM AUDIT (user 2026-09-06): two more found, one is a WITHDRAWN CLAIM
+
+User asked to verify that every criterion is evaluated against the appropriate arm. Swept all 65
+criteria rows plus every arm-bearing claim in the paper. Two problems:
+1. REPLANS were quoted for the ablated arm (14.3 champ). Shipped is 14.0 (t=+5.53 vs FIFO's 9.0).
+   Fixed in paper + sandbox + the criteria row.
+2. CLAIM WITHDRAWN -- "the champion also yields the lowest stuck-time" is a RANK ORDERING ON NOISE.
+   Per-arm means: fifo 293.2, rush 304.6, champ 276.0, mpc 299.3. Paired tests:
+     mpc vs champ  +23.3  t=+1.12     mpc vs fifo  +6.1  t=+0.15     champ vs fifo  -17.2  t=-0.37
+   NO PAIR SEPARATES. The ranking was real in the means and meaningless as a difference, and it had
+   been in the paper as a supporting clause for the replan argument. Replans DO separate (+4.98,
+   t=+5.53); stuck-time does not. Withdrawn explicitly in the text rather than quietly deleted.
+NOTE ON WHAT SHOULD *NOT* BE THE SHIPPED ARM: mechanism ablations (rollout -7.2%, belief map +6.2%,
+reset rule +3.5%, the Brier metrics, the VoPI/oracle experiments) deliberately run FIXED CONSTANTS to
+isolate the mechanism from tuner noise. That is correct protocol, not an oversight. The rule is:
+PERFORMANCE claims vs a baseline -> shipped system; MECHANISM claims -> fixed constants, stated.
+Remaining "champion's ..." references in the paper are all about the rules layer specifically (its
+candidate set, its weights, its deadline tier, its keepout notion) and are correct as written.

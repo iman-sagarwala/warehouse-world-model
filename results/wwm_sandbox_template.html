@@ -131,7 +131,7 @@ button.term:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <h1>wwm_sim Sandbox</h1>
   <p>Slide the fleet and floor. The layout, charging bays, and the constants the robots
   learned for that world update live — data straight from the MPC campaign.
-  <span class="mono" style="opacity:.55;font-size:.72rem">build r48</span></p>
+  <span class="mono" style="opacity:.55;font-size:.72rem">build r49</span></p>
   <p id="errLine" class="mono" style="color:var(--bad);display:none"></p>
 </header>
 <nav class="tabs">
@@ -327,7 +327,7 @@ through shelving. These are the checks that now have measurements behind them.</
 <tr><td>The map&rsquo;s confidence is honest</td><td>2.6M cell-observations binned by stated probability</td><td class="mono">says 98% blocked, really 97.9%</td></tr>
 <tr><td>Robots wedged holding a pod</td><td>held a pod and never moved for 100 straight steps</td><td class="mono">0 (baselines: 4&ndash;13 per test cell)</td></tr>
 <tr><td>Is the map a good <em>forecaster</em>, not just a good router?</td><td>scored as a probability on every cell, every step (4.8M predictions)</td><td class="mono"><button class="term" data-g="brier">Brier<sup>25</sup></button> 0.020, skill +0.35 (old map: +0.01)</td></tr>
-<tr><td>How hard the fleet works to avoid spills</td><td>paths rebuilt per spill event</td><td class="mono">9.0 (built-in) vs 14.3 (champion) &mdash; and the champion loses the least time stuck</td></tr>
+<tr><td>How hard the fleet works to avoid spills</td><td>paths rebuilt per spill event</td><td class="mono">9.0 (built-in) vs 14.0 (shipped fleet), t = +5.5. <b>Correction:</b> we previously added &ldquo;and loses the least time stuck&rdquo; &mdash; that ranking is real in the averages but vanishes under a paired test (every pair |t| &lt; 1.2), so it has been withdrawn</td></tr>
 <tr><td>Do the charging bays really have no pod on them?</td><td>counted the pods on the floor after one step, instead of only after setup</td><td class="mono"><b>No &mdash; a bug, found 2026-09-06.</b> The rule was never in force in any run. Correcting it handicaps the baseline, so it is documented rather than shipped</td></tr>
 <tr><td>Are the headline numbers still what the current code produces?</td><td>re-ran the benchmark seeds against today&rsquo;s simulator</td><td class="mono"><b>Not exactly</b> &mdash; the published table predates a 2026-08-25 simulator change. A full 1,152-run re-measurement is under way; the margins are paired within each run, the absolute values are being re-locked</td></tr>
 </table>
@@ -780,7 +780,7 @@ do not currently distinguish them.</p>
 <tr><td class="s"><span class="st y">MET</span></td><td>Energy per task</td><td class="w">0.079&ndash;0.083; the baselines pay none of it</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>Strandings</td><td class="w">0 across 2,300+ runs, audited robot-by-robot</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>Collisions</td><td class="w">0 vertex and 0 swap, ~96,000 robot-steps per controller &mdash; and measured, after the first pass was caught reading a counter that did not exist</td></tr>
-<tr><td class="s"><span class="st y">MET</span></td><td>Replans per disturbance</td><td class="w">9.0 (built-in) vs 14.3 (champion)</td></tr>
+<tr><td class="s"><span class="st y">MET</span></td><td>Replans per disturbance</td><td class="w">9.0 (built-in) vs 14.0 (shipped fleet), t = +5.5. The fleet reroutes far more often, which is the spill map doing its job.</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>Brier score</td><td class="w">0.0204 vs 0.0310 for the map it replaced</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>Skill vs the base rate</td><td class="w">+0.351 vs +0.013</td></tr>
 <tr><td class="s"><span class="st y">MET</span></td><td>Area under precision&ndash;recall</td><td class="w">0.367 against 0.032 for random guessing</td></tr>
