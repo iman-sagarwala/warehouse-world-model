@@ -349,7 +349,7 @@ def fig_coupled():
     hazard red, stations blue. Nothing carries meaning by hue alone -- every element is also
     labelled on the floor.
     """
-    from matplotlib.patches import Rectangle, Circle, FancyArrowPatch
+    from matplotlib.patches import (Rectangle, Circle, FancyArrowPatch, FancyBboxPatch)
     W, H = 16, 25
     aisle_x = {0, 3, 6, 9, 12, 15}
     cross_y = {0, 7, 14, 21, 22, 23, 24}
@@ -377,8 +377,6 @@ def fig_coupled():
             elif not is_hw(x, y):
                 ax.add_patch(Rectangle((x, y), 1, 1, fc=RACK, ec=RACK_E, lw=.5, zorder=1))
     ax.add_patch(Rectangle((0, 0), W, H, fc="none", ec=GRID, lw=1.1, zorder=4))
-    ax.text(W / 2, 25.9, "pick stations", ha="center", va="center", fontsize=7.6,
-            color=INK2, zorder=5)
 
     # ---- (4) hazard: one real, one believed but already cleared -----------------------------
     ax.add_patch(Rectangle((9, 7), 1, 1, fc=BAD, alpha=.85, ec="none", zorder=3))
@@ -390,23 +388,42 @@ def fig_coupled():
             va="center", zorder=7, linespacing=1.4)
 
     # ---- (2) two routes to the same pod ------------------------------------------------------
+    # The two paths share the x = 12 stretch, so they are drawn with a small lateral offset:
+    # without it neither route can be traced end to end where they overlap.
     clear = [(6, 10), (6, 14), (12, 14), (12, 4), (13, 4)]
     congested = [(6, 10), (6, 7), (12, 7), (12, 4), (13, 4)]
-    ax.plot([c(*p)[0] for p in clear], [c(*p)[1] for p in clear],
-            color=INK2, lw=2.6, zorder=5, solid_capstyle="round")
-    ax.plot([c(*p)[0] for p in congested], [c(*p)[1] for p in congested],
-            color=C2, lw=2.6, ls=(0, (3.6, 2.0)), zorder=5, solid_capstyle="round")
+
+    def path(pts, dx):
+        return [c(*p)[0] + dx for p in pts], [c(*p)[1] for p in pts]
+
+    xs, ys = path(clear, -0.17)
+    ax.plot(xs, ys, color=INK2, lw=2.6, zorder=5, solid_capstyle="round")
+    xs, ys = path(congested, +0.17)
+    ax.plot(xs, ys, color=C2, lw=2.6, ls=(0, (3.6, 2.0)), zorder=5, solid_capstyle="round")
+
     for p in ((8, 7), (10, 7), (11, 7)):
         ax.add_patch(Circle(c(*p), .30, fc=INK3, ec=SURFACE, lw=1.0, zorder=7))
-    ax.text(13.3, 7.5, "short, but three\nrobots are in it", fontsize=7.4, color=C2,
-            va="center", zorder=7, linespacing=1.4)
-    ax.text(9.2, 15.1, "longer, clear", fontsize=7.4, color=INK2, ha="center", zorder=7)
+
+    # Both routes start at the robot and end at the same pod, so they are named in a key below
+    # the floor rather than in labels on it: the aisles are too narrow to hold legible text.
+    def route_key(row, col, dash, name, dist, note):
+        y = 26.95 + row * 1.40
+        ax.plot([0.5, 2.4], [y, y], color=col, lw=2.6, zorder=6,
+                ls=(0, (3.6, 2.0)) if dash else "solid", solid_capstyle="round")
+        ax.text(2.9, y, "%s  ·  %d m" % (name, dist), fontsize=8.4, fontweight="bold",
+                color=col, va="center", zorder=6)
+        ax.text(7.9, y, note, fontsize=8.0, color=INK2, va="center", zorder=6)
+
+    route_key(0, C2, True, "SHORT", 13, "crosses the aisle three robots are already in")
+    route_key(1, INK2, False, "LONG", 21, "eight metres further, and empty")
+    ax.text(0.5, 25.70, "TWO ROUTES TO THE SAME POD", fontsize=7.4, color=INK3,
+            va="center", fontweight="bold", zorder=6)
 
     # ---- (1) two candidate pods ---------------------------------------------------------------
     ax.add_patch(Rectangle((7, 9), 1, 1, fc=C3, alpha=.32, ec=C3, lw=1.9, zorder=3))
     ax.add_patch(Rectangle((13, 4), 1, 1, fc=C3, alpha=.32, ec=C3, lw=1.9, zorder=3))
-    ax.text(7.5, 8.35, "near, worth little", fontsize=7.4, color=C3, ha="center",
-            va="center", zorder=7)
+    ax.text(8.30, 9.55, "near,\nworth little", fontsize=7.4, color=C3, ha="left",
+            va="center", zorder=7, linespacing=1.4)
     ax.text(13.5, 2.6, "far, worth much,\ndue soon", fontsize=7.4, color=C3, ha="center",
             va="center", zorder=7, linespacing=1.4)
 
@@ -427,7 +444,7 @@ def fig_coupled():
 
     # ---- numbered badges ----------------------------------------------------------------------
     for n, (px, py), tgt in ((1, (10.6, 10.6), (13.3, 4.9)),
-                             (2, (8.0, 12.2), (9.4, 14.4)),
+                             (2, (8.1, 12.3), (9.4, 14.3)),
                              (3, (2.2, 10.4), (4.3, 10.3)),
                              (4, (11.0, 5.4), (9.7, 7.2))):
         ax.add_patch(FancyArrowPatch((px, py), tgt, arrowstyle="-|>", mutation_scale=9,
@@ -439,13 +456,13 @@ def fig_coupled():
                                  color=INK3, lw=1.0, shrinkA=10, shrinkB=4, zorder=8))
 
     # ---- scale bar ------------------------------------------------------------------------------
-    ax.plot([0.4, 5.4], [-1.0, -1.0], color=INK2, lw=1.6, solid_capstyle="butt")
-    for xx in (0.4, 5.4):
-        ax.plot([xx, xx], [-1.3, -0.7], color=INK2, lw=1.2)
-    ax.text(5.9, -1.0, "5 m   (one cell = 1 m)", va="center", fontsize=7.8, color=INK2)
+    ax.plot([0.6, 5.6], [22.6, 22.6], color=INK2, lw=1.6, solid_capstyle="butt", zorder=5)
+    for xx in (0.6, 5.6):
+        ax.plot([xx, xx], [22.3, 22.9], color=INK2, lw=1.2, zorder=5)
+    ax.text(6.2, 22.6, "5 m   (one cell = 1 m)", va="center", fontsize=7.4, color=INK2, zorder=5)
 
-    ax.set_xlim(-0.5, W + 3.9)
-    ax.set_ylim(H + 1.9, -2.0)
+    ax.set_xlim(-0.5, W + 2.3)
+    ax.set_ylim(H + 4.0, -0.7)
     ax.set_aspect("equal")
     ax.axis("off")
 
