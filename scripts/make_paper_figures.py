@@ -801,13 +801,18 @@ def fig_planner():
     save(fig, "fig_planner.png")
 
 
-# Keyed by the figure's number in the paper (docs/FIGURE_SPECS.md). Fig. 6 is the belief-curve
-# panel, produced by scripts/exp_m5_brier.py, and is not built here.
+# Keyed by the figure's number in the paper, which numbers by order of first appearance.
+# Fig. 5 is the belief-curve panel, produced by scripts/exp_m5_brier.py, and is not built here.
 FIGS = {"f1": fig_coupled, "f2": fig_realism, "f3": fig_planner, "f4": fig_benchmark,
-        "f5": fig_anticipation, "f7": fig_sensing, "f8": fig_ablation, "f9": fig_horizon}
+        "f6": fig_sensing, "f7": fig_ablation, "f8": fig_anticipation, "f9": fig_horizon}
 FIGS.update({fn.__name__.replace("fig_", ""): fn for fn in list(FIGS.values())})
 
 if __name__ == "__main__":
-    want = sys.argv[1:] or list(FIGS)
+    want = sys.argv[1:] or [k for k in FIGS if k.startswith("f") and k[1:].isdigit()]
+    seen = set()
     for k in want:
-        FIGS[k]()
+        fn = FIGS[k]
+        if fn in seen:                      # name aliases point at the same figure
+            continue
+        seen.add(fn)
+        fn()

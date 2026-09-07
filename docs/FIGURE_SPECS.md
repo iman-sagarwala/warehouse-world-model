@@ -14,17 +14,21 @@ a world model. Both need rebuilding.
 | # | Claim it must make | Status |
 |---|---|---|
 | Fig. 1 | Four decisions are coupled, on one floor | **built** `fig_coupled.png` |
-| Fig. 2 | Correcting the world cost 66% of throughput | **rebuild** |
-| Fig. 3 | The planner is a funnel ending in a rollout, wrapped by a tuner | **rebuild** |
+| Fig. 2 | Correcting the world cost 66% of throughput | **built** `fig_realism.png` |
+| Fig. 3 | The planner is a funnel ending in a rollout, wrapped by a tuner | **built** `fig_planner.png` |
 | Fig. 4 | The margin over the vendored dispatcher grows under disturbances | ready |
-| Fig. 5 | More future is monotonically worse, and no channel pays | ready |
-| Fig. 6 | The map is a calibrated forecaster; the fix was memory, not perception | ready |
-| Fig. 7 | The worse the sensors, the more prediction carries | ready |
-| Fig. 8 | Everything kept reasons about what exists | ready |
+| Fig. 5 | The map is a calibrated forecaster; the fix was memory, not perception | ready |
+| Fig. 6 | The worse the sensors, the more prediction carries | ready |
+| Fig. 7 | Everything kept reasons about what exists | ready |
+| Fig. 8 | More future is monotonically worse, and no channel pays | ready |
 | Fig. 9 | Horizon is the lever; cadence is not | ready |
-| Table 1 | Every world constant, corrected or declared | **build** |
-| Table 2 | The 24 decision features | **build** |
-| Table 3 | Metric suite against pre-registered targets | **build** |
+
+Figures 5-8 are renumbered from this document's original draft order to the paper's reading order;
+the per-figure sheets below still carry their original headings, and the file each names is the
+authority.
+| Table 1 | Every world constant, corrected or declared | **built** PAPER_DRAFT §3.8 (18 rows) |
+| Table 2 | The 24 decision features | **built** PAPER_DRAFT §5.21 |
+| Table 3 | Metric suite against pre-registered targets | **built** PAPER_DRAFT §5.0 |
 
 Shared style: `scripts/make_paper_figures.py` holds the palette (categorical slots validated for
 colour-vision deficiency, adjacent-pair ΔE 9.1), the recessive grid, tabular numerals, and direct
@@ -33,7 +37,7 @@ alone.
 
 ---
 
-## Fig. 1 — The coupled decision *(build)*
+## Fig. 1 — The coupled decision *(built — `results/fig_coupled.png`)*
 
 - **Claim:** a free robot's next action couples four decisions that are usually studied separately.
 - **Form:** labelled schematic of one floor, not a photograph. Single panel, landscape.
@@ -58,7 +62,7 @@ alone.
   recently (4). Each is a well-studied problem in isolation; the coupling is what this paper
   addresses.*
 
-## Fig. 2 — The realism audit *(rebuild)*
+## Fig. 2 — The realism audit *(built — `results/fig_realism.png`)*
 
 - **Claim:** correcting the simulator's constants cut measured throughput by 66%, and every result
   taken before the correction was measured on a world three times too productive.
@@ -75,7 +79,7 @@ alone.
   predating this correction was obtained on a simulator approximately three times too productive,
   and is excluded from this paper.*
 
-## Fig. 3 — The planner *(rebuild)*
+## Fig. 3 — The planner *(built — `results/fig_planner.png`)*
 
 - **Claim:** decisions come from imagined futures — the funnel prepares candidates, the rollout
   chooses, and the self-tuner re-chooses the funnel's own settings.
@@ -161,7 +165,7 @@ alone.
 
 ---
 
-## Table 1 — World constants *(build)*
+## Table 1 — World constants *(built — PAPER_DRAFT §3.8)*
 
 - **Purpose:** make the realism audit auditable. This table is the reason §2.1 is a contribution
   rather than setup.
@@ -177,7 +181,7 @@ alone.
   corrected value, and the evidence for the correction. Four constants have no public data and are
   declared as assumptions rather than calibrated.*
 
-## Table 2 — The decision features *(build)*
+## Table 2 — The decision features *(built — PAPER_DRAFT §5.21)*
 
 - **Purpose:** show the learner and the rules saw the same information, which is what makes §3.5's
   negative result a fair test.
@@ -190,7 +194,7 @@ alone.
   of Section 3.5 receives exactly this set, over exactly the same candidate shortlist, so the
   comparison isolates the selection rule.*
 
-## Table 3 — Metric suite and targets *(build)*
+## Table 3 — Metric suite and targets *(built — PAPER_DRAFT §5.0)*
 
 - **Purpose:** report against pre-registered targets rather than chosen ones, including the one that
   is missed.
@@ -225,3 +229,24 @@ alone.
    without it if time runs short.
 
 Regenerate Fig. 4 after the shipped-system re-lead so its callouts match the text.
+
+
+---
+
+## Build log
+
+**2026-09-07 — the register is closed.** All nine figures and all three tables are built.
+
+- Fig. 1 rebuilt so the two routes are disjoint (the target pod moved to the one candidate with two
+  aisle faces) and every object type is named in a key across the top rather than in scattered floor
+  annotations. Distances are computed from the drawn polylines.
+- Fig. 2 built as specified: four-bar waterfall, per-step deltas, −66% bracket. The constants moved
+  into Table 1; the "what this invalidates" panel became prose in §3.7; the "NEXT —" box is gone.
+- Fig. 3 built with the self-tuner as the enclosing band, which is what the superseded
+  `champion_architecture.png` was missing — that dashboard depicted the ablated system.
+- Table 1 has **18** rows, not the 16 the spec anticipated: deadline slack and demand exogeneity were
+  separated out of "demand", and amnesty rate and amnesty duration were separated because one is
+  cited and the other is assumed.
+- One correction fell out of building Table 1: the paper described the high-disturbance arm as "10×
+  the calibrated rate". The two rates actually run are 0.002/step and 0.037/step, so the multiplier is
+  ≈18×. §5.6 and §5.16 now state both absolute rates.

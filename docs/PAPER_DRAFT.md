@@ -70,6 +70,13 @@ argue such audits should be routine, because most of our own earlier findings di
 **deadlines** (SLA) and **values**. Under overload you cannot do everything on time, so the objective is
 **on-time value**, not throughput. A late delivery banks **zero**.
 
+![Figure 1 - the coupled decision](../results/fig_coupled.png)
+
+*Figure 1. The four decisions one free robot couples. Which task to take, which route to take, whether
+to charge first, and what the fleet cannot see are each a literature of their own; answering "what
+next?" settles all four at once, and the coupling between them is what this paper is about. The floor
+is the shipped dense layout read off the simulator, not a sketch: 16 x 25 cells, one metre each.*
+
 **Contributions.**
 1. **A rollout sequencer plus a model-predictive tuner** — the shipped system — worth
    **+21.7% / +48.8%** over the simulator's own dispatcher on clean floors and **+31.6% / +65.4%**
@@ -77,7 +84,8 @@ argue such audits should be routine, because most of our own earlier findings di
 2. **Six negative results with mechanisms**, obtained cheaply via a VoPI discipline (§5.3, §5.5,
    §5.19, §5.25), including one where a *scrambled* forecast outperformed the true one.
 3. **A learned opponent, not a straw one**: a policy-gradient dispatcher with identical inputs and
-   candidates beats the vendored heuristic and loses to the rules by 5.3% (§5.21).
+   candidates beats the vendored heuristic and loses to the shipped system by **5.8%** (t = −5.66,
+   winning 14 of 48 held-out days); against the tuner-ablated arm the gap is 5.3% (§5.21).
 4. **The belief map graded as a probabilistic forecaster** — Brier, skill, AUPRC, reliability and
    detection latency — which separates "useful to route on" from "honest as numbers" (§5.22).
 5. **A realism audit methodology** and the finding that our own pre-audit results largely did not
@@ -235,6 +243,52 @@ policy-dependent (two policies shared only ~22% of (time, shelf) pairs) and pair
 **Throughput falls 66%.** The simulator was ~3× too productive, and every pre-audit number was measured
 on that world.
 
+![Figure 2 - the realism audit](../results/fig_realism.png)
+
+*Figure 2. Cumulative effect of the realism audit on measured throughput. Correcting storage density,
+station count, step duration, order-value distribution and per-operation service times reduced
+deliveries per three episodes from 171 to 58. Every result predating this correction was obtained on a
+simulator approximately three times too productive, and is excluded from this paper.*
+
+### 3.8 Table 1 — every world constant, corrected or declared
+
+The audit is only auditable if the constants are on the page. Status is one of **verified** (checked
+against a source and already right), **corrected** (changed, with the source that forced the change),
+**opt-in** (implemented and measured, off by default, with the cost of turning it on), **declared**
+(the mechanism is cited but the magnitude is our choice), and **assumed** (no public figure exists;
+the value is a stated assumption and is swept, not fitted).
+
+*Table 1. Every world constant in the simulator, its original and corrected value, and the evidence
+for the correction. Two constants have no public figure behind them at all and two more are
+operating-point choices; all four are declared rather than calibrated, and swept rather than tuned.*
+
+| # | Constant | As found | Corrected to | Source or justification | Status |
+|---|---|---|---|---|---|
+| 1 | Cell size | 1 m | 1 m | Pod footprint ≈ 1×1 m; the drive unit (75×60 cm) travels beneath it | **verified** |
+| 2 | Occupancy | one robot per cell | one robot per cell | Follows from cell size and the drive-unit footprint | **verified** |
+| 3 | Storage density | 31% (2-wide blocks, 2-cell lanes) | **55%** (4×6 clusters, 1-cell lanes) | In-aisle picking runs 40–60%; pod-to-station reaches ~65% only because nothing is picked in the field | **corrected** |
+| 4 | Station count | 10 (every non-highway bottom-row cell) | **3** | Throughput balance: ~700 picks/hr demanded against 300–600 picks/hr per station ⇒ 1.2–2.3 stations for 8 AGVs | **corrected** |
+| 5 | Step duration | 0.67 s (1 m ÷ 1.5 m/s cruise) | **1.069 s** | Trapezoidal profile per straight run at `a = 0.8 m/s²`, `v_max = 1.2 m/s` laden; measured run lengths are short (p25 1, median 3, p75 8 cells), so cruise is rarely reached. The naive figure is 38% too fast | **corrected** |
+| 6 | Picker load (arm cycle) | 0 s | **8 steps** | UR-arm pick-and-place ≈ 5–10 s | **corrected** |
+| 7 | Station service, per item | 0 s | **6 steps / item** | Manufacturer station rates of 300–600 picks/hr. Dwell scales with item count because one pod trip serves every order pending on that shelf | **corrected** |
+| 8 | Order-value distribution | Uniform(1, 15) | **Lognormal** (median 8, σ = 1, clipped to [1, 15]) | Real order values are long-tailed. Uniform spans only 5.3× p90/p10, which makes 48.6% of selections tie | **corrected** |
+| 9 | Arrival rate | `rate = 0.075` (implied 47% utilisation) | **utilisation-anchored**: `rate = utilisation × n_agvs / task_steps` | A bare rate constant silently fixes utilisation; real distribution centres run far busier | **corrected** |
+| 10 | Deadline slack | single band | **mixture**: standard U(80, 200) steps, rush U(25, 60) steps at 20% of orders, rush value ×1.6 | Real fulfilment has an expedited tier; without it every order arrives with more slack than a task takes to serve | **corrected** |
+| 11 | Demand exogeneity | shelves drawn from those not in transit | **whole schedule pre-drawn from the seed** | The stock model made demand policy-dependent — two policies shared only ~22% of (time, shelf) pairs, which invalidates paired comparison | **corrected** |
+| 12 | Diurnal period | `period = 250` steps called "one day" | **the day spans episodes**: seed *i* is the *i*-th window of a 24 h day; 162 seeds = one day | The step-as-second and step-as-6-minutes clocks are ~280× apart and cannot both hold; resolving it in favour of robot speed puts the day outside the episode | **corrected** |
+| 13 | One-way lanes | not implemented | implemented (directed A*, alternating Manhattan); **off by default** | The real rule, but it costs 16% at our robot density: it trades conflict cost for detour cost, and conflicts are rare with 8 robots on 650 cells | **opt-in** |
+| 14 | Demand shape | — | `zipf_s = 1.1`, `n_hot = 3`, Hawkes (`p = 0.006`, jump 0.4, decay 0.90), within-day hotspot drift | Mechanisms are cited (skewed popularity, burst clustering, category drift calibrated from an Instacart sample); the parameter values are ours | **declared** |
+| 15 | Battery | none | RB-VOGUI 48 V × 15 Ah = 720 Wh, ~6 h working runtime, compressed to `steps_per_charge` (1500 nominal, 300 for the binding arm) | Robotnik AMR specification. Compression is a uniform scaling of an exactly-computed quantity, so it costs no model accuracy; it only makes energy bind inside a 500-step episode | **declared** |
+| 16 | Random blockage rate | none | `disturb_rate = 0.002`/step (≈1 blockage per 500-step episode), swept to **0.037**/step (≈20 per episode) | No public figure exists (searched 2026-08-04: obstruction statistics, robot fault telemetry, AMR reliability, MAPF benchmarks — all proprietary). The only anchor is a ~20-year-old field-robot MTBF of ~8 h, which implies roughly one blockage per episode across the fleet. Every disturbance result is reported at both rates | **assumed** |
+| 17 | Amnesty rate | none | 3.7% per item handled at a station | The Stow paper's per-attempt amnesty rate. One roll per item, not per trip, because one pod trip serves every pending order on that shelf | **declared** |
+| 18 | Amnesty duration | none | U(15, 45) steps | The same paper reports no intervention or recovery times, so cleanup duration is a stated assumption | **assumed** |
+
+Rows 3–12 are the corrections whose combined cost Figure 2 measures. Rows 16 and 18 are the two
+constants that carry no evidence at all; the utilisation operating point (row 9) and the demand-shape
+parameters (row 14) are the other two declared choices. Four assumptions in eighteen constants is the
+honest count, and each of the four is swept rather than tuned.
+
+
 ---
 
 ## 4. Method
@@ -253,6 +307,15 @@ realised-minus-predicted completion — so the imagination plans in today's actu
 **A deliberate asymmetry (Sec 5.7).** The rollout is calibrated; the step-5 admission filter is
 deliberately **optimistic** (no bias term). Predicting carefully to *choose*, optimistically to *admit*.
 
+![Figure 3 - the decision layer](../results/fig_planner.png)
+
+*Figure 3. The decision layer. For each free robot, stages 1-5 reduce the task set to roughly fifteen
+legal candidates and order them; stage 6 simulates each candidate forward under the fleet's own physics
+and selects by simulated banked value; stage 7 commits only the first move. The enclosing loop is the
+model-predictive tuner, which re-selects the funnel's own settings every 50 steps by the same forward
+simulation. Stage 6 is the only point at which a decision is made: disabling it costs 7.2% of on-time
+value (t = -30.6).*
+
 ---
 
 ## 4.1 Figures
@@ -265,14 +328,28 @@ must not be cited.**
 
 | # | file | what it shows | section |
 |---|---|---|---|
-| 1 | `champion_architecture.png` | the seven-step funnel and where the rollout sits | §4 |
-| 2 | `diag_realism_pass.png` | the realism audit: what each corrected constant cost | §3 |
-| 3 | `fig_benchmark.png` | head-to-head vs the simulator's own dispatcher, both regimes, ± disturbances | §5.20 |
-| 4 | `m5_belief_curves.png` | the belief map as a forecaster: PR, reliability, detection latency | §5.22 |
-| 5 | `fig_sensing.png` | the prediction inversion across sight radius | §5.23 |
-| 6 | `fig_ablation.png` | the pre-registered keep/cut ledger, 10 shipped / 22 cut | §5.24 |
-| 7 | `fig_anticipation.png` | the anticipation null: horizon damage, and six channels | §5.3, §5.25 |
-| 8 | `fig_horizon.png` | the tuner's cadence/horizon grid, value against compute | §5.26 |
+| 1 | `fig_coupled.png` | the four decisions one free robot couples, on the real floor | §1 |
+| 2 | `fig_realism.png` | the realism audit: what each group of corrected constants cost | §3.7 |
+| 3 | `fig_planner.png` | the seven-step funnel, the rollout, and the tuner that wraps them | §4 |
+| 4 | `fig_benchmark.png` | head-to-head vs the simulator's own dispatcher, both regimes, ± disturbances | §5.20 |
+| 5 | `m5_belief_curves.png` | the belief map as a forecaster: PR, reliability, detection latency | §5.22 |
+| 6 | `fig_sensing.png` | the prediction inversion across sight radius | §5.23 |
+| 7 | `fig_ablation.png` | the pre-registered keep/cut ledger, 10 shipped / 22 cut | §5.24 |
+| 8 | `fig_anticipation.png` | the anticipation null: horizon damage, and six channels | §5.3, §5.25 |
+| 9 | `fig_horizon.png` | the tuner's cadence/horizon grid, value against compute | §5.26 |
+
+Figures are numbered by order of first appearance.
+
+| # | table | what it shows | section |
+|---|---|---|---|
+| 1 | world constants | every constant, corrected or declared, with its evidence | §3.8 |
+| 2 | decision features | the 24 features, and that both arms see all of them | §5.21 |
+| 3 | pre-registered scorecard | every criterion registered before the work, and its outcome | §5.0 |
+
+The two working dashboards this index used to point at — `champion_architecture.png` and
+`diag_realism_pass.png` — are superseded by Figures 3 and 2 respectively. The architecture dashboard
+predated the self-tuner and therefore depicted the ablated system; both carried internal class names
+and work-planning notes. They are retained for provenance and must not be cited.
 
 Palette note: the categorical slots are validated for colour-vision deficiency (worst adjacent-pair
 ΔE 9.1, normal-vision ΔE 22.9); two slots fall below 3:1 against the page, so every bar carries a
@@ -302,6 +379,43 @@ two policies on the same seed). `DemandModel(exogenous=True)` pre-draws the whol
 the seed, so both arms now face identical orders; the legacy path was verified unchanged. Results
 measured before that fix share order counts and times but not shelf identities — they are reported as
 such, and every headline number in §5.15 onward is fully paired.
+
+### 5.0 Table 3 — the pre-registered scorecard
+
+Every criterion below was written down before the work that tests it, and every one is reported here
+whether it passed or not. One did not pass, and the row says so.
+
+*Table 3. Every success criterion registered before the work began, with its measured outcome. One
+criterion is not met; the accompanying oracle measurement establishes that its target was not
+attainable at this sensing density.*
+
+| Metric | What it grades | Pre-registered target | Measured | Verdict |
+|---|---|---|---|---|
+| Sensitivity | does the belief map notice a real blockage? | ≥ 90% | **92.2%** per event | **met** ᶠ¹ |
+| Specificity | does it avoid inventing blockages? | ≥ 90% | **99.87%** | met ᶠ² |
+| Detection latency | how long until it notices? | median ≤ 15 steps | **2 steps** | met |
+| Phantom hard-blocks | how often does it assert a blockage that is not there? | ≤ 1 per 1,000 steps | **9.8** per 1,000 | **not met** ᶠ³ |
+| Collisions | robots occupying the same cell | 0 | **0** | met |
+| Strandings | robots out of charge away from a bay | 0 | **0** | met |
+| Inner-loop success | MAPF solve rate | ≥ 98% | **100%** | met |
+| Decision latency | wall-clock to dispatch, five robots | ≤ 1 s | **1.3 ms** median | met |
+| Ship bar | every mechanism must earn ≥ 3% or be cut | applied without exception | **applied 32 times** | met |
+
+ᶠ¹ This criterion was recorded as *failed* for several months. The instrument was wrong, not the map:
+per-cell-per-step recall was being compared against an event-level target. Graded on the events the
+target names — did the fleet ever come to believe in this blockage — the map passes.
+
+ᶠ² Measured on a 3.2% base rate, which is the easy half of the problem: a map that never asserts
+anything scores 96.8% specificity. The number that carries information is the precision at the router's
+own decision threshold, 95.58%, and that is the number the phantom row grades.
+
+ᶠ³ The miss is real and is not explained away. It is, however, bounded: a perfect-memory oracle
+running on the identical sight stream — never forgetting an observation, never decaying a belief —
+scores **9.2** phantom hard-blocks per 1,000 steps on the same seeds. The attainable floor at this
+sensing density is therefore about nine times the target we registered, and the shipped map sits
+within 7% of that floor. The criterion was set without knowing what the sensing budget could support;
+the honest conclusion is that the target was wrong, and the measurement that shows it was run after
+the fact rather than before.
 
 ### 5.1 Main result — the controller ladder
 162 seeds = one simulated day; champion vs rush re-run at 486 seeds = three days.
@@ -345,7 +459,8 @@ the project.*
 
 ### 5.6 Negative result — belief-based disturbance avoidance (M2 premise; STRENGTHENED, see 5.16)
 With clairvoyant routing removed (planners route on a line-of-sight belief map, execution hits ground
-truth) and debris at **10× the calibrated rate (20 cells/episode)**, disturbance cost is **statistically
+truth) and debris at the **high-disturbance rate (0.037/step, ≈20 cells/episode, ~18× the anchored
+0.002/step of Table 1)**, disturbance cost is **statistically
 zero** across three routing models. An arm that ignores debris entirely and simply collides is the
 *best* performer. **Perfect disturbance information is worth ≤ 0.** Traffic-weighted spawning raised the
 sharing count past the threshold (0.83 → 1.67 robots per disturbed cell) and cost stayed zero.
@@ -531,9 +646,10 @@ else.
 
 ### 5.16 M2 closed — perfect disturbance information is *harmful* under a disciplined executor
 Re-measured under champion v6 with the bounding pair (clairvoyant router vs debris-blind router),
-144 paired seeds: at the calibrated debris rate VoPI = −0.04% (t=−0.18); at **10× debris,
-VoPI = −1.18% (t=−2.60)** — the blind fleet *beats* the perfectly-informed fleet, significantly.
-Frozen AGVs are 0 in every arm: liveness is debris-proof at 10×.
+144 paired seeds: at the anchored debris rate (0.002/step) VoPI = −0.04% (t=−0.18); at the high rate
+(0.037/step, ≈18×), **VoPI = −1.18% (t=−2.60)** — the blind fleet *beats* the perfectly-informed
+fleet, significantly.
+Frozen AGVs are 0 in every arm: liveness is debris-proof at the high rate too.
 
 This is the project's **third** perfect-information-is-harmful result (demand foresight §5.3,
 admission accuracy §5.7) — but a code audit prompted by the result sharpened its meaning: **debris in
@@ -783,9 +899,9 @@ is a decision-layer redesign rather than a learned component.
 
 ### 5.20 M5 — head-to-head against the simulator's own dispatcher, safety, and inner-loop validation
 
-![Figure 3](../results/fig_benchmark.png)
+![Figure 4](../results/fig_benchmark.png)
 
-*Figure 3 — head-to-head against the simulator's own dispatcher, both regimes, with and without disturbances. 144 paired days per cell; the baselines run with free energy.*
+*Figure 4 — head-to-head against the simulator's own dispatcher, both regimes, with and without disturbances. 144 paired days per cell; the baselines run with free energy.*
 
 **Benchmarks.** Against the simulator's own dispatcher and a value-plus-urgency baseline, on 144
 paired days per regime (1,152 runs), the **shipped system** — the rules with the self-tuner live —
@@ -847,6 +963,50 @@ untouched. **Only the choice is learned.** Training is REINFORCE with a running 
 entropy bonus, dense per-decision credit (each decision credited with the on-time value the task it
 chose actually banked), softmax sampling in training and argmax at evaluation: 40 iterations × 24
 episodes = **960 training days** on seeds 1–96.
+
+#### Table 2 — the 24 features, and who gets to see them
+
+The negative result above is only a fair test if the learner was not starved. It was not: the
+dispatcher network receives the assembler's feature dictionary verbatim, over the identical candidate
+shortlist produced by stages 1–5, at the identical decision points. The last two columns of Table 2
+are therefore identical all the way down, and that identity *is* the table's content.
+
+*Table 2. The 24 features available at each dispatch decision. The learned dispatcher of §5.21
+receives exactly this set, over exactly the same candidate shortlist, so the comparison isolates the
+selection rule and nothing else.*
+
+| # | Feature | Group | Units | Rules | Learner |
+|---|---|---|---|---|---|
+| 1 | `pred_finish` | task | steps, empty-world estimate of completion | ✓ | ✓ |
+| 2 | `my_arrival` | task | cells on the chosen route | ✓ | ✓ |
+| 3 | `dock` | task | cells from the pod to its nearest station | ✓ | ✓ |
+| 4 | `value` | task | order value, summed over pending orders on the shelf | ✓ | ✓ |
+| 5 | `dl_slack` | task | steps until the shelf's earliest deadline | ✓ | ✓ |
+| 6 | `my_wait` | self | steps this robot would wait at the pod | ✓ | ✓ |
+| 7 | `path_stretch` | self | route length ÷ Manhattan distance (ratio) | ✓ | ✓ |
+| 8 | `picker_eta` | partner | steps until a picker can meet this robot | ✓ | ✓ |
+| 9 | `n_busy_agv` | fleet | robots currently on a task | ✓ | ✓ |
+| 10 | `n_free_pk` | fleet | idle pickers | ✓ | ✓ |
+| 11 | `q_size` | fleet | tasks in the request queue | ✓ | ✓ |
+| 12 | `busy_frac` | fleet | busy robots ÷ fleet (fraction) | ✓ | ✓ |
+| 13 | `free_pk_frac` | fleet | idle pickers ÷ pickers (fraction) | ✓ | ✓ |
+| 14 | `q_per_agv` | fleet | queued tasks per robot | ✓ | ✓ |
+| 15 | `delay_ema` | traffic | EMA of realised minus predicted completion, in steps | ✓ | ✓ |
+| 16 | `dur_recent` | traffic | mean duration of the last 10 completions, in steps | ✓ | ✓ |
+| 17 | `dur_trend` | traffic | `dur_recent` minus the long window; > 0 means slowing | ✓ | ✓ |
+| 18 | `deliv_rate` | traffic | deliveries per step over a 40-step window | ✓ | ✓ |
+| 19 | `local_density` | congestion | agents within 8 cells of this pod ÷ all agents | ✓ | ✓ |
+| 20 | `sin_t` | clock | sine of the diurnal phase (unitless) | ✓ | ✓ |
+| 21 | `cos_t` | clock | cosine of the diurnal phase (unitless) | ✓ | ✓ |
+| 22 | `day_frac` | clock | position through the episode, 0 to 1 | ✓ | ✓ |
+| 23 | `dl_soon40` | deadline pressure | pending tasks due within 40 steps | ✓ | ✓ |
+| 24 | `dl_soon80` | deadline pressure | pending tasks due within 80 steps | ✓ | ✓ |
+
+Every feature is divided by a fixed scale taken from a champion run before it reaches the network, so
+no worker needs shared normalisation state. The assembler computes one further scalar, `dl_soon160`,
+which is present in the dictionary but consumed by neither the dispatch rules nor the learner — only
+by the delay-prediction study of §5.19. It is excluded from Table 2 so that both columns describe the
+information actually available at a dispatch decision, and describe it identically.
 
 The level was chosen deliberately. RWARE-standard *move-level* MARL would spend most of its capacity
 learning locomotion and is known to trail greedy heuristics at this fleet size; scoring the same
@@ -985,15 +1145,15 @@ precision 36.0% for the same map. Both are "correct" arithmetic on the same hist
 detector parks its don't-know mass on the decision boundary, the inequality is part of the metric
 definition, not an implementation detail.
 
-![Figure 4](../results/m5_belief_curves.png)
+![Figure 5](../results/m5_belief_curves.png)
 
-*Figure 4 — the belief map graded as a forecaster: precision–recall, reliability, and the detection-latency CDF, shipped map against the one it replaced. The two latency curves lying on top of each other is the result.*
+*Figure 5 — the belief map graded as a forecaster: precision–recall, reliability, and the detection-latency CDF, shipped map against the one it replaced. The two latency curves lying on top of each other is the result.*
 
 ### 5.23 What prediction itself is worth
 
-![Figure 5](../results/fig_sensing.png)
+![Figure 6](../results/fig_sensing.png)
 
-*Figure 5 — the prediction inversion. At generous sensor range eyes carry the value; at honest range the split inverts and memory carries it.*
+*Figure 6 — the prediction inversion. At generous sensor range eyes carry the value; at honest range the split inverts and memory carries it.*
 
 Finally, decomposing the sensing value isolates what prediction itself is worth. A fleet that
 routes only around hazards *currently in someone's view* (no memory) captures most of the
@@ -1023,9 +1183,9 @@ eliminating 100% of permanent deadlock on dense maps). Cut: five anticipation me
 hazard-guess mechanisms, five learned components, and six others (the sixth being the spare-storage
 sweep of §5.27).
 
-![Figure 6](../results/fig_ablation.png)
+![Figure 7](../results/fig_ablation.png)
 
-*Figure 6 — the pre-registered keep/cut ledger. Everything kept reasons about what already exists; everything cut acted on what did not.*
+*Figure 7 — the pre-registered keep/cut ledger. Everything kept reasons about what already exists; everything cut acted on what did not.*
 
 Read as two halves, the ledger states the thesis without any prose. **Everything kept reasons about
 things that already exist** — the tasks in hand, the batteries draining, the spill somebody saw.
@@ -1035,9 +1195,9 @@ is the methodological point: a 3% rule chosen afterwards would have kept several
 
 ### 5.25 Charging foresight — the sixth leg of the anticipation null, and a real finding underneath it
 
-![Figure 7](../results/fig_anticipation.png)
+![Figure 8](../results/fig_anticipation.png)
 
-*Figure 7 — the anticipation null. Left: damage grows monotonically with how much of the future the
+*Figure 8 — the anticipation null. Left: damage grows monotonically with how much of the future the
 planner is given. Right: six independent channels fed the true future; none pays.*
 
 Five channels had been tested for the value of perfect information: which task to take, how far ahead
@@ -1147,9 +1307,9 @@ against the fixed-constant control:
 | 50 / 200 | **838.99** | **+96.69** | **+5.86** | 137 | 5,770 | 66 |
 | 100 / 200 | 817.64 | +75.34 | +5.07 | 90 | 3,000 | **63** |
 
-![Figure 8](../results/fig_horizon.png)
+![Figure 9](../results/fig_horizon.png)
 
-*Figure 8 — the tuner's cadence/horizon grid, value against compute. Horizon is the lever; cadence is not.*
+*Figure 9 — the tuner's cadence/horizon grid, value against compute. Horizon is the lever; cadence is not.*
 
 **Horizon is the lever; cadence is not.** Doubling the horizon at the shipped cadence is worth +39
 more value than the shipped setting and cuts strandings from 95 to 66. Halving the cadence at a fixed
