@@ -1419,13 +1419,25 @@ boundary (+29.98, t = +2.22).
   does not make it hit anything, drop anything or miss a deadline it would otherwise have made. Of
   all the ways to miss a target, this is the cheap one.
 
-  **(c) Fixing it would cost time, and might cost something we care about more.** These phantoms are
-  not mistakes — they are memories. A robot saw a real spill, someone cleaned it up, and nobody has
-  walked past since to notice. The obvious fix is to make the map forget faster. But the map forgets
-  real spills on the same clock, so forgetting faster means missing more real ones: we would be
-  trading a harmless detour for a robot driving into an actual spill. That trade-off is a prediction
-  from the mechanism, not a measurement — a decay sweep scoring phantom rate and sensitivity together
-  would settle it cheaply, and we have not run one.
+  **(c) The obvious fix does nothing, and we checked rather than assuming.** These phantoms are not
+  mistakes, they are memories: a robot saw a real spill, someone cleaned it, and nobody has walked
+  past since. So the obvious fix is to make the map let go of old sightings. There was even a
+  structural reason to expect this to work — decay relaxed beliefs toward *exactly* the routing
+  threshold, so a stale block approached it from above and mathematically never crossed. We made the
+  decay target adjustable (`rest_prior`; 0.5 reproduces the old behaviour exactly) and swept it down
+  to 0.02, which should let stale beliefs lapse entirely.
+
+  It moved almost nothing: phantoms 7.2 → 7.1 per 1,000, sensitivity 92.2% → 92.4%, on-time value
+  identical to the decimal across 24 paired days. The reason is a second constant we had not
+  accounted for. A direct look writes overwhelming evidence (26:1), and at the shipped decay rate
+  that takes **263 steps to lapse no matter how low the target is set**. Phantoms are almost always
+  resolved by somebody driving past long before then, so the dial never gets a chance to fire.
+
+  So the honest position is narrower than the one we would have written from the mechanism alone: we
+  did *not* demonstrate a phantoms-versus-sensitivity trade-off, we demonstrated that this particular
+  dial is inert. The remaining levers are the decay *rate* and the reset *strength*, both of which
+  act on real and stale sightings identically and so should trade directly against sensitivity — but
+  that is again reasoning, and it is untested. What is measured is that the cheap fix is not a fix.
 
 - **The process failure behind it is the more serious half, and it is worth saying plainly.** Nobody
   measured this for the entire life of the project. Not because it was hard — it took about twenty

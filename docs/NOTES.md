@@ -7999,3 +7999,33 @@ LATENCY RE-MEASURED ON AN IDLE MACHINE: mean 1.84ms, median 0.45ms, p99 46.2ms, 
 median 288ms / max 445ms, now WITHIN the 1s budget too. The earlier 9.07ms/510ms/1655ms figures were
 taken while background experiment jobs were saturating all 8 cores -- worth noting as the reason the
 numbers moved, not as a correction to a claim (both readings pass).
+
+### REST_PRIOR SWEEP (2026-09-06): a clean hypothesis, measured, and WRONG
+
+Chasing point (c) of the phantom-block limitation. FOUND A REAL STRUCTURAL DETAIL: decay relaxed
+alpha and beta toward 1.0 each, i.e. toward belief EXACTLY 0.5 -- which IS b_hard, tested strictly
+(`b > b_hard`). So a stale "blocked" belief approached the routing threshold from above and
+MATHEMATICALLY NEVER CROSSED IT (800 steps later: 0.5004). A cell seen dirty once stayed hard-blocked
+forever unless somebody looked again; decay could not clear a phantom by construction.
+That looked like the whole explanation, and I said so mid-conversation before testing it. It is not.
+Added `BetaRumorMap(rest_prior=)` -- what an unrefreshed belief decays toward; 0.5 reproduces the old
+behaviour bit-for-bit (verified). Swept 0.5 / 0.35 / 0.2 / 0.1 / 0.05 / 0.02, 24 paired seeds:
+  rest prior   phantoms/1000   sensitivity   value    hits
+  0.50 (ship)      7.2            92.2%      956.7     39
+  0.10             7.1            92.4%      956.7     39
+  0.02             7.1            92.4%      956.7     39
+NOTHING MOVES. Value is bit-identical to the decimal across every arm.
+WHY (the second constant, unaccounted for): obs_reset writes alpha,beta = 26,1 on a dirty look. At
+decay 0.99 that needs 263-307 steps to fall below 0.5 REGARDLESS of the target -- the decay RATE and
+the reset STRENGTH bind, not the target. Phantoms are nearly always resolved by someone driving past
+well before 263 steps, so the dial never fires.
+CONSEQUENCES:
+ 1. The ORACLE BOUND STANDS. The map is at 1.05x the memory-only ceiling and this dial does not
+    escape it. My mid-conversation "the unreachable claim was too strong" was itself too hasty --
+    reasoned from a formula, not measured. THIRD time today the right move was measure-first.
+ 2. We have NOT demonstrated a phantoms-vs-sensitivity trade-off. We demonstrated that this dial is
+    INERT. The limitation now says exactly that instead of asserting the trade-off.
+ 3. Remaining levers are the decay RATE and the reset STRENGTH (26:1), which act on real and stale
+    sightings identically and so should trade against sensitivity -- reasoning, untested, labelled.
+KEEPING the rest_prior parameter: it is a correct generalisation, defaults to the old behaviour, and
+the null is worth having on record so nobody re-derives the hypothesis and assumes it works.

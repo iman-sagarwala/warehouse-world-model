@@ -22,7 +22,16 @@ import numpy as np
 
 
 class BetaRumorMap:
-    def __init__(self, grid_size, decay=0.99, sight_radius=None, learn_style=False):
+    def __init__(self, grid_size, decay=0.99, sight_radius=None, learn_style=False,
+                 rest_prior=0.5):
+        # REST PRIOR (2026-09-06): what an unrefreshed belief decays TOWARD. Historically this was
+        # hard-wired to 0.5 by relaxing alpha and beta toward 1.0 each -- which is exactly b_hard,
+        # so a stale "blocked" belief approached the routing threshold from above and NEVER crossed
+        # it. A cell seen dirty once stayed hard-blocked forever unless somebody looked again; decay
+        # could not clear a phantom by construction. Setting rest_prior below b_hard lets stale
+        # beliefs lapse. 0.5 reproduces the old behaviour bit-for-bit.
+        self._a0 = 2.0 * rest_prior
+        self._b0 = 2.0 * (1.0 - rest_prior)
         # SIGHT RADIUS IS A TUNABLE WORLD KNOB (user 2026-08-23): hardware, not policy -- set it
         # per deployment via WWM_SIGHT_RADIUS (default 5 = camera-equipped; 1 = sensor-poor
         # near-contact; 3 = modest camera, ~free vs 5). Explicit constructor arg still wins.
@@ -105,11 +114,11 @@ class BetaRumorMap:
         if self.learn_style and self.style_slowmem and self.spawn_prior.max() > 0:
             hz = self.spawn_prior / self.spawn_prior.max()
             d = self.decay + (0.999 - self.decay) * hz
-            self.alpha = 1.0 + (self.alpha - 1.0) * d
-            self.beta = 1.0 + (self.beta - 1.0) * d
+            self.alpha = self._a0 + (self.alpha - self._a0) * d
+            self.beta = self._b0 + (self.beta - self._b0) * d
         else:
-            self.alpha = 1.0 + (self.alpha - 1.0) * self.decay
-            self.beta = 1.0 + (self.beta - 1.0) * self.decay
+            self.alpha = self._a0 + (self.alpha - self._a0) * self.decay
+            self.beta = self._b0 + (self.beta - self._b0) * self.decay
         disturbed = getattr(env, "disturbed", None) or set()
         agents = env.agents
         H, W = self.alpha.shape
