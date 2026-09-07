@@ -578,8 +578,234 @@ def fig_coupled():
     save(fig, "fig_coupled.png")
 
 
-FIGS = {"fig0": fig_coupled, "fig1": fig_benchmark, "fig2": fig_anticipation, "fig3": fig_sensing,
-        "fig4": fig_ablation, "fig5": fig_horizon}
+def fig_realism():
+    """Figure 2: what correcting the world's constants cost in measured throughput.
+
+    Four readings, each the same three episodes re-run after one more group of constants was
+    corrected (docs/PAPER_DRAFT.md 3.7). The constants themselves are Table 1; this figure is
+    only the arithmetic they add up to.
+
+    Everything that names a row lives in the left margin and everything that measures it lives on
+    the bar, so the right-hand third is free for the bracket that carries the claim.
+    """
+    from matplotlib.patches import Rectangle
+
+    ROWS = [
+        ("as found", 171, "31% storage · 10 stations · uniform values · no service time"),
+        ("+ geometry and stations", 95, "storage 31% → 55%, stations 10 → 3"),
+        ("+ lognormal order values", 76, "uniform 1–15 → lognormal"),
+        ("+ service times", 58, "load 0 → 8 steps, station 0 → 6 steps per item"),
+    ]
+
+    fig = plt.figure(figsize=(10.8, 4.6))
+    ax = fig.add_axes([0.300, 0.150, 0.545, 0.615])
+
+    for i, (name, val, change) in enumerate(ROWS):
+        last = i == len(ROWS) - 1
+        ax.add_patch(Rectangle((0, i - .30), val, .60, ec="none", zorder=3,
+                               fc=C1 if last else (INK3 if i == 0 else "#b9cfe8")))
+        ax.text(val + 4, i, "%d" % val, va="center", ha="left", fontsize=13,
+                fontweight="bold", color=C1 if last else INK, zorder=4)
+        ax.text(-5, i - .10, name, va="center", ha="right", fontsize=10.4,
+                fontweight="bold", color=INK)
+        ax.text(-5, i + .22, change, va="center", ha="right", fontsize=8.4, color=INK2)
+        if i:
+            prev = ROWS[i - 1][1]
+            ax.plot([val, prev], [i - .30, i - .30], color=C2, lw=1.1, zorder=4)
+            ax.plot([prev, prev], [i - .30, i - .70], color=INK3, lw=.8, ls=(0, (2, 2)), zorder=2)
+            ax.text((val + prev) / 2, i - .50, "−%d" % (prev - val), ha="center", va="center",
+                    fontsize=9.4, fontweight="bold", color=C2, zorder=5,
+                    bbox=dict(boxstyle="round,pad=0.18", fc=SURFACE, ec="none"))
+
+    # the bracket the caption is about, in the clear third to the right of every bar
+    bx = 190
+    ax.plot([bx, bx + 7, bx + 7, bx], [0, 0, 3, 3], color=INK, lw=1.4, zorder=6,
+            solid_capstyle="butt", clip_on=False)
+    ax.text(bx + 13, 1.30, "−66%", va="bottom", ha="left", fontsize=17, fontweight="bold",
+            color=INK, zorder=6, clip_on=False)
+    ax.text(bx + 13, 1.48, "the world was three\ntimes too productive", va="top", ha="left",
+            fontsize=8.6, color=INK2, zorder=6, linespacing=1.5, clip_on=False)
+
+    ax.set_xlim(0, 200)
+    ax.set_ylim(3.78, -0.78)
+    ax.set_yticks([])
+    ax.set_xticks([0, 50, 100, 150])
+    ax.tick_params(axis="x", length=0, labelsize=9, colors=INK2, pad=4)
+    for s in ("top", "right", "left"):
+        ax.spines[s].set_visible(False)
+    ax.spines["bottom"].set_color(GRID)
+    ax.set_xlabel("deliveries per three episodes", fontsize=9.4, color=INK2, labelpad=7)
+    ax.xaxis.grid(True, color=GRID, lw=.8, zorder=0)
+    ax.set_axisbelow(True)
+
+    fig.text(0.012, 0.968, "Correcting the world cost two thirds of the throughput",
+             fontsize=15, fontweight="bold", color=INK, va="top")
+    fig.text(0.012, 0.898, "Same three episodes and the same policy, re-measured after each group "
+                           "of constants was corrected. In-aisle picking runs at 40–60% storage; "
+                           "three stations\nbalance eight robots; real order values are long-tailed; "
+                           "and the simulator had spent no time at all on any physical operation. "
+                           "Every result taken\nbefore the bottom row was measured on the top row's "
+                           "world, and none of them is reported in this paper.",
+             fontsize=9.2, color=INK2, va="top", linespacing=1.55)
+    save(fig, "fig_realism.png")
+
+def fig_planner():
+    """Figure 3: the decision layer — a funnel that ends in a rollout, wrapped by a tuner.
+
+    Stages 1-5 are preparation: they shrink the task set and order it. Stage 6 is the only place a
+    decision is made, and it is made by simulating. Stage 7 throws away everything the simulation
+    imagined except the first move. The band around all of it is the model-predictive tuner, which
+    re-chooses the funnel's own settings by the same forward simulation -- its absence is what made
+    the previous version of this diagram a picture of the ablated system.
+
+    Laid out on an explicit vertical budget: every box's top and height are computed, so nothing is
+    positioned by eye and nothing can land on anything else.
+    """
+    from matplotlib.patches import FancyBboxPatch, FancyArrowPatch, Rectangle
+
+    STAGES = [
+        ("1", "Cross off the impossible", "tasks already assigned, unreachable, or past due",
+         "~120 → ~40"),
+        ("2", "Cheap screen", "distance, value and deadline slack — no simulation yet", "~40 → 15"),
+        ("3", "Yen's k-shortest routes", "k = 3 per surviving candidate", "15 × 3"),
+        ("4", "Delete illegal routes", "reserved-cell collisions; battery floor at the far end",
+         "drops ~1 in 9"),
+        ("5", "Order by tier, value, urgency", "deliberately optimistic — no pace bias here",
+         "ranked 15"),
+    ]
+    X0, WIDE, H_STAGE, GAP = 7.0, 48.0, 6.4, 2.05
+    H_ROLL = 11.2
+
+    fig = plt.figure(figsize=(11.8, 8.8))
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_xlim(0, 100)
+    ax.set_ylim(100, 0)                 # y increases downward, like the reading order
+    ax.axis("off")
+
+    def box(x, y, w, h, fc, ec, lw=1.2, z=3):
+        ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.0,rounding_size=0.9",
+                                    fc=fc, ec=ec, lw=lw, zorder=z))
+
+    # ------------------------------------------------------- the tuner band, drawn under everything
+    ax.add_patch(FancyBboxPatch((2.0, 10.2), 79.0, 88.2,
+                                boxstyle="round,pad=0.0,rounding_size=1.6",
+                                fc="#f7f2e6", ec=C4, lw=1.6, ls=(0, (5, 3)), zorder=1))
+    ax.text(8.0, 12.9, "THE SELF-TUNER — the outer loop, and part of the shipped system",
+            fontsize=9.8, fontweight="bold", color="#8a6200", va="center", zorder=2)
+    ax.text(8.0, 16.0, "Every 50 steps: deep-copy the whole warehouse, roll 200 steps forward "
+                       "under each candidate setting of seven knobs, adopt whichever\nwins. The "
+                       "same forward simulation as stage 6, turned on the funnel's own settings.",
+            fontsize=8.8, color=INK2, va="center", linespacing=1.6, zorder=2)
+
+    # ------------------------------------------------------- stages 1-5: the funnel, visibly narrowing
+    y = 21.5
+    for i, (n, title, body, count) in enumerate(STAGES):
+        w = WIDE - i * 2.0
+        box(X0, y, w, H_STAGE, SURFACE, GRID, 1.2, 4)
+        ax.add_patch(Rectangle((X0, y), 0.85, H_STAGE, fc="#c9d7e8", ec="none", zorder=5))
+        ax.text(X0 + 2.5, y + 2.4, n, fontsize=11.5, fontweight="bold", color=INK3,
+                va="center", ha="center", zorder=6)
+        ax.text(X0 + 4.8, y + 2.4, title, fontsize=10.2, fontweight="bold", color=INK,
+                va="center", zorder=6)
+        ax.text(X0 + 4.8, y + 4.5, body, fontsize=8.6, color=INK2, va="center", zorder=6)
+        ax.text(X0 + w - 1.8, y + 2.4, count, fontsize=8.8, color=INK3, fontweight="bold",
+                ha="right", va="center", zorder=6, fontfamily="monospace")
+        ax.add_patch(FancyArrowPatch((X0 + 2.1, y + H_STAGE), (X0 + 2.1, y + H_STAGE + GAP),
+                                     arrowstyle="-|>", mutation_scale=11, color=INK3, lw=1.2,
+                                     zorder=5))
+        y += H_STAGE + GAP
+
+    # ------------------------------------------------------- stage 6: the only decision
+    y6 = y
+    box(X0, y6, WIDE, H_ROLL, SURFACE, C1, 2.3, 4)
+    ax.add_patch(Rectangle((X0, y6), 0.85, H_ROLL, fc=C1, ec="none", zorder=5))
+    ax.text(X0 + 2.5, y6 + 2.6, "6", fontsize=12.5, fontweight="bold", color=C1,
+            va="center", ha="center", zorder=6)
+    ax.text(X0 + 4.8, y6 + 2.6, "Roll the fleet forward", fontsize=11, fontweight="bold",
+            color=INK, va="center", zorder=6)
+    ax.text(X0 + WIDE - 1.8, y6 + 2.6, "the decision", fontsize=8.8, color=C1,
+            fontweight="bold", ha="right", va="center", zorder=6, fontfamily="monospace")
+    ax.text(X0 + 4.8, y6 + 4.4, "each candidate simulated forward to now + SEQ_DEPTH × 75, with "
+                                "pickers as\nconsumed resources and an event heap of robot free "
+                                "times; ranked by the\ntotal on-time value the imagined future "
+                                "actually banks",
+            fontsize=8.6, color=INK2, va="top", zorder=6, linespacing=1.62)
+    ax.add_patch(FancyArrowPatch((X0 + 2.1, y6 + H_ROLL), (X0 + 2.1, y6 + H_ROLL + GAP),
+                                 arrowstyle="-|>", mutation_scale=11, color=INK3, lw=1.2,
+                                 zorder=5))
+
+    # ------------------------------------------------------- stage 7: commit one move
+    y7 = y6 + H_ROLL + GAP
+    box(X0, y7, WIDE - 12.0, H_STAGE, SURFACE, GRID, 1.2, 4)
+    ax.add_patch(Rectangle((X0, y7), 0.85, H_STAGE, fc="#c9d7e8", ec="none", zorder=5))
+    ax.text(X0 + 2.5, y7 + 2.4, "7", fontsize=11.5, fontweight="bold", color=INK3,
+            va="center", ha="center", zorder=6)
+    ax.text(X0 + 4.8, y7 + 2.4, "Commit the first move", fontsize=10.2, fontweight="bold",
+            color=INK, va="center", zorder=6)
+    ax.text(X0 + 4.8, y7 + 4.5, "the rest of the imagined trajectory is thrown away",
+            fontsize=8.6, color=INK2, va="center", zorder=6)
+    ax.text(X0 + WIDE - 13.8, y7 + 2.4, "1 move", fontsize=8.8, color=INK3, fontweight="bold",
+            ha="right", va="center", zorder=6, fontfamily="monospace")
+
+    # ------------------------------------------------------- the one number this figure carries
+    ys = y7 + H_STAGE + 2.8
+    H_CLAIM = 9.8
+    box(X0, ys, WIDE, H_CLAIM, "#eef4fb", "#bcd4ee", 1.2, 4)
+    ax.text(X0 + 2.4, ys + 2.4, "Stage 6 is the only point at which anything is chosen.",
+            fontsize=9.6, fontweight="bold", color=C1, va="center", zorder=6)
+    ax.text(X0 + 2.4, ys + 3.9, "Disabling it and selecting on the stage-5 ordering\nalone costs "
+                                "−7.2% of on-time value (t = −30.6) —\nthe largest single mechanism "
+                                "effect in this paper.",
+            fontsize=8.6, color=INK2, va="top", zorder=6, linespacing=1.66)
+
+    # ------------------------------------------------------- the right-hand column
+    PX, PW = 61.0, 18.0
+    box(PX, 21.5, PW, 17.5, "#f3f8f5", "#bcdccb", 1.2, 3)
+    ax.text(PX + 1.8, 24.4, "ONE HONEST CORRECTION", fontsize=9.2, fontweight="bold",
+            color=GOOD, va="center")
+    ax.text(PX + 1.8, 27.3, "Every imagined completion\ncarries a live EMA of\nrealised-minus-"
+                            "predicted\ntime, so the imagination\nplans in today's clock.",
+            fontsize=8.6, color=INK2, va="top", linespacing=1.66)
+
+    box(PX, 42.0, PW, 15.5, "#fdf4f4", "#f0c2c2", 1.2, 3)
+    ax.text(PX + 1.8, 44.9, "WHAT IT CANNOT SEE", fontsize=9.2, fontweight="bold", color=BAD,
+            va="center")
+    ax.text(PX + 1.8, 47.8, "The imagination is given no\nfuture orders. It plans the\nqueue that "
+                            "exists, not the\none that will.",
+            fontsize=8.6, color=INK2, va="top", linespacing=1.66)
+
+    box(PX, 61.5, PW, 21.5, "#f4f7fb", "#c9d7e8", 1.2, 3)
+    ax.text(PX + 1.8, 64.4, "PICKERS", fontsize=9.2, fontweight="bold", color=INK3, va="center")
+    ax.text(PX + 1.8, 67.3, "Pickers run their own\nassignment, but the rollout\ntreats them as a "
+                            "consumed\nresource: one committed\ninside an imagined future is\n"
+                            "unavailable to every later\ncandidate in that imagining.",
+            fontsize=8.6, color=INK2, va="top", linespacing=1.66)
+    ax.add_patch(FancyArrowPatch((PX - 0.4, 70.5), (X0 + WIDE + 0.8, 70.5), arrowstyle="-|>",
+                                 mutation_scale=11, color="#8aa6c8", lw=1.4, zorder=5))
+
+    # ------------------------------------------------------- the tuner's return path
+    LX = 4.9
+    ax.plot([X0 + 2.1, LX, LX, X0 - 1.4], [ys + H_CLAIM + 1.6, ys + H_CLAIM + 1.6, 19.4, 19.4],
+            color=C4, lw=1.8, zorder=6, solid_joinstyle="round")
+    ax.add_patch(FancyArrowPatch((X0 - 1.4, 19.4), (X0 + 2.1, 19.4), arrowstyle="-|>",
+                                 mutation_scale=12, color=C4, lw=1.8, zorder=6))
+    ax.plot([X0 + 2.1, X0 + 2.1], [ys + H_CLAIM, ys + H_CLAIM + 1.6], color=C4, lw=1.8, zorder=6)
+    ax.text(3.5, 52.0, "every 50 steps, re-choose the knobs", fontsize=8.4, color="#8a6200",
+            rotation=90, ha="center", va="center", fontweight="bold", zorder=6)
+
+    fig.text(0.028, 0.978, "Decisions come from imagined futures", fontsize=16.5,
+             fontweight="bold", color=INK, va="top")
+    fig.text(0.028, 0.940, "One free robot, one tick. Stages 1–5 prepare a shortlist; stage 6 is "
+                           "the only place anything is chosen; stage 7 throws the rest away.",
+             fontsize=10.0, color=INK2, va="top")
+    save(fig, "fig_planner.png")
+
+
+# Keyed by the figure's number in the paper (docs/FIGURE_SPECS.md). Fig. 6 is the belief-curve
+# panel, produced by scripts/exp_m5_brier.py, and is not built here.
+FIGS = {"f1": fig_coupled, "f2": fig_realism, "f3": fig_planner, "f4": fig_benchmark,
+        "f5": fig_anticipation, "f7": fig_sensing, "f8": fig_ablation, "f9": fig_horizon}
+FIGS.update({fn.__name__.replace("fig_", ""): fn for fn in list(FIGS.values())})
 
 if __name__ == "__main__":
     want = sys.argv[1:] or list(FIGS)
