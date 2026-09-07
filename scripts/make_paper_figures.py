@@ -332,7 +332,179 @@ def fig_horizon():
     save(fig, "fig_horizon.png")
 
 
-FIGS = {"fig1": fig_benchmark, "fig2": fig_anticipation, "fig3": fig_sensing,
+
+# ------------------------------------------------------------------ figure 1
+RACK = "#e3dccd"        # stored pod, warm neutral against the surface
+RACK_E = "#cfc5b1"
+
+
+def fig_coupled():
+    """Figure 1: the four decisions a single free robot couples, on the real floor.
+
+    Geometry is the shipped dense layout read off the simulator, not a sketch: 16 x 25 cells,
+    vertical aisles every third column, cross-aisles at y = 0, 7, 14 and 21-23, three pick stations
+    on the bottom row, eight charger bays. One cell is one metre.
+
+    Colour roles are kept disjoint: routes are ink and orange, candidate pods aqua, energy amber,
+    hazard red, stations blue. Nothing carries meaning by hue alone -- every element is also
+    labelled on the floor.
+    """
+    from matplotlib.patches import Rectangle, Circle, FancyArrowPatch
+    W, H = 16, 25
+    aisle_x = {0, 3, 6, 9, 12, 15}
+    cross_y = {0, 7, 14, 21, 22, 23, 24}
+    stations = [(1, 24), (5, 24), (11, 24)]
+    bays = [(1, 1), (2, 5), (4, 10), (5, 15), (7, 19), (10, 3), (11, 8), (13, 12)]
+
+    def is_hw(x, y):
+        return x in aisle_x or y in cross_y
+
+    def c(x, y):
+        return (x + .5, y + .5)
+
+    fig = plt.figure(figsize=(12.4, 7.4))
+    ax = fig.add_axes([0.015, 0.02, 0.40, 0.96])
+    tx = fig.add_axes([0.44, 0.02, 0.55, 0.96])
+    tx.axis("off")
+
+    # ---- floor -----------------------------------------------------------------------------
+    for y in range(H):
+        for x in range(W):
+            if (x, y) in stations:
+                ax.add_patch(Rectangle((x, y), 1, 1, fc=C1, ec=SURFACE, lw=.7, zorder=2))
+            elif (x, y) in bays:
+                ax.add_patch(Rectangle((x, y), 1, 1, fc=SURFACE, ec=C4, lw=1.5, zorder=2))
+            elif not is_hw(x, y):
+                ax.add_patch(Rectangle((x, y), 1, 1, fc=RACK, ec=RACK_E, lw=.5, zorder=1))
+    ax.add_patch(Rectangle((0, 0), W, H, fc="none", ec=GRID, lw=1.1, zorder=4))
+    ax.text(W / 2, 25.9, "pick stations", ha="center", va="center", fontsize=7.6,
+            color=INK2, zorder=5)
+
+    # ---- (4) hazard: one real, one believed but already cleared -----------------------------
+    ax.add_patch(Rectangle((9, 7), 1, 1, fc=BAD, alpha=.85, ec="none", zorder=3))
+    ax.add_patch(Rectangle((8.9, 6.9), 1.2, 1.2, fc="none", ec=BAD, lw=1.6,
+                           ls=(0, (2.2, 1.6)), zorder=6))
+    ax.add_patch(Rectangle((2.9, 16.9), 1.2, 1.2, fc="none", ec=BAD, lw=1.6,
+                           ls=(0, (2.2, 1.6)), zorder=6))
+    ax.text(4.6, 17.5, "believed blocked,\nactually clear", fontsize=7.4, color=BAD,
+            va="center", zorder=7, linespacing=1.4)
+
+    # ---- (2) two routes to the same pod ------------------------------------------------------
+    clear = [(6, 10), (6, 14), (12, 14), (12, 4), (13, 4)]
+    congested = [(6, 10), (6, 7), (12, 7), (12, 4), (13, 4)]
+    ax.plot([c(*p)[0] for p in clear], [c(*p)[1] for p in clear],
+            color=INK2, lw=2.6, zorder=5, solid_capstyle="round")
+    ax.plot([c(*p)[0] for p in congested], [c(*p)[1] for p in congested],
+            color=C2, lw=2.6, ls=(0, (3.6, 2.0)), zorder=5, solid_capstyle="round")
+    for p in ((8, 7), (10, 7), (11, 7)):
+        ax.add_patch(Circle(c(*p), .30, fc=INK3, ec=SURFACE, lw=1.0, zorder=7))
+    ax.text(13.3, 7.5, "short, but three\nrobots are in it", fontsize=7.4, color=C2,
+            va="center", zorder=7, linespacing=1.4)
+    ax.text(9.2, 15.1, "longer, clear", fontsize=7.4, color=INK2, ha="center", zorder=7)
+
+    # ---- (1) two candidate pods ---------------------------------------------------------------
+    ax.add_patch(Rectangle((7, 9), 1, 1, fc=C3, alpha=.32, ec=C3, lw=1.9, zorder=3))
+    ax.add_patch(Rectangle((13, 4), 1, 1, fc=C3, alpha=.32, ec=C3, lw=1.9, zorder=3))
+    ax.text(7.5, 8.35, "near, worth little", fontsize=7.4, color=C3, ha="center",
+            va="center", zorder=7)
+    ax.text(13.5, 2.6, "far, worth much,\ndue soon", fontsize=7.4, color=C3, ha="center",
+            va="center", zorder=7, linespacing=1.4)
+
+    # ---- (3) energy: reachable set, and the nearest bay ---------------------------------------
+    ax.add_patch(Circle(c(6, 10), 3.1, fc=C4, alpha=.07, ec=C4, lw=1.2,
+                        ls=(0, (1.6, 2.0)), zorder=2))
+    ax.plot([c(6, 10)[0], c(4, 10)[0]], [c(6, 10)[1], c(4, 10)[1]],
+            color=C4, lw=2.2, ls=(0, (1.4, 1.6)), zorder=6)
+    ax.text(1.0, 12.6, "how far 38%\nstill reaches", fontsize=7.4, color=C4, va="center",
+            zorder=7, linespacing=1.4)
+
+    # ---- the deciding robot -------------------------------------------------------------------
+    ax.add_patch(Circle(c(6, 10), .42, fc=INK, ec=SURFACE, lw=1.7, zorder=9))
+    ax.add_patch(Rectangle((4.55, 8.55), 1.55, .40, fc=SURFACE, ec=INK3, lw=.8, zorder=9))
+    ax.add_patch(Rectangle((4.59, 8.59), 1.55 * .38, .32, fc=C4, ec="none", zorder=10))
+    ax.text(4.35, 8.75, "38%", ha="right", va="center", fontsize=7.4, color=INK2, zorder=10,
+            fontfamily="monospace")
+
+    # ---- numbered badges ----------------------------------------------------------------------
+    for n, (px, py), tgt in ((1, (10.6, 10.6), (13.3, 4.9)),
+                             (2, (8.0, 12.2), (9.4, 14.4)),
+                             (3, (2.2, 10.4), (4.3, 10.3)),
+                             (4, (11.0, 5.4), (9.7, 7.2))):
+        ax.add_patch(FancyArrowPatch((px, py), tgt, arrowstyle="-|>", mutation_scale=9,
+                                     color=INK3, lw=1.0, shrinkA=10, shrinkB=4, zorder=8))
+        ax.add_patch(Circle((px, py), .60, fc=INK, ec=SURFACE, lw=1.4, zorder=11))
+        ax.text(px, py, str(n), ha="center", va="center", color=SURFACE,
+                fontsize=9.2, fontweight="bold", zorder=12)
+    ax.add_patch(FancyArrowPatch((10.6, 10.6), (8.15, 9.6), arrowstyle="-|>", mutation_scale=9,
+                                 color=INK3, lw=1.0, shrinkA=10, shrinkB=4, zorder=8))
+
+    # ---- scale bar ------------------------------------------------------------------------------
+    ax.plot([0.4, 5.4], [-1.0, -1.0], color=INK2, lw=1.6, solid_capstyle="butt")
+    for xx in (0.4, 5.4):
+        ax.plot([xx, xx], [-1.3, -0.7], color=INK2, lw=1.2)
+    ax.text(5.9, -1.0, "5 m   (one cell = 1 m)", va="center", fontsize=7.8, color=INK2)
+
+    ax.set_xlim(-0.5, W + 3.9)
+    ax.set_ylim(H + 1.9, -2.0)
+    ax.set_aspect("equal")
+    ax.axis("off")
+
+    # ---- callouts ---------------------------------------------------------------------------------
+    tx.text(0, 0.985, "One robot has just come free.", transform=tx.transAxes,
+            fontsize=14.5, fontweight="bold", color=INK, va="top")
+    tx.text(0, 0.930, "Answering \u201cwhat next?\u201d settles four questions at once. Each has a "
+                      "literature of its own;\nthe coupling between them does not.",
+            transform=tx.transAxes, fontsize=10, color=INK2, va="top", linespacing=1.5)
+
+    items = [
+        (0.826, 1, "Which task", C3,
+         "A near pod worth little, or a distant pod worth much whose deadline is\n"
+         "close. A late delivery banks nothing, so the choice is neither distance\n"
+         "nor value but value that still arrives in time."),
+        (0.632, 2, "Which route", C2,
+         "Both paths reach the same pod. The short one crosses an aisle three\n"
+         "robots are already in; the long one is clear. What a route costs\n"
+         "depends on what every other robot has just been told to do."),
+        (0.438, 3, "Whether to charge first", C4,
+         "At 38% this robot can reach the pod, or reach a charger, but not\n"
+         "reliably both. What binds is not a reserve threshold but whether a\n"
+         "charger is still reachable from wherever the task ends."),
+        (0.244, 4, "What it cannot see", BAD,
+         "A spill sits in the short route. The fleet believes in it because\n"
+         "somebody drove past \u2014 and believes in another that was cleared, because\n"
+         "nobody has been back to look."),
+    ]
+    for y, n, title, col, body in items:
+        tx.add_patch(Circle((0.024, y), 0.0175, fc=INK, ec="none",
+                            transform=tx.transAxes, clip_on=False, zorder=5))
+        tx.text(0.024, y, str(n), transform=tx.transAxes, ha="center", va="center",
+                color=SURFACE, fontsize=8.8, fontweight="bold", zorder=6)
+        tx.text(0.064, y + 0.004, title, transform=tx.transAxes, fontsize=11.5,
+                fontweight="bold", color=col, va="center")
+        tx.text(0.064, y - 0.072, body, transform=tx.transAxes, fontsize=9.5,
+                color=INK2, va="center", linespacing=1.65)
+
+    tx.plot([0.024, 0.062], [0.055, 0.055], transform=tx.transAxes, color=BAD, lw=5,
+            solid_capstyle="butt", alpha=.85)
+    tx.text(0.076, 0.055, "true state", transform=tx.transAxes, fontsize=9.2, color=INK2,
+            va="center")
+    tx.plot([0.235, 0.273], [0.055, 0.055], transform=tx.transAxes, color=BAD, lw=1.7,
+            ls=(0, (2.2, 1.6)))
+    tx.text(0.287, 0.055, "what the fleet believes", transform=tx.transAxes, fontsize=9.2,
+            color=INK2, va="center")
+    for i2, (fcol, ecol, lab) in enumerate(((RACK, RACK_E, "stored pod"),
+                                            (C1, C1, "pick station"),
+                                            (SURFACE, C4, "charger bay"))):
+        xx = 0.024 + i2 * 0.200
+        tx.add_patch(Rectangle((xx, 0.000), 0.028, 0.030, fc=fcol, ec=ecol, lw=1.3,
+                               transform=tx.transAxes, clip_on=False))
+        tx.text(xx + 0.038, 0.015, lab, transform=tx.transAxes, fontsize=9.2, color=INK2,
+                va="center")
+
+    save(fig, "fig_coupled.png")
+
+
+FIGS = {"fig0": fig_coupled, "fig1": fig_benchmark, "fig2": fig_anticipation, "fig3": fig_sensing,
         "fig4": fig_ablation, "fig5": fig_horizon}
 
 if __name__ == "__main__":

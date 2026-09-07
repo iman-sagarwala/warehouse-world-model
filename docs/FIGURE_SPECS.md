@@ -13,7 +13,7 @@ a world model. Both need rebuilding.
 
 | # | Claim it must make | Status |
 |---|---|---|
-| Fig. 1 | Four decisions are coupled, on one floor | **build** |
+| Fig. 1 | Four decisions are coupled, on one floor | **built** `fig_coupled.png` |
 | Fig. 2 | Correcting the world cost 66% of throughput | **rebuild** |
 | Fig. 3 | The planner is a funnel ending in a rollout, wrapped by a tuner | **rebuild** |
 | Fig. 4 | The margin over the vendored dispatcher grows under disturbances | ready |
@@ -46,7 +46,11 @@ alone.
 - **Required annotation:** the four arrows numbered and named; a legend distinguishing *true state*
   from *believed state*; a scale bar in metres (cell = 1 m).
 - **Do not** include scores, formulae or class names. This figure is the problem, not the method.
-- **Source:** layout from `wwm_sim.warehouse` geometry; render alongside the sandbox's floor drawing.
+- **Built 2026-09-06** as `fig_coupled()` in `scripts/make_paper_figures.py` -> `results/fig_coupled.png`.
+  Geometry is read off the simulator, not sketched: 16x25 cells, aisles at x = 0/3/6/9/12/15,
+  cross-aisles at y = 0/7/14/21-23, three stations on the bottom row, the eight real bay positions.
+  Colour roles are disjoint (routes ink/orange, candidates aqua, energy amber, hazard red, stations
+  blue) and every element is labelled on the floor, so nothing carries meaning by hue alone.
 - **Draft caption:** *Figure 1. The four coupled decisions facing a single free robot on the
   dense-aisle floor. Solid outlines mark true world state; dashed outlines mark the fleet's belief.
   The robot must simultaneously choose a task (1), a route through contested aisles (2), whether to

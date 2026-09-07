@@ -388,7 +388,7 @@ captions above the table.*
 
 | # | Type | Content | Section | Status |
 |---|---|---|---|---|
-| Fig. 1 | Diagram | Four coupled decisions on one floor plan | §1.1 | **to draw** |
+| Fig. 1 | Diagram | Four coupled decisions on one floor plan | §1.1 | exists |
 | Fig. 2 | Chart | The realism audit: cost of each corrected constant | §2.1 | **rebuild** |
 | Fig. 3 | Diagram | The funnel, the rollout, and the tuner loop | §2.2.1 | **rebuild** |
 | Fig. 4 | Chart | Benchmark, both regimes, ± disturbances | §3.1 | exists |
