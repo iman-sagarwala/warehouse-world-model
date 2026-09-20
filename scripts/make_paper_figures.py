@@ -715,9 +715,11 @@ def fig_planner():
                                 fc="#f7f2e6", ec=C4, lw=1.6, ls=(0, (5, 3)), zorder=1))
     ax.text(8.0, 12.9, "THE SELF-TUNER — the outer loop, and part of the shipped system",
             fontsize=9.8, fontweight="bold", color="#8a6200", va="center", zorder=2)
-    ax.text(8.0, 16.0, "Every 50 steps: deep-copy the whole warehouse, roll 200 steps forward "
-                       "under each candidate setting of seven knobs, adopt whichever\nwins. The "
-                       "same forward simulation as stage 6, turned on the funnel's own settings.",
+    ax.text(8.0, 16.0, "Every 50 steps: deep-copy the whole warehouse and roll 100 steps forward "
+                       "under a few candidate settings of nine knobs, adopting\nwhichever wins. "
+                       "Candidates come from a UCB1 bandit over parameter moves, not brute "
+                       "enumeration — the same forward\nsimulation as stage 6, turned on the "
+                       "funnel's own settings.",
             fontsize=8.8, color=INK2, va="center", linespacing=1.6, zorder=2)
 
     # ------------------------------------------------------- stages 1-5: the funnel, visibly narrowing
