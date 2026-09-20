@@ -826,10 +826,102 @@ def fig_planner():
     save(fig, "fig_planner.png")
 
 
+def fig_features():
+    """Table 2 as a figure: the 24 decision features, and the fact that both arms get all of them.
+
+    The table's content is an identity -- twenty-four rows of tick, tick. A reader has to scan all
+    of it to learn one thing. This figure states the one thing and keeps the twenty-four names, so
+    the table can stay in the appendix as reference for units, or be dropped.
+
+    Groups and membership are read off FEATS in scripts/marl_dispatch.py and the assembler in
+    scripts/sim_priority.py; the figure is laid out from that list, so it cannot drift from it.
+    """
+    from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+
+    GROUPS = [
+        ("task", ["pred_finish", "my_arrival", "dock", "value", "dl_slack"]),
+        ("self", ["my_wait", "path_stretch"]),
+        ("partner", ["picker_eta"]),
+        ("fleet", ["n_busy_agv", "n_free_pk", "q_size", "busy_frac", "free_pk_frac", "q_per_agv"]),
+        ("traffic", ["delay_ema", "dur_recent", "dur_trend", "deliv_rate"]),
+        ("congestion", ["local_density"]),
+        ("clock", ["sin_t", "cos_t", "day_frac"]),
+        ("deadline pressure", ["dl_soon40", "dl_soon80"]),
+    ]
+    N = sum(len(f) for _g, f in GROUPS)
+    assert N == 24, N
+
+    fig = plt.figure(figsize=(11.6, 6.4))
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_xlim(0, 100)
+    ax.set_ylim(100, 0)
+    ax.axis("off")
+
+    LX, CX, CW, CG = 3.0, 15.0, 8.2, 0.6      # label col, chip col, chip width, gap
+    TOP, BH = 21.0, 8.4                        # first band top, band height
+
+    for bi, (gname, feats) in enumerate(GROUPS):
+        y = TOP + bi * BH
+        if bi % 2 == 0:                        # quiet banding, so long rows stay readable
+            ax.add_patch(FancyBboxPatch((LX - 1.2, y - 0.6), 66.4, BH - 1.0,
+                                        boxstyle="round,pad=0.0,rounding_size=0.6",
+                                        fc="#f4f2ec", ec="none", zorder=1))
+        ax.text(CX - 1.4, y + BH / 2 - 0.8, gname, fontsize=9.0, fontweight="bold",
+                color=INK3, ha="right", va="center", zorder=3)
+        for fi, f in enumerate(feats):
+            x = CX + fi * (CW + CG)
+            ax.add_patch(FancyBboxPatch((x, y + 1.0), CW, BH - 3.0,
+                                        boxstyle="round,pad=0.0,rounding_size=0.55",
+                                        fc=SURFACE, ec="#cdd9e8", lw=1.2, zorder=2))
+            ax.text(x + CW / 2, y + BH / 2 - 0.5, f, fontsize=7.4, color=INK,
+                    ha="center", va="center", zorder=3, fontfamily="monospace")
+
+    # ---- the collector: all 24, one set -------------------------------------------------------
+    BX = 69.2
+    MID = TOP + 4 * BH - 1.1
+    ax.plot([BX, BX + 1.7, BX + 1.7, BX], [TOP - 0.6, TOP - 0.6, TOP + 8 * BH - 1.6,
+                                           TOP + 8 * BH - 1.6],
+            color=INK3, lw=1.3, zorder=3, solid_joinstyle="miter")
+    ax.plot([BX + 1.7, BX + 3.4], [MID, MID], color=INK3, lw=1.3, zorder=3)
+
+    # ---- the two consumers ---------------------------------------------------------------------
+    for cy, col, fill, title, body in (
+            (30.0, C3, "#eef8f3", "The rules",
+             "stages 1–5 of the funnel:\ntier, value and urgency\nproduce the ordering"),
+            (58.0, C1, "#eef4fb", "The learner",
+             "MLP(24 → 64 → 64 → 1)\nscores the same shortlist\nin the same slot")):
+        ax.add_patch(FancyBboxPatch((76.5, cy), 22.0, 19.0,
+                                    boxstyle="round,pad=0.0,rounding_size=1.0",
+                                    fc=fill, ec=col, lw=1.8, zorder=3))
+        ax.text(78.5, cy + 4.0, title, fontsize=12, fontweight="bold", color=col, va="center")
+        ax.text(78.5, cy + 7.0, body, fontsize=8.8, color=INK2, va="top", linespacing=1.6)
+        ax.text(78.5, cy + 16.4, "receives all 24", fontsize=9.0, fontweight="bold",
+                color=col, va="center")
+        ax.add_patch(FancyArrowPatch((BX + 3.4, MID), (75.7, cy + 9.5),
+                                     arrowstyle="-|>", mutation_scale=13, color=INK3, lw=1.5,
+                                     zorder=2, connectionstyle="arc3,rad=%.2f"
+                                     % (0.22 if cy < 45 else -0.22)))
+
+    fig.text(0.026, 0.965, "Both arms see the same 24 features", fontsize=16.5,
+             fontweight="bold", color=INK, va="top")
+    fig.text(0.026, 0.918, "Over the identical candidate shortlist, at the identical decision "
+                           "points. Only the selection rule differs — which is what makes the "
+                           "learner's\nloss in §6.5 a fair test rather than a starved one. Units "
+                           "for each feature are given in Table 2.",
+             fontsize=9.8, color=INK2, va="top", linespacing=1.55)
+
+    fig.text(0.026, 0.045, "One further scalar, dl_soon160, is computed by the assembler and "
+                           "consumed by neither arm — only by the delay-prediction study of "
+                           "§6.4.",
+             fontsize=8.6, color=INK3, va="center")
+    save(fig, "fig_features.png")
+
+
 # Keyed by the figure's number in the paper, which numbers by order of first appearance.
 # Fig. 5 is the belief-curve panel, produced by scripts/exp_m5_brier.py, and is not built here.
 FIGS = {"f1": fig_coupled, "f2": fig_realism, "f3": fig_planner, "f4": fig_benchmark,
-        "f6": fig_sensing, "f7": fig_ablation, "f8": fig_anticipation, "f9": fig_horizon}
+        "f6": fig_sensing, "f7": fig_ablation, "f8": fig_anticipation, "f9": fig_horizon,
+        "t2": fig_features}
 FIGS.update({fn.__name__.replace("fig_", ""): fn for fn in list(FIGS.values())})
 
 if __name__ == "__main__":
