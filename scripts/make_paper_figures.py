@@ -917,11 +917,109 @@ def fig_features():
     save(fig, "fig_features.png")
 
 
+def fig_table2():
+    """Table 2, typeset as an image: the 24 decision features with units and availability.
+
+    Booktabs rules (top / mid / bottom, no verticals), faint zebra for scanning 24 rows, and the
+    two availability columns set off together so their identity reads at a glance -- that identity
+    is the table's whole content.
+
+    Rows are generated from the same list the code uses, so the image cannot drift from the
+    feature set: FEATS in scripts/marl_dispatch.py, assembled in scripts/sim_priority.py.
+    """
+    from matplotlib.patches import Rectangle
+
+    ROWS = [
+        ("pred_finish", "task", "steps, empty-world completion estimate"),
+        ("my_arrival", "task", "cells on the chosen route"),
+        ("dock", "task", "cells from pod to nearest station"),
+        ("value", "task", "order value, summed over pending orders"),
+        ("dl_slack", "task", "steps to the shelf's earliest deadline"),
+        ("my_wait", "self", "steps this robot would wait at the pod"),
+        ("path_stretch", "self", "route length ÷ Manhattan distance"),
+        ("picker_eta", "partner", "steps until a picker can meet it"),
+        ("n_busy_agv", "fleet", "robots currently on a task"),
+        ("n_free_pk", "fleet", "idle pickers"),
+        ("q_size", "fleet", "tasks in the request queue"),
+        ("busy_frac", "fleet", "busy robots ÷ fleet"),
+        ("free_pk_frac", "fleet", "idle pickers ÷ pickers"),
+        ("q_per_agv", "fleet", "queued tasks per robot"),
+        ("delay_ema", "traffic", "EMA of realised minus predicted, steps"),
+        ("dur_recent", "traffic", "mean of last 10 completions, steps"),
+        ("dur_trend", "traffic", "dur_recent minus long window; > 0 means slowing"),
+        ("deliv_rate", "traffic", "deliveries per step over a 40-step window"),
+        ("local_density", "congestion", "agents within 8 cells ÷ all agents"),
+        ("sin_t", "clock", "sine of diurnal phase"),
+        ("cos_t", "clock", "cosine of diurnal phase"),
+        ("day_frac", "clock", "position through the episode, 0 to 1"),
+        ("dl_soon40", "deadline pressure", "pending tasks due within 40 steps"),
+        ("dl_soon80", "deadline pressure", "pending tasks due within 80 steps"),
+    ]
+    assert len(ROWS) == 24, len(ROWS)
+
+    X_NUM, X_FEAT, X_GRP, X_UNIT, X_RULE, X_LRN = 4.0, 7.5, 24.0, 38.0, 82.5, 92.5
+    HEAD, RH = 14.0, 3.15                      # header baseline, row height
+    MID = HEAD + 3.0                           # rule under the header
+    TOP, BOT = MID + 2.8, MID + 2.8 + 24 * RH  # first row sits clear of it
+
+    fig = plt.figure(figsize=(12.2, 9.0))
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_xlim(0, 100)
+    ax.set_ylim(BOT + 8.0, 0)
+    ax.axis("off")
+
+    # the two availability columns belong together: one tint behind both
+    ax.add_patch(Rectangle((X_RULE - 5.6, HEAD - 3.2), 98.5 - (X_RULE - 5.6),
+                           BOT - HEAD - 0.4, fc="#f2f6fb", ec="none", zorder=1))
+
+    for i, (feat, grp, unit) in enumerate(ROWS):
+        y = TOP + i * RH
+        if i % 2:                              # faint zebra, for scanning 24 rows
+            ax.add_patch(Rectangle((1.5, y - RH * 0.62), 97.0, RH,
+                                   fc="#f6f5f1", ec="none", zorder=0))
+        ax.text(X_NUM, y, str(i + 1), fontsize=8.4, color=INK3, ha="center", va="center",
+                zorder=3)
+        ax.text(X_FEAT, y, feat, fontsize=8.8, color=INK, va="center", zorder=3,
+                fontfamily="monospace")
+        ax.text(X_GRP, y, grp, fontsize=8.6, color=INK2, va="center", zorder=3)
+        ax.text(X_UNIT, y, unit, fontsize=8.6, color=INK2, va="center", zorder=3)
+        for x in (X_RULE, X_LRN):
+            ax.text(x, y, "✓", fontsize=10.5, color=GOOD, ha="center", va="center",
+                    zorder=3, fontweight="bold")
+
+    # ---- header ---------------------------------------------------------------------------------
+    for x, lab, ha in ((X_NUM, "#", "center"), (X_FEAT, "Feature", "left"),
+                       (X_GRP, "Group", "left"), (X_UNIT, "Units", "left"),
+                       (X_RULE, "Rules", "center"), (X_LRN, "Learner", "center")):
+        ax.text(x, HEAD, lab, fontsize=9.4, fontweight="bold", color=INK, ha=ha, va="center",
+                zorder=3)
+
+    # ---- booktabs rules ---------------------------------------------------------------------------
+    for y, lw in ((HEAD - 3.2, 1.6), (MID, 1.0), (BOT - RH * 0.62, 1.6)):
+        ax.plot([1.5, 98.5], [y, y], color=INK, lw=lw, zorder=4, solid_capstyle="butt")
+
+    # ---- title, caption, footnote -----------------------------------------------------------------
+    ax.text(1.5, 3.4, "Table 2  ·  The 24 decision features", fontsize=15,
+            fontweight="bold", color=INK, va="center")
+    ax.text(1.5, 8.2, "The learned dispatcher of §6.5 receives exactly this set, over exactly "
+                      "the same candidate shortlist, at the same decision points, so the\n"
+                      "comparison isolates the selection rule and nothing else. The last two "
+                      "columns are identical all the way down — that is the table's content.",
+            fontsize=9.2, color=INK2, va="center", linespacing=1.55)
+    ax.text(1.5, BOT + 2.6, "Every feature is divided by a fixed scale taken from a champion run "
+                            "before it reaches the network, so no worker needs shared "
+                            "normalisation state.\nOne further scalar, dl_soon160, is computed by "
+                            "the assembler and consumed by neither arm — only by the "
+                            "delay-prediction study of §6.4.",
+            fontsize=8.4, color=INK3, va="center", linespacing=1.55)
+    save(fig, "fig_table2.png")
+
+
 # Keyed by the figure's number in the paper, which numbers by order of first appearance.
 # Fig. 5 is the belief-curve panel, produced by scripts/exp_m5_brier.py, and is not built here.
 FIGS = {"f1": fig_coupled, "f2": fig_realism, "f3": fig_planner, "f4": fig_benchmark,
         "f6": fig_sensing, "f7": fig_ablation, "f8": fig_anticipation, "f9": fig_horizon,
-        "t2": fig_features}
+        "t2": fig_features, "t2tbl": fig_table2}
 FIGS.update({fn.__name__.replace("fig_", ""): fn for fn in list(FIGS.values())})
 
 if __name__ == "__main__":
