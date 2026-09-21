@@ -8119,3 +8119,35 @@ the fix (FIFO -104, ours -76.5); the 2026-09-06 note's "champ moved +13" does no
 We therefore know the fix is not arm-neutral and do NOT know why. PAPER_DRAFT 8.5 should state the
 effect and stop there; the load-bearing-pod explanation must not be added to it. Mechanism is an
 open item, and the env-level keepout is still the prerequisite for any re-measurement.
+
+
+### BAY-POD MECHANISM FOUND (2026-09-20): the "unfairness" was a bug in the fix, not the rule
+
+The 2026-09-06 and earlier 2026-09-20 readings (margin +60.7 -> +82.1) are both artifacts of an
+INCOMPLETE fix. `_removed_shelf_ids` took the bay pods off the grid, but DemandModel.__init__ draws
+the whole exogenous schedule immediately from EVERY shelf, and build() only filtered dm.shelfs
+afterwards. The live-stream regime replays that schedule verbatim, so on the retired floor it kept
+ordering pods that no longer existed. Those orders could never be fulfilled; controllers sent
+robots after them. Wave was never affected: it seeds through _inject, which reads the filtered list.
+
+Fingerprint (24 stream seeds, half-fix vs legacy): deliveries fell for EVERY arm (FIFO 36.8 -> 29.9,
+ours 40.9 -> 37.7) while hit rate, frozen, collisions, stranded were unchanged. FIFO suffered most
+because it walks the queue in arrival order straight into phantom tasks; the funnel's stage 1
+crosses off unreachable tasks. The "load-bearing pod" story was never it -- bay occupancy was 0.
+
+FIX (92350c4): DemandModel(exclude_ids=...) applied BEFORE the schedule is drawn;
+build(retire_bays=True) retires grid and demand together; exp_m5_bench BAYFLOOR switch.
+Legacy verified bit-identical (6/6 runs). Retired floor schedules 0 bay-pod orders (half-fix: 4/58).
+
+FAIRNESS, corrected floor vs legacy, 24 paired stream seeds:
+  fifo  +6.99 (t=+0.15)   champ +1.88 (t=+0.04)   mpc +34.85 (t=+0.73)
+  margin +39.2% -> +43.9%, carried by the mpc arm at t=0.73 -- noise.
+The correct bay rule is NEUTRAL between arms. It ships. PAPER 8.5 is wrong in its reasoning as well
+as its numbers and should be replaced once the rerun lands.
+
+RERUN LAUNCHED on the corrected floor: full m5 bench, 4 arms x 2 regimes x 144 seeds, clean then
+disturbed -> results/m5_bench_retired.csv, results/m5_bench_disturb_retired.csv.
+
+LESSON (third time this project): when a measured effect has a clean story, check the story's
+prediction directly. "FIFO parks pods on bays" predicted nonzero bay occupancy; it was zero, and
+that one number was what broke the case open.
