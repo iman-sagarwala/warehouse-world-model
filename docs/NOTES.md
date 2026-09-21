@@ -8092,3 +8092,30 @@ isolate the mechanism from tuner noise. That is correct protocol, not an oversig
 PERFORMANCE claims vs a baseline -> shipped system; MECHANISM claims -> fixed constants, stated.
 Remaining "champion's ..." references in the paper are all about the rules layer specifically (its
 candidate set, its weights, its deadline tier, its keepout notion) and are correct as written.
+
+
+### BAY-POD RE-CHECK (2026-09-20): margin effect REPRODUCES, stated mechanism DOES NOT
+
+`exp_bayfix_fairness.py`, stream, both floors x both arms, paired. Prompted by noticing that the
+BASE controller (sim_dashboard.py:192) already filters `env._charger_bays` out of its empty-slot
+search -- so the 2026-09-06 claim that "the vendored FIFO has no such notion" needed testing rather
+than assuming. Git cannot date that guard (repo squashed at the open-source release the same day).
+
+8 seeds  -- fifo 470.98 -> 408.30 (-62.7) | mpc 708.54 -> 594.89 (-113.7) | margin +50.4 -> +45.7
+48 seeds -- fifo 526.44 -> 422.44 (-104.0) | mpc 845.98 -> 769.48 (-76.5) | margin +60.7 -> +82.1
+
+The 8-seed read pointed the other way and was small-sample noise; 48 seeds reproduces 2026-09-06
+closely on the quantity that matters (legacy +60.7 vs +62.6 noted; retired +82.1 vs +80.7 noted).
+
+FINDING 1: the DECISION stands. Retiring the bay pods inflates our margin ~21 points and the fix
+must not ship without env-level bay keepout first.
+
+FINDING 2 (new, and it corrects the record): the stated MECHANISM does not reproduce. Bay occupancy
+under `retired` is 0.00 for BOTH arms -- neither FIFO nor the champion parks pods on charger bays,
+because the base controller's own `_charger_bays` filter protects both. So "the pod was load-bearing
+because it hid the bay from FIFO's slot search" is NOT what is happening. Also, both arms lose under
+the fix (FIFO -104, ours -76.5); the 2026-09-06 note's "champ moved +13" does not reproduce.
+
+We therefore know the fix is not arm-neutral and do NOT know why. PAPER_DRAFT 8.5 should state the
+effect and stop there; the load-bearing-pod explanation must not be added to it. Mechanism is an
+open item, and the env-level keepout is still the prerequisite for any re-measurement.
