@@ -1015,11 +1015,91 @@ def fig_table2():
     save(fig, "fig_table2.png")
 
 
+def fig_table3():
+    """Table 3, typeset as an image: every pre-registered criterion and its outcome.
+
+    Same booktabs treatment as Table 2. The one criterion that is not met is the only row given a
+    tint, so the reader finds it without scanning -- the table exists to report it honestly.
+    """
+    from matplotlib.patches import Rectangle
+
+    ROWS = [
+        ("Sensitivity", "≥ 90%", "92.2% per event", True, "¹"),
+        ("Specificity", "≥ 90%", "99.87%", True, "²"),
+        ("Detection latency", "median ≤ 15 steps", "2 steps", True, ""),
+        ("Phantom hard-blocks", "≤ 1 per 1,000 steps", "9.8 per 1,000", False, "³"),
+        ("Collisions", "0", "0", True, ""),
+        ("Strandings", "0", "0", True, ""),
+        ("Inner-loop MAPF success", "≥ 98%", "100%", True, ""),
+        ("Decision latency, five robots", "≤ 1 s", "1.3 ms median", True, ""),
+        ("Ship bar", "≥ 3% or cut, no exceptions", "applied 32 times", True, ""),
+    ]
+
+    X_MET, X_TGT, X_MEAS, X_VER = 2.5, 36.0, 60.0, 85.0
+    HEAD, RH = 16.0, 5.0
+    MID = HEAD + 3.4
+    TOP = MID + 3.6
+    BOT = TOP + len(ROWS) * RH
+
+    fig = plt.figure(figsize=(11.4, 6.6))
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_xlim(0, 100)
+    ax.set_ylim(BOT + 22.0, 0)
+    ax.axis("off")
+
+    for i, (metric, tgt, meas, ok, fn) in enumerate(ROWS):
+        y = TOP + i * RH
+        if not ok:                              # the miss is the one row that must be found
+            ax.add_patch(Rectangle((1.5, y - RH * 0.5), 97.0, RH, fc="#fdecec", ec="none",
+                                   zorder=0))
+        elif i % 2:
+            ax.add_patch(Rectangle((1.5, y - RH * 0.5), 97.0, RH, fc="#f6f5f1", ec="none",
+                                   zorder=0))
+        ax.text(X_MET, y, metric, fontsize=10.4, color=INK, va="center", zorder=3,
+                fontweight="bold" if not ok else "normal")
+        ax.text(X_TGT, y, tgt, fontsize=10.0, color=INK2, va="center", zorder=3)
+        ax.text(X_MEAS, y, meas, fontsize=10.4, color=INK, va="center", zorder=3,
+                fontweight="bold")
+        ax.text(X_VER, y, ("met" if ok else "not met") + (" " + fn if fn else ""),
+                fontsize=10.4, va="center", zorder=3, fontweight="bold",
+                color=GOOD if ok else BAD)
+
+    for x, lab in ((X_MET, "Metric"), (X_TGT, "Pre-registered target"),
+                   (X_MEAS, "Measured"), (X_VER, "Verdict")):
+        ax.text(x, HEAD, lab, fontsize=10.6, fontweight="bold", color=INK, va="center")
+
+    for y, lw in ((HEAD - 3.4, 1.6), (MID, 1.0), (BOT - RH * 0.5, 1.6)):
+        ax.plot([1.5, 98.5], [y, y], color=INK, lw=lw, zorder=4, solid_capstyle="butt")
+
+    ax.text(1.5, 3.6, "Table 3  ·  The pre-registered scorecard", fontsize=15,
+            fontweight="bold", color=INK, va="center")
+    ax.text(1.5, 8.6, "Every success criterion registered before the work began, with its measured "
+                      "outcome. One criterion is not met; the accompanying oracle\nmeasurement "
+                      "establishes that its target was not attainable at this sensing density.",
+            fontsize=9.4, color=INK2, va="center", linespacing=1.55)
+
+    notes = [
+        ("¹", "Recorded as failed for months: per-cell-per-step recall was being compared "
+                   "against an event-level target. Graded on the events the target names, the "
+                   "map passes."),
+        ("²", "Measured on a 3.2% base rate — a map asserting nothing scores 96.8%. The "
+                   "informative number is precision at the router's decision threshold, 95.58%."),
+        ("³", "Bounded, not explained away: a perfect-memory oracle on the identical sight "
+                   "stream scores 9.2. The attainable floor is about nine times the target,\n"
+                   "and the shipped map sits within 7% of it."),
+    ]
+    for k, (mark, text) in enumerate(notes):
+        y = BOT + 3.6 + k * 5.4
+        ax.text(1.5, y, mark, fontsize=9.4, color=INK2, va="top", fontweight="bold")
+        ax.text(3.4, y, text, fontsize=8.8, color=INK2, va="top", linespacing=1.5)
+    save(fig, "fig_table3.png")
+
+
 # Keyed by the figure's number in the paper, which numbers by order of first appearance.
 # Fig. 5 is the belief-curve panel, produced by scripts/exp_m5_brier.py, and is not built here.
 FIGS = {"f1": fig_coupled, "f2": fig_realism, "f3": fig_planner, "f4": fig_benchmark,
         "f6": fig_sensing, "f7": fig_ablation, "f8": fig_anticipation, "f9": fig_horizon,
-        "t2": fig_features, "t2tbl": fig_table2}
+        "t2": fig_features, "t2tbl": fig_table2, "t3tbl": fig_table3}
 FIGS.update({fn.__name__.replace("fig_", ""): fn for fn in list(FIGS.values())})
 
 if __name__ == "__main__":
