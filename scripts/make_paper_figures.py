@@ -1095,11 +1095,144 @@ def fig_table3():
     save(fig, "fig_table3.png")
 
 
+def fig_table1():
+    """Table 1, typeset as an image: every world constant, its correction and its evidence.
+
+    Eighteen rows with prose in two of the columns, so cells wrap and row heights vary with
+    content. Status is a labelled pill in a reserved colour -- never colour alone.
+    """
+    import textwrap
+    from matplotlib.patches import Rectangle, FancyBboxPatch
+
+    ROWS = [
+        ("Cell size", "1 m", "1 m",
+         "Pod ≈ 1×1 m; drive unit (75×60 cm) travels beneath", "verified"),
+        ("Occupancy", "one robot/cell", "one robot/cell",
+         "Follows from cell size and footprint", "verified"),
+        ("Storage density", "31%", "55%",
+         "In-aisle picking runs 40–60%", "corrected"),
+        ("Station count", "10", "3",
+         "~700 picks/hr demanded vs 300–600/hr per station", "corrected"),
+        ("Step duration", "0.67 s", "1.069 s",
+         "Trapezoidal profile, a = 0.8 m/s², v_max = 1.2 m/s; short runs rarely reach cruise",
+         "corrected"),
+        ("Picker load", "0 s", "8 steps",
+         "UR-arm pick-and-place ≈ 5–10 s", "corrected"),
+        ("Station service per item", "0 s", "6 steps",
+         "300–600 picks/hr station rates", "corrected"),
+        ("Order values", "Uniform(1, 15)", "Lognormal (median 8, σ = 1)",
+         "Real values are long-tailed; uniform ties 48.6% of selections", "corrected"),
+        ("Arrival rate", "0.075 (47% util.)", "utilisation-anchored",
+         "A bare rate silently fixes utilisation", "corrected"),
+        ("Deadline slack", "single band",
+         "mixture: std U(80, 200), rush U(25, 60) at 20%, value ×1.6",
+         "Real fulfilment has an expedited tier", "corrected"),
+        ("Demand exogeneity", "drawn from not-in-transit", "pre-drawn from seed",
+         "Policy-dependent demand shared only ~22% of (time, shelf) pairs", "corrected"),
+        ("Diurnal period", "250 steps = “a day”", "day spans episodes (162 seeds = 1 day)",
+         "The two clocks are ~280× apart", "corrected"),
+        ("One-way lanes", "not implemented", "implemented, off by default",
+         "The real rule, but costs 16% at 8 robots on 650 cells", "opt-in"),
+        ("Demand shape", "—",
+         "zipf_s = 1.1, n_hot = 3, Hawkes (p = .006, jump .4, decay .90)",
+         "Mechanisms cited; parameter values ours", "declared"),
+        ("Battery", "none", "720 Wh, ~6 h, compressed via steps_per_charge",
+         "Robotnik AMR spec; compression is uniform scaling of an exact quantity", "declared"),
+        ("Blockage rate", "none", "0.002/step, swept to 0.037",
+         "No public figure exists; only anchor is a ~20-year-old field-robot MTBF of ~8 h",
+         "assumed"),
+        ("Amnesty rate", "none", "3.7% per item handled",
+         "Published per-stow-attempt rate; one roll per item, not per trip", "declared"),
+        ("Amnesty duration", "none", "U(15, 45) steps",
+         "That source reports no recovery times", "assumed"),
+    ]
+    assert len(ROWS) == 18, len(ROWS)
+
+    STATUS = {"verified": GOOD, "corrected": C1, "opt-in": C4,
+              "declared": INK2, "assumed": BAD}
+    TINT = {"verified": "#eef7ee", "corrected": "#eef4fb", "opt-in": "#fdf5e6",
+            "declared": "#f2f2f0", "assumed": "#fdecec"}
+
+    X_NUM, X_CON, X_OLD, X_NEW, X_WHY, X_STA = 2.0, 4.6, 17.0, 30.0, 49.0, 88.5
+    W_CON, W_OLD, W_NEW, W_WHY = 28, 26, 44, 88     # wrap widths, characters
+    LH = 1.75                                        # one text line, in y units
+
+    fig = plt.figure(figsize=(15.2, 11.6))
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_xlim(0, 100)
+    ax.axis("off")
+
+    HEAD = 16.0
+    MID = HEAD + 3.2
+    y = MID + 3.4
+    laid = []
+    for con, old, new, why, sta in ROWS:
+        cells = [textwrap.wrap(con, W_CON), textwrap.wrap(old, W_OLD),
+                 textwrap.wrap(new, W_NEW), textwrap.wrap(why, W_WHY)]
+        h = max(len(c) for c in cells) * LH + 1.9
+        laid.append((y, h, cells, sta))
+        y += h
+    BOT = y
+
+    ax.set_ylim(BOT + 17.0, 0)
+
+    for i, (ry, h, cells, sta) in enumerate(laid):
+        ax.add_patch(Rectangle((1.5, ry - 0.9), 97.0, h, ec="none", zorder=0,
+                               fc=TINT[sta] if sta in ("opt-in", "assumed") else
+                               ("#f7f6f2" if i % 2 else SURFACE)))
+        ax.text(X_NUM, ry + 0.4, str(i + 1), fontsize=8.6, color=INK3, ha="center", va="top",
+                zorder=3)
+        for x, lines, fs, col, bold in ((X_CON, cells[0], 9.2, INK, True),
+                                        (X_OLD, cells[1], 8.8, INK2, False),
+                                        (X_NEW, cells[2], 8.8, INK, False),
+                                        (X_WHY, cells[3], 8.6, INK2, False)):
+            ax.text(x, ry + 0.4, "\n".join(lines), fontsize=fs, color=col, va="top",
+                    zorder=3, linespacing=1.5,
+                    fontweight="bold" if bold else "normal")
+        ax.add_patch(FancyBboxPatch((X_STA, ry - 0.1), 9.0, 2.5,
+                                    boxstyle="round,pad=0.0,rounding_size=0.5",
+                                    fc=SURFACE, ec=STATUS[sta], lw=1.2, zorder=3))
+        ax.text(X_STA + 4.5, ry + 1.15, sta, fontsize=8.4, color=STATUS[sta], ha="center",
+                va="center", fontweight="bold", zorder=4)
+
+    for x, lab in ((X_NUM, "#"), (X_CON, "Constant"), (X_OLD, "As found"),
+                   (X_NEW, "Corrected to"), (X_WHY, "Source or justification"),
+                   (X_STA, "Status")):
+        ax.text(x, HEAD, lab, fontsize=9.8, fontweight="bold", color=INK,
+                ha="center" if x == X_NUM else "left", va="center")
+
+    for yy, lw in ((HEAD - 3.4, 1.6), (MID, 1.0), (BOT - 0.9, 1.6)):
+        ax.plot([1.5, 98.5], [yy, yy], color=INK, lw=lw, zorder=5, solid_capstyle="butt")
+
+    ax.text(1.5, 3.8, "Table 1  ·  Every world constant, corrected or declared",
+            fontsize=15.5, fontweight="bold", color=INK, va="center")
+    ax.text(1.5, 9.0, "The audit is only auditable if the constants are on the page. Two constants "
+                      "have no public figure behind them at all and two more are operating-point\n"
+                      "choices; all four are declared rather than calibrated, and swept rather "
+                      "than tuned.",
+            fontsize=9.4, color=INK2, va="center", linespacing=1.55)
+
+    defs = [("verified", "checked against a source, and already right"),
+            ("corrected", "changed, with the source that forced the change"),
+            ("opt-in", "implemented and measured, off by default"),
+            ("declared", "mechanism cited, magnitude ours"),
+            ("assumed", "no public figure exists; stated and swept, never fitted")]
+    for k, (name, meaning) in enumerate(defs):
+        yy = BOT + 3.4 + k * 2.6
+        ax.add_patch(FancyBboxPatch((1.5, yy - 1.1), 9.0, 2.3,
+                                    boxstyle="round,pad=0.0,rounding_size=0.5",
+                                    fc=SURFACE, ec=STATUS[name], lw=1.2, zorder=3))
+        ax.text(6.0, yy, name, fontsize=8.4, color=STATUS[name], ha="center", va="center",
+                fontweight="bold", zorder=4)
+        ax.text(12.0, yy, meaning, fontsize=8.8, color=INK2, va="center")
+    save(fig, "fig_table1.png")
+
+
 # Keyed by the figure's number in the paper, which numbers by order of first appearance.
 # Fig. 5 is the belief-curve panel, produced by scripts/exp_m5_brier.py, and is not built here.
 FIGS = {"f1": fig_coupled, "f2": fig_realism, "f3": fig_planner, "f4": fig_benchmark,
         "f6": fig_sensing, "f7": fig_ablation, "f8": fig_anticipation, "f9": fig_horizon,
-        "t2": fig_features, "t2tbl": fig_table2, "t3tbl": fig_table3}
+        "t2": fig_features, "t2tbl": fig_table2, "t3tbl": fig_table3, "t1tbl": fig_table1}
 FIGS.update({fn.__name__.replace("fig_", ""): fn for fn in list(FIGS.values())})
 
 if __name__ == "__main__":
