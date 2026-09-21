@@ -1228,11 +1228,99 @@ def fig_table1():
     save(fig, "fig_table1.png")
 
 
+def fig_tablebench():
+    """The main benchmark as a table image: four conditions, four arms, margin over the vendored
+    dispatcher.
+
+    Numbers are read from the same CSVs fig_benchmark plots, so the table and the chart cannot
+    disagree. Only one of the two should appear in the paper.
+    """
+    from matplotlib.patches import Rectangle
+
+    def pick(*names):
+        for n in names:
+            p_ = os.path.join(OUT, n)
+            if not os.path.exists(p_):
+                continue
+            m, raw = bench_means(p_)
+            want = {(a_, r_) for a_ in ("fifo", "rush", "champ", "mpc")
+                    for r_ in ("wave", "stream")}
+            if want <= set(raw) and min(len(v) for v in raw.values()) >= 144:
+                return p_
+        raise IOError(names[0])
+
+    clean, _ = bench_means(pick("m5_bench_current.csv", "m5_bench.csv"))
+    dist, _ = bench_means(pick("m5_bench_disturb_current.csv", "m5_bench_disturb.csv"))
+
+    CONDS = [("Clean, wave days", clean, "wave"), ("Clean, live-stream days", clean, "stream"),
+             ("Disturbed, wave days", dist, "wave"),
+             ("Disturbed, live-stream days", dist, "stream")]
+    ARMS = [("fifo", "FIFO"), ("rush", "Rush"), ("champ", "Champion"), ("mpc", "Shipped")]
+
+    X_CON = 2.5
+    XS = {"fifo": 36.0, "rush": 47.0, "champ": 59.5, "mpc": 73.0}
+    X_MAR = 89.0
+    HEAD, RH = 16.0, 5.6
+    MID = HEAD + 3.4
+    TOP = MID + 4.0
+    BOT = TOP + len(CONDS) * RH
+
+    fig = plt.figure(figsize=(12.0, 5.6))
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_xlim(0, 100)
+    ax.set_ylim(BOT + 14.0, 0)
+    ax.axis("off")
+
+    # the shipped column is the one the paper leads on: tint it down the whole table
+    ax.add_patch(Rectangle((XS["mpc"] - 5.5, HEAD - 3.4), 12.0,
+                           (BOT - RH * 0.5) - (HEAD - 3.4),
+                           fc="#fdf5e6", ec="none", zorder=0))
+
+    for i, (name, src, regime) in enumerate(CONDS):
+        y = TOP + i * RH
+        if i % 2:
+            ax.add_patch(Rectangle((1.5, y - RH * 0.5), 97.0, RH, fc="#f6f5f1", ec="none",
+                                   zorder=0))
+        ax.text(X_CON, y, name, fontsize=10.2, color=INK, va="center", zorder=3)
+        for key, _lab in ARMS:
+            v = src[(key, regime)]
+            ax.text(XS[key], y, "%.0f" % v, fontsize=10.6, va="center", ha="center", zorder=3,
+                    color=INK if key == "mpc" else INK2,
+                    fontweight="bold" if key == "mpc" else "normal")
+        f, c = src[("fifo", regime)], src[("mpc", regime)]
+        ax.text(X_MAR, y, "+%.1f%%" % (100 * (c - f) / f), fontsize=11.2, color=GOOD,
+                va="center", ha="center", fontweight="bold", zorder=3)
+
+    ax.text(X_CON, HEAD, "Condition", fontsize=10.0, fontweight="bold", color=INK, va="center")
+    for key, lab in ARMS:
+        ax.text(XS[key], HEAD, lab, fontsize=10.0, fontweight="bold", va="center", ha="center",
+                color=INK if key == "mpc" else INK2)
+    ax.text(X_MAR, HEAD, "Margin vs FIFO", fontsize=10.0, fontweight="bold", color=INK,
+            va="center", ha="center")
+
+    for yy, lw in ((HEAD - 3.4, 1.6), (MID, 1.0), (BOT - RH * 0.5, 1.6)):
+        ax.plot([1.5, 98.5], [yy, yy], color=INK, lw=lw, zorder=5, solid_capstyle="butt")
+
+    ax.text(1.5, 4.0, "The main benchmark", fontsize=15.5, fontweight="bold", color=INK,
+            va="center")
+    ax.text(1.5, 9.2, "On-time value per day against the simulator's own dispatcher. 144 paired "
+                      "days per cell; the baselines run with free energy, so the\nshipped system "
+                      "pays a real battery cost and still wins by these margins.",
+            fontsize=9.4, color=INK2, va="center", linespacing=1.55)
+
+    ax.text(1.5, BOT + 3.4, "Shipped = the rule stack plus the self-tuner. The two right-hand arms "
+                            "tie on disturbed wave days and differ by under 1% on the other\nthree "
+                            "cells: the tuner earns its place by removing the need to choose knob "
+                            "settings per regime, not by beating a well-chosen constant.",
+            fontsize=8.8, color=INK3, va="top", linespacing=1.55)
+    save(fig, "fig_tablebench.png")
+
+
 # Keyed by the figure's number in the paper, which numbers by order of first appearance.
 # Fig. 5 is the belief-curve panel, produced by scripts/exp_m5_brier.py, and is not built here.
 FIGS = {"f1": fig_coupled, "f2": fig_realism, "f3": fig_planner, "f4": fig_benchmark,
         "f6": fig_sensing, "f7": fig_ablation, "f8": fig_anticipation, "f9": fig_horizon,
-        "t2": fig_features, "t2tbl": fig_table2, "t3tbl": fig_table3, "t1tbl": fig_table1}
+        "t2": fig_features, "t2tbl": fig_table2, "t3tbl": fig_table3, "t1tbl": fig_table1, "tbench": fig_tablebench}
 FIGS.update({fn.__name__.replace("fig_", ""): fn for fn in list(FIGS.values())})
 
 if __name__ == "__main__":
