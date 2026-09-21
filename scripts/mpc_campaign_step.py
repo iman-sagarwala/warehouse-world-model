@@ -18,8 +18,9 @@ import sys
 from collections import defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CSV = os.path.join(ROOT, "results", "mpc_campaign.csv")
-STATUS = os.path.join(ROOT, "results", "mpc_status.md")
+# overridable so the campaign can be re-run on another floor without touching the published log
+CSV = os.environ.get("CAMPAIGN_CSV", os.path.join(ROOT, "results", "mpc_campaign.csv"))
+STATUS = os.environ.get("CAMPAIGN_STATUS", os.path.join(ROOT, "results", "mpc_status.md"))
 PY = os.path.join(ROOT, ".venv", "Scripts", "python.exe")
 
 # disjoint 36-seed blocks (mixed off-peak/peak halves); block 0 was the first sweep

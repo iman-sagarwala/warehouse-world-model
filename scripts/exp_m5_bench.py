@@ -33,6 +33,27 @@ DISTURB = os.environ.get("DISTURB") == "1"      # spills on: the roadmap's head-
 # env._removed_shelf_ids. Kept as a switch so the fairness check and the rerun share one harness.
 BAYFLOOR = os.environ.get("BAYFLOOR", "legacy")
 assert BAYFLOOR in ("legacy", "retired"), BAYFLOOR
+# FORESIGHT (2026-09-20). The value-of-perfect-demand-information arm, ported onto the corrected
+# world. The original measurements (exp_true_vopi.py -3.4%, exp_foresight_window.py) ran 2026-08-01
+# on the PRE-AUDIT map -- 31% storage, uniform values, no service time -- which is the world the
+# paper says it excludes. Here the champ/mpc controllers' rollout is handed the GENUINE upcoming
+# orders, W steps ahead: 0 = none (the control), 999 = everything to the rollout horizon. Running it
+# through this harness means foresight is measured on exactly the code the headline is.
+FORESIGHT = int(os.environ.get("FORESIGHT", "0"))
+
+
+class _ForesightMixin:
+    """Hands the rollout the TRUE upcoming orders in (now, min(horizon, now + W)] instead of []."""
+    FORESIGHT_W = 0
+
+    def _future_arrivals(self, now, horizon):
+        dm = getattr(self.env, "demand_model", None)
+        if self.FORESIGHT_W <= 0 or dm is None:
+            return super()._future_arrivals(now, horizon)
+        from congestion_policies import _FakeOrder
+        cut = horizon if self.FORESIGHT_W >= 999 else min(horizon, now + self.FORESIGHT_W)
+        return [(t_, _FakeOrder(s.x, s.y, v, dl, -1000 - i))
+                for i, (t_, s, v, dl) in enumerate(dm.future_arrivals(now, cut))]
 OUT = os.environ.get("OUT", "results/m5_bench.csv")
 FIELDS = ["arm", "regime", "seed", "onv", "delivered", "hit_rate", "tard_mean", "tard_p95",
           "energy_per_task", "stranded", "frozen", "collisions"]
@@ -72,6 +93,12 @@ def one(job):
         bat = None
     elif arm == "mpc":
         M.apply_setting(ctrl, M.DEFAULT)
+    if FORESIGHT and arm in ("champ", "mpc"):
+        # a runtime subclass, not a patched method: the tuner deep-copies ctrl every 50 steps, and a
+        # class survives deepcopy where an instance-bound method would not
+        _base = type(ctrl)
+        ctrl.__class__ = type("Foresight" + _base.__name__, (_ForesightMixin, _base),
+                              {"FORESIGHT_W": FORESIGHT})
 
     cur = M.DEFAULT
     stats = {mv: [0, 0.0] for mv in M.moves_for(env)}

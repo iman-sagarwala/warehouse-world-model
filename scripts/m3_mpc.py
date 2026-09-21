@@ -31,8 +31,12 @@ TIMING = os.environ.get("TIMING", "0") == "1"
 # mixed halves: window_index=seed makes 73+ the peak half -- batches must see both regimes
 SEEDS = ([int(x) for x in os.environ["SEEDLIST"].split(",")] if os.environ.get("SEEDLIST")
          else list(range(1, 19)) + list(range(73, 91)))
-CSV = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                   "results", "mpc_campaign.csv")
+CSV = os.environ.get("CAMPAIGN_CSV", os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "results", "mpc_campaign.csv"))
+# The replay log is derived from CSV by replacing its FILENAME, so an override must keep the name
+# `mpc_campaign.csv` and change only the directory (e.g. results/retired/mpc_campaign.csv); a renamed
+# file would make the replacement miss and send replay rows into the campaign log itself.
+assert os.path.basename(CSV) == "mpc_campaign.csv", CSV
 
 _size, _agvs, _pk = CONFIG.split("-")
 # size may carry an explicit geometry suffix ("largedual"); bare sizes get dense geometry
