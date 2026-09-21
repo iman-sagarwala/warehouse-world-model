@@ -92,6 +92,25 @@ def setup_bays(env, n=None):
     return bays
 
 
+def bay_exclusions(env, force=None):
+    """Retire the charger-bay pods from the world, when the corrected floor is requested.
+
+    Returns the shelf-id set to pass as DemandModel(exclude_ids=...), or None for the legacy
+    floor. BOTH halves are required: the pods must leave the grid (`_removed_shelf_ids`, honoured
+    by _recalc_grid) AND the demand universe BEFORE DemandModel draws its schedule. Doing only the
+    first half -- the 2026-09-06 fix -- leaves the live-stream schedule ordering pods that no longer
+    exist, which is what produced the spurious "unfairness" (NOTES 2026-09-20).
+
+    `force=None` reads WWM_RETIRE_BAYS=1 from the environment, so every experiment that builds a
+    world can be moved onto the corrected floor without editing it. Call AFTER setup_bays().
+    """
+    on = force if force is not None else os.environ.get("WWM_RETIRE_BAYS") == "1"
+    if not on:
+        return None
+    env._removed_shelf_ids = set(env._charger_bay_ids)
+    return set(env._charger_bay_ids)
+
+
 def setup_spare_slots(env, frac=0.0):
     """Leave a fraction of storage slots EMPTY, so the floor has somewhere to put a pod.
 

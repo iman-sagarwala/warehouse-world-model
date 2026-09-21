@@ -40,11 +40,10 @@ def build(config, seed, stress=False, stream=False, retire_bays=False):
     # bay pods leave the grid (honoured by _recalc_grid) AND leave the demand universe before the
     # schedule is drawn. Doing only the first half dispatches robots after pods that are gone.
     # Default False keeps the published floor bit-identical.
-    if retire_bays:
-        env._removed_shelf_ids = set(env._charger_bay_ids)
+    _excl = m3b.bay_exclusions(env, force=(True if retire_bays else None))
     dm = DemandModel(env, seed=seed, exogenous=True, horizon=500, window_index=seed,
                      n_windows=162, value_dist="lognormal", value_sigma=1.0, value_hi=200.0,
-                     exclude_ids=(set(env._charger_bay_ids) if retire_bays else None))
+                     exclude_ids=_excl)
     dm.shelfs = [s for s in dm.shelfs if s.id not in env._charger_bay_ids]
     env.demand_model = dm
     n = dm.warm_start_n()

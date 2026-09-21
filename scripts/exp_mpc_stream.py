@@ -47,7 +47,8 @@ def one(job):
     env.request_queue = []
     m3b.setup_bays(env)
     dm = DemandModel(env, seed=seed, exogenous=True, horizon=500, window_index=seed,
-                     n_windows=162, value_dist="lognormal", value_sigma=1.0, value_hi=200.0)
+                     n_windows=162, value_dist="lognormal", value_sigma=1.0, value_hi=200.0,
+                     exclude_ids=m3b.bay_exclusions(env))    # WWM_RETIRE_BAYS=1 -> corrected floor
     dm.shelfs = [s for s in dm.shelfs if s.id not in env._charger_bay_ids]
     env.demand_model = dm
     n = dm.warm_start_n()
