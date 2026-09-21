@@ -27,6 +27,12 @@ ARMS = os.environ.get("ARMS", "fifo,rush,champ,mpc").split(",")
 REGIMES = os.environ.get("REGIMES", "wave,stream").split(",")
 CONFIG = os.environ.get("CONFIG", "large-8-6")
 DISTURB = os.environ.get("DISTURB") == "1"      # spills on: the roadmap's head-to-head condition
+# BAY FLOOR (2026-09-20). `legacy` = the floor every published number was measured on: setup_bays
+# strips the pods from the charger bays and _recalc_grid puts them straight back, so the
+# 2026-08-14 "charger cells have no shelf" rule is cosmetic. `retired` honours the strip via
+# env._removed_shelf_ids. Kept as a switch so the fairness check and the rerun share one harness.
+BAYFLOOR = os.environ.get("BAYFLOOR", "legacy")
+assert BAYFLOOR in ("legacy", "retired"), BAYFLOOR
 OUT = os.environ.get("OUT", "results/m5_bench.csv")
 FIELDS = ["arm", "regime", "seed", "onv", "delivered", "hit_rate", "tard_mean", "tard_p95",
           "energy_per_task", "stranded", "frozen", "collisions"]
@@ -39,7 +45,8 @@ def one(job):
     import m3_mpc as M
     os.environ["M3SPC"] = "1500"
     stream = (regime == "stream")
-    env, ctrl = build(CONFIG, seed, stream=stream)     # champion stack + battery + bays
+    env, ctrl = build(CONFIG, seed, stream=stream,     # champion stack + battery + bays
+                      retire_bays=(BAYFLOOR == "retired"))
     bat = getattr(ctrl, "battery", None)
     if DISTURB:
         # the roadmap's head-to-head condition: "target +10% UNDER DISTURBANCES". Same spill

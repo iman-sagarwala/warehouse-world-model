@@ -48,7 +48,8 @@ class DemandModel:
                  slotting="velocity", slot_jitter=6.0, exogenous=False, horizon=500,
                  window_index=None, n_windows=144, day_steps=72_000,
                  utilisation=None, task_steps=50,
-                 value_dist='uniform', value_median=8.0, value_sigma=1.0, drift=None):
+                 value_dist='uniform', value_median=8.0, value_sigma=1.0, drift=None,
+                 exclude_ids=None):
         # TIMESCALE FIX (2026-08-06). The old default `period=250` claimed one DAY = 250 steps, i.e.
         # ~5.8 min per step. But a step is ONE CELL of robot travel, and the Robotnik grounding
         # (RB-KAIROS+ 1.5 m/s over 1 m cells, ~62 s per measured 50-step task) puts a step at ~1.2 s.
@@ -82,7 +83,14 @@ class DemandModel:
         self.phase = (2.0 * math.pi * (window_index % n_windows) / n_windows
                       if window_index is not None else 0.0)
         self.rng = np.random.RandomState(seed)
-        self.shelfs = list(env.shelfs)
+        # EXCLUDE (2026-09-20). Shelves that are not on the floor must be removed HERE, before the
+        # exogenous schedule is drawn below. Filtering `dm.shelfs` after construction -- which is
+        # what build() did -- is too late for the live-stream regime: `_build_schedule` has already
+        # named those shelves, and the stream replays that schedule verbatim. With the charger-bay
+        # pods retired from the grid, orders naming them could never be fulfilled, and robots were
+        # dispatched after pods that did not exist. None/empty -> the historical behaviour, bit for bit.
+        self.shelfs = ([s for s in env.shelfs if s.id not in exclude_ids] if exclude_ids
+                       else list(env.shelfs))
         n = len(self.shelfs)
         # ZIPF popularity over shelves (random rank), then boost a few spatial HOT clusters so popular
         # SKUs are spatially correlated (hot zones), not scattered.
