@@ -1316,11 +1316,111 @@ def fig_tablebench():
     save(fig, "fig_tablebench.png")
 
 
+def fig_arms():
+    """The five arms, as a table image, with what is held constant across them.
+
+    Descriptions are read off the implementations rather than from memory: FIFOController and its
+    `_task_order` in scripts/sim_dashboard.py, RushValueController in scripts/sim_priority.py, the
+    champion stack in scripts/congestion_policies.py, the tuner in scripts/m3_mpc.py, and the
+    learner in scripts/marl_dispatch.py.
+    """
+    import textwrap
+    from matplotlib.patches import Rectangle, FancyBboxPatch
+
+    ROWS = [
+        ("fifo", "baseline", INK2,
+         "The simulator's own vendored dispatcher, unmodified. Task-centric: it walks the request "
+         "queue in arrival order and hands each task to whichever free robot has the shortest path "
+         "to it. Deadlines and values are not consulted at any point.",
+         "scripts/sim_dashboard.py"),
+        ("rush", "baseline", INK2,
+         "A value-priority heuristic with lateness-decay ordering. Makeable tasks come first by "
+         "value, deadline breaking ties, so on-time work is never displaced; already-doomed tasks "
+         "are then reordered by value decayed per step overdue, so a barely-late valuable task is "
+         "rushed and a hopeless one is skipped. No rollout.",
+         "scripts/sim_priority.py"),
+        ("champ", "ours", C3,
+         "The full rule stack — the seven-step funnel including the stage-6 rollout — with "
+         "the self-tuner ablated. Its nine knobs are held at the constants chosen for the dense "
+         "8-AGV map, so it cannot adapt them within an episode.",
+         "scripts/congestion_policies.py"),
+        ("mpc", "shipped", C4,
+         "The shipped system: the same rule stack with the self-tuner active, re-choosing its own "
+         "knobs every 50 steps by forward simulation. Every headline number in this paper is "
+         "measured on this arm.",
+         "scripts/m3_mpc.py"),
+        ("marl", "learned", C1,
+         "A policy-gradient dispatcher, MLP(24→64→64→1), trained by REINFORCE over 960 "
+         "episodes on seeds 1–96 and evaluated greedily on 97–144. It scores the identical "
+         "candidate shortlist on the identical 24 features, in the same selection slot. Only the "
+         "choice is learned.",
+         "scripts/marl_dispatch.py"),
+    ]
+
+    X_ARM, X_KIND, X_DESC, X_SRC = 2.5, 13.0, 25.0, 79.5
+    LH = 2.15
+
+    fig = plt.figure(figsize=(13.6, 7.4))
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_xlim(0, 100)
+    ax.axis("off")
+
+    HEAD = 17.0
+    MID = HEAD + 3.6
+    y = MID + 4.2
+    laid = []
+    for arm, kind, col, desc, src in ROWS:
+        lines = textwrap.wrap(desc, 74)
+        h = len(lines) * LH + 3.2
+        laid.append((y, h, arm, kind, col, lines, src))
+        y += h
+    BOT = y
+    ax.set_ylim(BOT + 13.0, 0)
+
+    for i, (ry, h, arm, kind, col, lines, src) in enumerate(laid):
+        ax.add_patch(Rectangle((1.5, ry - 1.4), 97.0, h, ec="none", zorder=0,
+                               fc="#fdf5e6" if arm == "mpc" else
+                               ("#f7f6f2" if i % 2 else SURFACE)))
+        ax.text(X_ARM, ry, arm, fontsize=11.2, color=INK, va="top", zorder=3,
+                fontfamily="monospace", fontweight="bold")
+        ax.add_patch(FancyBboxPatch((X_KIND, ry - 0.5), 8.6, 2.8,
+                                    boxstyle="round,pad=0.0,rounding_size=0.5",
+                                    fc=SURFACE, ec=col, lw=1.2, zorder=3))
+        ax.text(X_KIND + 4.3, ry + 0.9, kind, fontsize=8.4, color=col, ha="center",
+                va="center", fontweight="bold", zorder=4)
+        ax.text(X_DESC, ry, "\n".join(lines), fontsize=9.2, color=INK2, va="top",
+                zorder=3, linespacing=1.55)
+        ax.text(X_SRC, ry, src, fontsize=8.2, color=INK3, va="top", zorder=3,
+                fontfamily="monospace")
+
+    for x, lab in ((X_ARM, "Arm"), (X_KIND, "Kind"), (X_DESC, "What it is"),
+                   (X_SRC, "Defined in")):
+        ax.text(x, HEAD, lab, fontsize=10.0, fontweight="bold", color=INK, va="center")
+
+    for yy, lw in ((HEAD - 3.6, 1.6), (MID, 1.0), (BOT - 1.4, 1.6)):
+        ax.plot([1.5, 98.5], [yy, yy], color=INK, lw=lw, zorder=5, solid_capstyle="butt")
+
+    ax.text(1.5, 4.0, "The five arms", fontsize=15.5, fontweight="bold", color=INK, va="center")
+    ax.text(1.5, 9.4, "Routing, picker sequencing, the battery layer and the collision referee are "
+                      "identical across every arm; only the rule that chooses which task a free\n"
+                      "robot takes differs. Every comparison is paired by seed, so both arms of a "
+                      "comparison face the identical arrival schedule.",
+            fontsize=9.4, color=INK2, va="center", linespacing=1.55)
+
+    ax.text(1.5, BOT + 2.4, "Two handicaps run against us, both deliberate. fifo and rush are "
+                            "measured with free energy — no battery constraint at all — while "
+                            "champ, mpc and marl\npay the real one. And marl is given the champion's "
+                            "own candidate shortlist rather than the raw task set, which is the "
+                            "strongest form of the learner we could build.",
+            fontsize=8.8, color=INK3, va="top", linespacing=1.55)
+    save(fig, "fig_arms.png")
+
+
 # Keyed by the figure's number in the paper, which numbers by order of first appearance.
 # Fig. 5 is the belief-curve panel, produced by scripts/exp_m5_brier.py, and is not built here.
 FIGS = {"f1": fig_coupled, "f2": fig_realism, "f3": fig_planner, "f4": fig_benchmark,
         "f6": fig_sensing, "f7": fig_ablation, "f8": fig_anticipation, "f9": fig_horizon,
-        "t2": fig_features, "t2tbl": fig_table2, "t3tbl": fig_table3, "t1tbl": fig_table1, "tbench": fig_tablebench}
+        "t2": fig_features, "t2tbl": fig_table2, "t3tbl": fig_table3, "t1tbl": fig_table1, "tbench": fig_tablebench, "arms": fig_arms}
 FIGS.update({fn.__name__.replace("fig_", ""): fn for fn in list(FIGS.values())})
 
 if __name__ == "__main__":
