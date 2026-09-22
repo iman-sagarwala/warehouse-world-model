@@ -22,6 +22,10 @@ S144=$(seq -s, 1 144)
 log() { echo "[$(date '+%m-%d %H:%M')] $*" >> "$L/queue.log"; }
 step() {
   local name=$1; shift
+  # restartable: a step that already finished cleanly is not run again
+  if grep -q "END   $name rc=0" "$L/queue.log" 2>/dev/null; then
+    log "SKIP  $name (already done)"; return
+  fi
   log "START $name"
   "$@" > "$L/$name.log" 2>&1
   log "END   $name rc=$?"
