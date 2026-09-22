@@ -55,8 +55,12 @@ class _ForesightMixin:
         return [(t_, _FakeOrder(s.x, s.y, v, dl, -1000 - i))
                 for i, (t_, s, v, dl) in enumerate(dm.future_arrivals(now, cut))]
 OUT = os.environ.get("OUT", "results/m5_bench.csv")
+# `collisions` is MEASURED here (same-type agents sharing a cell after a step). It used to read
+# env._collisions, an attribute that never existed, so every row silently recorded 0 (NOTES
+# 2026-08-24). `referee_saves` counts the collisions the referee's final vertex guard prevented
+# (warehouse.py, 2026-09-21); a row with 0 saves is bit-identical to a pre-guard run.
 FIELDS = ["arm", "regime", "seed", "onv", "delivered", "hit_rate", "tard_mean", "tard_p95",
-          "energy_per_task", "stranded", "frozen", "collisions"]
+          "energy_per_task", "stranded", "frozen", "collisions", "referee_saves"]
 
 
 def one(job):
@@ -108,6 +112,7 @@ def one(job):
     lateness = []
     n_orders_done = 0
     hist = []                     # (pos, carrying) per agent, last 100 steps -> FROZEN audit
+    collisions = 0                # same-type co-location, measured every step
     for t in range(STEPS):
         if stream:
             dm.step(env, t)
@@ -136,6 +141,12 @@ def one(job):
                 else:
                     lateness.append(late)
         delivered += len(getattr(env, "deliveries_this_step", []))
+        _occ = set()
+        for _a in env.agents:     # an AGV and a picker sharing a cell is the rendezvous, and legal
+            _k = ((_a.x, _a.y), _a.type)
+            if _k in _occ:
+                collisions += 1
+            _occ.add(_k)
         if t >= STEPS - 100:      # frozen audit window: carrying a pod and never moving
             hist.append([((a.x, a.y), getattr(a, "carrying_shelf", None) is not None)
                          for a in env.agents])
@@ -158,7 +169,7 @@ def one(job):
                 tard_p95=(sorted(lateness)[int(0.95 * (len(lateness) - 1))] if lateness else 0),
                 energy_per_task=(round(energy, 5) if energy == energy else ""),
                 stranded=stranded, frozen=frozen,
-                collisions=int(getattr(env, "_collisions", 0)))
+                collisions=collisions, referee_saves=int(getattr(env, "_vertex_guard_hits", 0)))
 
 
 def load_done():

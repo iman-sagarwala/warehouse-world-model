@@ -1705,6 +1705,33 @@ class Warehouse(gym.Env):
         failed_agents = set(agent_list) - commited_agents
         for agent in failed_agents:
             agent.req_action = Action.NOOP
+        # FINAL VERTEX GUARD (2026-09-21). The pairwise "both moving into the same empty cell" rule
+        # above is gated on BOTH agents having fixing_clash == 0. That counter is a cooldown to stop a
+        # just-resolved pair re-clashing -- but because it gates the rule, an agent still inside ANY
+        # earlier clash's cooldown could drive into a cell another agent was entering on the same
+        # tick, and neither was stopped. Measured: seed 6, t=352, two AGVs into (8,12), one with
+        # fixing_clash=3. So a cooldown meant for re-planning was switching off collision prevention.
+        #
+        # This guard runs after every other decision and fires ONLY when two same-type agents would
+        # occupy one cell after the step (an AGV and a picker sharing a cell is the rendezvous, and
+        # legal). It never fires in an episode that would not otherwise have collided, so every such
+        # episode is bit-identical to before; only a colliding episode changes, from the collision on.
+        # A yielding agent becomes stationary on its own cell, which can clash with a third agent
+        # entering that cell, so it repeats to a fixed point. `_vertex_guard_hits` counts how often
+        # the old referee would have let a collision through.
+        _stuck = True
+        while _stuck:
+            _stuck = False
+            _owner = {}
+            # stationary agents first: they cannot yield, so they own their cells
+            for _ag in sorted(self.agents, key=lambda a: (a.req_action == Action.FORWARD, a.id)):
+                _key = (_ag.req_location(self.grid_size), _ag.type)
+                if _key not in _owner:
+                    _owner[_key] = _ag
+                elif _ag.req_action == Action.FORWARD:
+                    _ag.req_action = Action.NOOP
+                    self._vertex_guard_hits = getattr(self, "_vertex_guard_hits", 0) + 1
+                    _stuck = True
         return clashes
 
     def resolve_stuck_agents(self) -> None:
@@ -1967,6 +1994,7 @@ class Warehouse(gym.Env):
 
         # Pods retired from the world; repopulated by setup_bays / setup_spare_slots after reset.
         self._removed_shelf_ids = set()
+        self._vertex_guard_hits = 0        # collisions the referee would have let through (see guard)
 
         # Make the shelfs
         self.shelfs = [
