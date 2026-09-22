@@ -8151,3 +8151,35 @@ disturbed -> results/m5_bench_retired.csv, results/m5_bench_disturb_retired.csv.
 LESSON (third time this project): when a measured effect has a clean story, check the story's
 prediction directly. "FIFO parks pods on bays" predicted nonzero bay occupancy; it was zero, and
 that one number was what broke the case open.
+
+
+### REFEREE HOLE (2026-09-21): a clash cooldown was switching off collision prevention
+
+The corrected-floor safety rerun reported 1 vertex collision for champ and 1 for mpc (legacy: 0).
+Both on seed 6 (wave, spills), identical rows -- the tuner never adopted a change there. Replay:
+t=352, AGV 5 (carrying) stepping down from (8,13) into its return slot (8,12) while AGV 2 (empty)
+stepped left from (9,12) into the same cell. Not a bay, not a spill: an ordinary storage cell.
+
+CAUSE: resolve_move_conflict's "both moving into the same empty cell" rule only fires when BOTH
+agents have fixing_clash == 0. AGV 2 still had fixing_clash=3 from an earlier clash, so the rule was
+skipped for the pair in both orders and both were committed FORWARD into (8,12). The cooldown exists
+to stop a resolved pair re-clashing; gating the safety rule on it disabled collision prevention for
+that agent against everyone. The bay fix did not cause this -- it changed demand slightly, sending
+seed 6 down a trajectory that reached a hole the legacy runs never happened to hit.
+
+FIX (56929c6): a final vertex guard after all other decisions, firing only when two SAME-TYPE agents
+would share a cell (AGV+picker = rendezvous, legal), repeated to a fixed point. It never fires in an
+episode that would not otherwise have collided, so those are bit-identical (legacy seeds 1-3, 6/6);
+seed 6 goes 1 collision -> 0 with exactly one guard intervention. The `fixing_clash` gate itself was
+deliberately NOT edited: that could change which robot yields in non-colliding cases.
+
+ALSO: exp_m5_bench's `collisions` column had read env._collisions, which never existed -- a placeholder
+flagged 2026-08-24 but never fixed in the bench. It now MEASURES same-type co-location and records
+referee_saves. Every published benchmark table's collisions column was 0 by construction.
+
+CONSEQUENCE: the corrected-floor benchmark and the four completed queue steps ran on the pre-fix
+referee. Archived to results/retired/pre_guard/; full rerun relaunched on the fixed simulator. Rows
+with referee_saves = 0 must reproduce the pre-guard run exactly -- a built-in check.
+
+PROCESS NOTE: TaskStop killed the task wrapper but not the queue's bash loop, and each subsequent kill
+of its Python workers just advanced the queue a step. Kill the shell (ps -ef | grep script) first.
