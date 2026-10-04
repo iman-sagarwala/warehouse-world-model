@@ -320,6 +320,15 @@ model-predictive tuner, which re-selects the funnel's own settings every 50 step
 simulation. Stage 6 is the only point at which a decision is made: disabling it costs 7.2% of on-time
 value (t = -30.6).*
 
+![Figure 4 - a candidate's value is a step, not a slope](../results/fig_cliff.png)
+
+*Figure 4. What stage 6 is actually ranking. An order banks its full value or none of it, with nothing
+in between, so the projected value of a candidate is a step at the deadline rather than a slope toward
+it. The route enters the score only through the finish estimate: it can carry a task across the
+deadline, but it never changes what the task is worth. Because the estimate's own error is ±14 steps,
+sharpening it can only re-rank candidates already inside that band — which is why better delay
+prediction does not pay (§5.25).*
+
 ---
 
 ## 4.1 Figures
@@ -335,12 +344,13 @@ must not be cited.**
 | 1 | `fig_coupled.png` | the four decisions one free robot couples, on the real floor | §1 |
 | 2 | `fig_realism.png` | the realism audit: what each group of corrected constants cost | §3.7 |
 | 3 | `fig_planner.png` | the seven-step funnel, the rollout, and the tuner that wraps them | §4 |
-| 4 | `fig_benchmark.png` | head-to-head vs the simulator's own dispatcher, both regimes, ± disturbances | §5.20 |
-| 5 | `m5_belief_curves.png` | the belief map as a forecaster: PR, reliability, detection latency | §5.22 |
-| 6 | `fig_sensing.png` | the prediction inversion across sight radius | §5.23 |
-| 7 | `fig_ablation.png` | the pre-registered keep/cut ledger, 10 shipped / 22 cut | §5.24 |
-| 8 | `fig_anticipation.png` | the anticipation null: horizon damage, and six channels | §5.3, §5.25 |
-| 9 | `fig_horizon.png` | the tuner's cadence/horizon grid, value against compute | §5.26 |
+| 4 | `fig_cliff.png` | why a candidate's value is a step at the deadline, and what the finish estimate can move | §4 |
+| 5 | `fig_benchmark.png` | head-to-head vs the simulator's own dispatcher, both regimes, ± disturbances | §5.20 |
+| 6 | `m5_belief_curves.png` | the belief map as a forecaster: PR, reliability, detection latency | §5.22 |
+| 7 | `fig_sensing.png` | the prediction inversion across sight radius | §5.23 |
+| 8 | `fig_ablation.png` | the pre-registered keep/cut ledger, 10 shipped / 22 cut | §5.24 |
+| 9 | `fig_anticipation.png` | the anticipation null: horizon damage, and six channels | §5.3, §5.25 |
+| 10 | `fig_horizon.png` | the tuner's cadence/horizon grid, value against compute | §5.26 |
 
 Figures are numbered by order of first appearance.
 
@@ -903,9 +913,9 @@ is a decision-layer redesign rather than a learned component.
 
 ### 5.20 M5 — head-to-head against the simulator's own dispatcher, safety, and inner-loop validation
 
-![Figure 4](../results/fig_benchmark.png)
+![Figure 5](../results/fig_benchmark.png)
 
-*Figure 4 — head-to-head against the simulator's own dispatcher, both regimes, with and without disturbances. 144 paired days per cell; the baselines run with free energy.*
+*Figure 5 — head-to-head against the simulator's own dispatcher, both regimes, with and without disturbances. 144 paired days per cell; the baselines run with free energy.*
 
 **Benchmarks.** Against the simulator's own dispatcher and a value-plus-urgency baseline, on 144
 paired days per regime (1,152 runs), the **shipped system** — the rules with the self-tuner live —
@@ -1149,15 +1159,15 @@ precision 36.0% for the same map. Both are "correct" arithmetic on the same hist
 detector parks its don't-know mass on the decision boundary, the inequality is part of the metric
 definition, not an implementation detail.
 
-![Figure 5](../results/m5_belief_curves.png)
+![Figure 6](../results/m5_belief_curves.png)
 
-*Figure 5 — the belief map graded as a forecaster: precision–recall, reliability, and the detection-latency CDF, shipped map against the one it replaced. The two latency curves lying on top of each other is the result.*
+*Figure 6 — the belief map graded as a forecaster: precision–recall, reliability, and the detection-latency CDF, shipped map against the one it replaced. The two latency curves lying on top of each other is the result.*
 
 ### 5.23 What prediction itself is worth
 
-![Figure 6](../results/fig_sensing.png)
+![Figure 7](../results/fig_sensing.png)
 
-*Figure 6 — the prediction inversion. At generous sensor range eyes carry the value; at honest range the split inverts and memory carries it.*
+*Figure 7 — the prediction inversion. At generous sensor range eyes carry the value; at honest range the split inverts and memory carries it.*
 
 Finally, decomposing the sensing value isolates what prediction itself is worth. A fleet that
 routes only around hazards *currently in someone's view* (no memory) captures most of the
@@ -1187,9 +1197,9 @@ eliminating 100% of permanent deadlock on dense maps). Cut: five anticipation me
 hazard-guess mechanisms, five learned components, and six others (the sixth being the spare-storage
 sweep of §5.27).
 
-![Figure 7](../results/fig_ablation.png)
+![Figure 8](../results/fig_ablation.png)
 
-*Figure 7 — the pre-registered keep/cut ledger. Everything kept reasons about what already exists; everything cut acted on what did not.*
+*Figure 8 — the pre-registered keep/cut ledger. Everything kept reasons about what already exists; everything cut acted on what did not.*
 
 Read as two halves, the ledger states the thesis without any prose. **Everything kept reasons about
 things that already exist** — the tasks in hand, the batteries draining, the spill somebody saw.
@@ -1199,9 +1209,9 @@ is the methodological point: a 3% rule chosen afterwards would have kept several
 
 ### 5.25 Charging foresight — the sixth leg of the anticipation null, and a real finding underneath it
 
-![Figure 8](../results/fig_anticipation.png)
+![Figure 9](../results/fig_anticipation.png)
 
-*Figure 8 — the anticipation null. Left: damage grows monotonically with how much of the future the
+*Figure 9 — the anticipation null. Left: damage grows monotonically with how much of the future the
 planner is given. Right: six independent channels fed the true future; none pays.*
 
 Five channels had been tested for the value of perfect information: which task to take, how far ahead
@@ -1311,9 +1321,9 @@ against the fixed-constant control:
 | 50 / 200 | **838.99** | **+96.69** | **+5.86** | 137 | 5,770 | 66 |
 | 100 / 200 | 817.64 | +75.34 | +5.07 | 90 | 3,000 | **63** |
 
-![Figure 9](../results/fig_horizon.png)
+![Figure 10](../results/fig_horizon.png)
 
-*Figure 9 — the tuner's cadence/horizon grid, value against compute. Horizon is the lever; cadence is not.*
+*Figure 10 — the tuner's cadence/horizon grid, value against compute. Horizon is the lever; cadence is not.*
 
 **Horizon is the lever; cadence is not.** Doubling the horizon at the shipped cadence is worth +39
 more value than the shipped setting and cuts strandings from 95 to 66. Halving the cadence at a fixed
