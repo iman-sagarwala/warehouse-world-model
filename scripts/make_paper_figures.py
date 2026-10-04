@@ -1416,11 +1416,102 @@ def fig_arms():
     save(fig, "fig_arms.png")
 
 
+def fig_cliff():
+    """Equation 2 drawn: the projected value of a candidate is a step, not a slope.
+
+    The image of the projected-value function is {0, v_o} and nothing between, so the finish
+    estimate changes the ranking only for a task whose own error straddles its deadline. Three
+    example candidates make that concrete: two sit far enough either side that no sharpening of
+    the estimate could move them, and only the middle one is in play.
+
+    The error half-width is the rollout's own measured per-task estimate error (+/-14 steps,
+    scripts/congestion_policies.py), so the shaded band is this planner's, not an illustration.
+    """
+    from matplotlib.patches import Rectangle, FancyArrowPatch
+
+    ERR = 14.0                      # measured per-task finish-estimate error, in steps
+    V = 1.0                         # the order's value, in units of v_o
+    XLO, XHI = -62, 62
+
+    # Two panels on a shared x. The candidates get their own strip because the main y axis is
+    # VALUE: a finish-estimate marker drawn there at y = 0.7 would read as "worth 0.7 v_o", and the
+    # whole point of the figure is that the only attainable values are 0 and v_o.
+    fig = plt.figure(figsize=(9.6, 6.0))
+    ax = fig.add_axes([0.095, 0.400, 0.875, 0.375])
+    cx_ax = fig.add_axes([0.095, 0.135, 0.875, 0.215], sharex=ax)
+
+    # ---- the region where a better estimate could change anything --------------------------------
+    ax.add_patch(Rectangle((-ERR, -0.12), 2 * ERR, 1.26, fc="#fdf0e8", ec="none", zorder=1))
+    ax.plot([-ERR, -ERR], [-0.12, 1.14], color=C2, lw=1.0, ls=(0, (2.4, 2.0)), zorder=2)
+    ax.plot([ERR, ERR], [-0.12, 1.14], color=C2, lw=1.0, ls=(0, (2.4, 2.0)), zorder=2)
+
+    # ---- the step itself --------------------------------------------------------------------------
+    ax.plot([XLO, 0], [V, V], color=C1, lw=3.0, zorder=5, solid_capstyle="butt")
+    ax.plot([0, XHI], [0, 0], color=C1, lw=3.0, zorder=5, solid_capstyle="butt")
+    ax.plot([0, 0], [0, V], color=C1, lw=1.4, ls=(0, (1.8, 2.2)), zorder=4)
+    ax.plot([0], [V], marker="o", ms=8, mfc=C1, mec=SURFACE, mew=1.6, zorder=6)   # closed: on time
+    ax.plot([0], [0], marker="o", ms=8, mfc=SURFACE, mec=C1, mew=2.0, zorder=6)   # open: one step late
+
+    ax.axvline(0, color=INK, lw=1.2, zorder=3)
+    ax.text(0, 1.21, "deadline", ha="center", va="bottom", fontsize=10, fontweight="bold",
+            color=INK)
+    ax.text(-XHI * 0.52, V + 0.055, "banks the full value", ha="center", fontsize=9.6, color=GOOD)
+    ax.text(XHI * 0.52, 0.055, "banks nothing", ha="center", fontsize=9.6, color=BAD)
+
+    # ---- three candidates, same error, different distance from the deadline ----------------------
+    cx_ax.add_patch(Rectangle((-ERR, -0.9), 2 * ERR, 3.6, fc="#fdf0e8", ec="none", zorder=0))
+    cx_ax.axvline(0, color=INK, lw=1.2, zorder=3)
+    for cx, y, lab, note, col in ((-38, 2.0, "A", "comfortably early — banks $v_o$", INK3),
+                                  (-2, 1.0, "B", "straddling — in play", C2),
+                                  (34, 0.0, "C", "comfortably late — banks 0", INK3)):
+        cx_ax.errorbar([cx], [y], xerr=[[ERR], [ERR]], fmt="o", ms=6.5, color=col,
+                       ecolor=col, elinewidth=1.8, capsize=4.5, capthick=1.8, zorder=7)
+        cx_ax.text(cx, y + 0.28, lab, ha="center", fontsize=9.6, fontweight="bold", color=col)
+        cx_ax.text(cx + ERR + 3.0, y, note, va="center", fontsize=8.8, color=INK2)
+    cx_ax.set_ylim(-1.1, 2.8)
+    cx_ax.set_yticks([])
+    cx_ax.set_ylabel("three candidates,\nsame ±14-step error", fontsize=8.8, color=INK2)
+    for s in ("top", "right", "left"):
+        cx_ax.spines[s].set_visible(False)
+    cx_ax.spines["bottom"].set_color(GRID)
+    cx_ax.tick_params(length=0, labelsize=9.4)
+    cx_ax.annotate("", xy=(-ERR, -0.75), xytext=(ERR, -0.75),
+                   arrowprops=dict(arrowstyle="<->", color=C2, lw=1.3))
+    cx_ax.text(0, -0.88, "the only candidates a sharper estimate can move",
+               ha="center", va="top", fontsize=9.2, color=C2, fontweight="bold")
+
+    ax.set_xlim(XLO, XHI)
+    ax.set_ylim(-0.12, 1.34)
+    ax.set_yticks([0, V])
+    ax.set_yticklabels(["0", "$v_o$"])
+    ax.set_xticks([-60, -40, -20, 0, 20, 40, 60])
+    plt.setp(ax.get_xticklabels(), visible=False)
+    cx_ax.set_xlabel("estimated finish time, steps relative to the deadline"
+                     "    ($t_{now} + \\hat{f}(o,r) - d_o$)", labelpad=8)
+    ax.set_ylabel("projected on-time value  $\\hat{V}(o,r)$")
+    ax.tick_params(length=0, labelsize=9.4)
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    ax.spines["left"].set_color(GRID)
+    ax.spines["bottom"].set_color(GRID)
+
+    fig.text(0.012, 0.975, "A candidate's value is a step, not a slope",
+             fontsize=15, fontweight="bold", color=INK, va="top")
+    fig.text(0.012, 0.925, "The route enters only through the finish estimate "
+                           "$\\hat{f}(o,r)$, so it can carry a task across the deadline but never "
+                           "changes what the task is worth.\nThe estimate's own error is "
+                           "±14 steps, so sharpening it can only change the ranking of "
+                           "candidates already inside that band — which is why a better\n"
+                           "delay predictor does not pay (§6.4).",
+             fontsize=9.4, color=INK2, va="top", linespacing=1.55)
+    save(fig, "fig_cliff.png")
+
+
 # Keyed by the figure's number in the paper, which numbers by order of first appearance.
 # Fig. 5 is the belief-curve panel, produced by scripts/exp_m5_brier.py, and is not built here.
 FIGS = {"f1": fig_coupled, "f2": fig_realism, "f3": fig_planner, "f4": fig_benchmark,
         "f6": fig_sensing, "f7": fig_ablation, "f8": fig_anticipation, "f9": fig_horizon,
-        "t2": fig_features, "t2tbl": fig_table2, "t3tbl": fig_table3, "t1tbl": fig_table1, "tbench": fig_tablebench, "arms": fig_arms}
+        "t2": fig_features, "t2tbl": fig_table2, "t3tbl": fig_table3, "t1tbl": fig_table1, "tbench": fig_tablebench, "arms": fig_arms, "cliff": fig_cliff}
 FIGS.update({fn.__name__.replace("fig_", ""): fn for fn in list(FIGS.values())})
 
 if __name__ == "__main__":
