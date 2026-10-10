@@ -242,6 +242,8 @@ The draft has only a caption. Insert:
 > | Hungarian, travel cost | 144 | +48.2% (t = 13.0) | +56.3% (t = 13.4) | +28.5% (t = 7.8) | +42.7% (t = 10.3) |
 > | Hungarian, on-time value | 144 | +32.6% (t = 12.1) | +43.7% (t = 12.3) | +16.3% (t = 7.2) | +29.1% (t = 8.9) |
 > | Weighted-tardiness | 144 | +15.3% (t = 9.8) | +18.3% (t = 10.0) | +7.9% (t = 4.4) | +15.1% (t = 5.8) |
+> | ATC, as published | 144 | +5.6% (t = 5.0) | +10.4% (t = 6.7) | +10.8% (t = 4.5) | +19.2% (t = 6.8) |
+> | ATC, robot-dependent | 144 | +7.6% (t = 5.6) | +10.7% (t = 6.8) | +5.1% (t = 2.6) | +17.7% (t = 6.7) |
 > | Policy-gradient learner | 72 | +4.0% (t = 3.4) | +2.1% (t = 1.4) | +0.1% (t = 0.1) | +1.7% (t = 0.8) |
 >
 > Planner mean on-time value across the four conditions: 785.86, 764.12, 578.34 and 537.96 over 144
@@ -256,6 +258,26 @@ mix them without the *n* column.
 
 **Do not use an averaged or minimum "margin over baselines" column.** An average rewards adding weak
 baselines, and a minimum silently changes which comparator it refers to between cells.
+
+### 3.1b The three-tier summary sentence
+
+The margins separate cleanly by comparator class, and this is the honest way to state the headline:
+
+> The planner improved on-time value by 18.9-66.5% over the simulator's own FIFO dispatcher, by
+> 5.1-19.2% over the strongest established dispatching rule, and by 0.1-4.0% over a learned scorer
+> given the same candidate set and features.
+
+ATC detail for 2.5: the look-ahead parameter K was swept over {0.5, 1, 2, 3, 5, 8} on the even seeds
+and the best value per demand regime was used (as published: K = 1.0 on wave, 5.0 on stream;
+robot-dependent: K = 2.0 on wave, 8.0 on stream). The sweep surface is flat -- 1.3% spread on wave,
+10% on stream -- so the comparison does not hinge on tuning. Selection on the even seeds overlaps the
+144-seed evaluation, which favours the baseline.
+
+One substantive observation: the published machine-independent rule wins on wave demand (744.2 vs
+730.4) while the robot-dependent adaptation wins on the clean stream (550.3 vs 522.2). ATC assumes
+processing time is independent of which machine takes the job; in a warehouse the fetch leg makes
+that false, and the assumption costs most when orders arrive continuously and robot positions
+therefore matter.
 
 ### 3.2 §3.1 — the baseline finding is missing entirely
 
