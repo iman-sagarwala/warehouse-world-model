@@ -43,23 +43,42 @@ constants were learned from the start … versus the dispatcher where they were 
 states that the sandbox tested the learner. The sandbox has no learner arm; it compares the planner
 with its tuner on against the same planner with fixed constants.
 
-> The learned dispatcher was retrained and evaluated on a parity split — even seeds for training,
-> the 72 odd seeds for evaluation — because seed difficulty is monotone in the seed index and the
-> original sequential split tested it on days roughly 2.5 times harder than those it trained on. It
-> was then evaluated in all four benchmark conditions rather than one.
+The section should also be reframed. The learned dispatcher is not an independent method: the hook it
+replaces, `_pick_winner`, *is* the rollout sequencer, so the learned arm is the planner with stage 6
+substituted and stages 1-5 and 7 untouched. That makes the comparison a direct contest between two
+ways of filling one decision slot, on identical candidates and identical features, and it supports a
+much stronger claim than a margin between systems.
+
+> The learned dispatcher replaces the rollout sequencer and leaves the rest of the planner intact:
+> the candidate filter, the route generation, the legality screen, the tier ordering and the
+> single-action commit are all unchanged, and the learned scorer selects among exactly the finalists
+> the rollout would have evaluated. The comparison is therefore between two ways of filling one
+> decision stage rather than between two systems.
 >
-> The planner led in every condition: by 4.0% on the clean wave regime (t = 3.38), 0.1% on clean
-> stream (t = 0.08), 2.1% on disturbed wave (t = 1.41), and 1.7% on disturbed stream (t = 0.77).
-> Only the first is statistically distinguishable from zero. The comparison isolates candidate
-> selection: both systems receive the same candidate set and the same 24 features, and routing,
-> battery handling, and execution are identical.
+> It was retrained and evaluated on a parity split — even seeds for training, the 72 odd seeds for
+> evaluation — because seed difficulty is monotone in the seed index and the original sequential
+> split tested it on days roughly 2.5 times harder than those it trained on. It was then evaluated in
+> all four benchmark conditions rather than one.
 >
-> The learned dispatcher was nevertheless the strongest comparator in the study, exceeding FIFO by
-> 11.9–29.3%, the optimal myopic assignment by 12.0–27.5%, and the weighted-tardiness heuristic by
-> 6.0–12.9% across the four conditions. A learned scorer with matched inputs therefore reaches
-> approximately the same decision quality as the rollout planner on this map and fleet, while
-> requiring 960 training episodes to do so. The planner's settings transfer across the 46 sandbox
-> configurations without retraining; the learner's transfer was not tested.
+> Filling stage 6 three ways, on identical seeds, separates the regimes. On the stream regime the
+> learned scorer recovers almost all of the rollout's contribution: taking the funnel's own top
+> candidate scores 553.14, the learned scorer 590.86 (+6.8%, t = 2.82) and the rollout 591.68
+> (+7.0%, t = 3.31), with the last two statistically indistinguishable. On the wave regime it
+> recovers almost none: 773.53 without the stage, 778.15 with the learned scorer (+0.6%, t = 0.50),
+> and 809.03 with the rollout (+4.6%, t = 3.15), the rollout exceeding the learned scorer by 4.0%
+> (t = 3.38).
+>
+> The split follows from what the stage has to do. A wave day exposes the whole order queue at once,
+> so the value of stage 6 lies in sequencing many known tasks against one another over a horizon — a
+> combinatorial lookahead that a per-candidate scoring function has no representation for. The
+> learned scorer was trained on wave days and still does not capture it, so this is a limit of the
+> representation rather than an artefact of the training distribution. Where orders arrive
+> continuously and each decision concerns few live alternatives, a learned scorer reaches the same
+> quality as forward simulation.
+
+This is the paper's strongest evidence that the rollout does something a scoring function cannot, and
+it is more informative than the aggregate margin. Promote a version of the last two paragraphs into
+§4.1.
 
 ### 1.2 §3.5, disturbance belief map — every number is pre-correction
 
@@ -244,7 +263,11 @@ The draft has only a caption. Insert:
 > | Weighted-tardiness | 144 | +15.3% (t = 9.8) | +18.3% (t = 10.0) | +7.9% (t = 4.4) | +15.1% (t = 5.8) |
 > | ATC, as published | 144 | +5.6% (t = 5.0) | +10.4% (t = 6.7) | +10.8% (t = 4.5) | +19.2% (t = 6.8) |
 > | ATC, robot-dependent | 144 | +7.6% (t = 5.6) | +10.7% (t = 6.8) | +5.1% (t = 2.6) | +17.7% (t = 6.7) |
-> | Policy-gradient learner | 72 | +4.0% (t = 3.4) | +2.1% (t = 1.4) | +0.1% (t = 0.1) | +1.7% (t = 0.8) |
+>
+> The learned dispatcher is deliberately NOT a row here. It is not a separate system: it is this
+> planner with stage 6 replaced, sharing the candidate funnel, the routes, the 24 features, the
+> battery layer and the commit step. It belongs in the stage-6 table below, not among methods that
+> differ from the planner throughout.
 >
 > Planner mean on-time value across the four conditions: 785.86, 764.12, 578.34 and 537.96 over 144
 > seeds. Baselines are ordered from weakest to strongest.
@@ -263,9 +286,14 @@ baselines, and a minimum silently changes which comparator it refers to between 
 
 The margins separate cleanly by comparator class, and this is the honest way to state the headline:
 
-> The planner improved on-time value by 18.9-66.5% over the simulator's own FIFO dispatcher, by
-> 5.1-19.2% over the strongest established dispatching rule, and by 0.1-4.0% over a learned scorer
-> given the same candidate set and features.
+> The planner improved on-time value by 18.9-66.5% over the simulator's own FIFO dispatcher and by
+> 5.1-19.2% over the strongest established dispatching rule. Substituting a learned scorer for the
+> rollout stage, with every other stage held fixed, recovered most of the rollout's contribution on
+> the stream regime and little of it on wave.
+
+The third clause must not be written as a margin "over a learned competitor". The learned arm is the
+same planner with one stage changed, so the comparison is between two ways of filling that stage,
+not between two systems.
 
 ATC detail for 2.5: the look-ahead parameter K was swept over {0.5, 1, 2, 3, 5, 8} on the even seeds
 and the best value per demand regime was used (as published: K = 1.0 on wave, 5.0 on stream;
