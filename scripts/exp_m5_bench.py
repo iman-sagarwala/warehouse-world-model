@@ -52,6 +52,8 @@ SEQDEPTH = os.environ.get("SEQDEPTH")
 # heuristics. They share FIFO's whole execution layer, so the arm difference is the assignment rule
 # alone. See scripts/baselines_mapd.py.
 from baselines_mapd import ARMS as BASELINES
+from baselines_atc import ARMS as _ATC
+BASELINES = dict(BASELINES, **_ATC)   # ATC dispatching: the weighted-tardiness rule family
 
 # MARL (2026-10-09). The learned dispatcher as a benchmark arm, so it runs the same grid as every
 # other arm instead of only wave/clean. It was trained on seeds 1-96 (marl_dispatch.TRAIN_SEEDS),
