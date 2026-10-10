@@ -174,6 +174,41 @@ class HungarianValueController(_AdaptiveWindow, HungarianController):
         return out
 
 
+class HungarianValueSlackController(HungarianValueController):
+    """hungv with the baselines' EXACT makeability test, to answer the handicap objection.
+
+    `hungv` projects finish as now + d + window, where d is the fetch leg and window is the full
+    assign->deliver duration -- so the fetch is counted twice and the test is conservative, marking
+    tasks doomed that the heuristic arms would call makeable. That could understate the baseline.
+
+    Here makeability is `deadline - now >= window`, character-for-character the test in
+    FeasiblePriorityController and ValuePriorityController, with distance kept only as the
+    tie-break. This arm is therefore the Hungarian form of ValuePriorityController: optimal
+    matching among the tasks the heuristics themselves consider feasible. If it still loses to the
+    planner, the loss is not an artefact of a conservative estimate.
+    """
+
+    def _cost(self, agvs, tasks):
+        now, w = self.timestep, self.window
+        out = np.zeros((len(agvs), len(tasks)), dtype=float)
+        for i, a in enumerate(agvs):
+            for j, t in enumerate(tasks):
+                d = _dist(self, a, t)
+                if d >= BIG:
+                    out[i, j] = BIG
+                    continue
+                v = 1.0 if t.value is None else float(t.value)
+                if t.deadline is None:
+                    base = -v * 0.5
+                elif (t.deadline - now) >= w:
+                    base = -v
+                else:
+                    base = 0.0
+                out[i, j] = base + TIE_EPS * d
+        return out
+
+
 ARMS = {"tp": TokenPassingController,
         "hung": HungarianController,
-        "hungv": HungarianValueController}
+        "hungv": HungarianValueController,
+        "hungv2": HungarianValueSlackController}

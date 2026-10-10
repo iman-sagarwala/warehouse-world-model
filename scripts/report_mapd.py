@@ -24,17 +24,18 @@ SOURCES = {
     "disturb": ("results/m5_bench_disturb_retired.csv", "results/mapd/mapd_disturb.csv"),
 }
 # order matters: it is the order the report prints, weakest baseline first
-ARMS = ["fifo", "tp", "hung", "rush", "hungv", "champ", "mpc"]
+ARMS = ["fifo", "tp", "hung", "rush", "hungv", "hungv2", "champ", "mpc"]
 LABEL = {
     "fifo":  "FIFO (simulator's own)",
     "tp":    "Token Passing (Ma et al. 2017)",
     "hung":  "Hungarian, travel cost (CENTRAL)",
     "rush":  "RushValue (ours, weighted-tardiness)",
     "hungv": "Hungarian, on-time value (optimal myopic)",
+    "hungv2": "Hungarian, on-time value, baselines' slack test",
     "champ": "Planner, fixed constants",
     "mpc":   "Planner + self-tuner (shipped)",
 }
-OUTSIDE = ("fifo", "tp", "hung", "hungv")     # not ours
+OUTSIDE = ("fifo", "tp", "hung", "hungv", "hungv2")     # not ours
 
 
 def load(paths):
@@ -88,7 +89,16 @@ def main():
             md += ["", "## %s floor, %s demand" % (cond.capitalize(), g), "",
                    "| arm | mean on-time value | vs FIFO | vs best outside baseline | t | won |",
                    "|---|---|---|---|---|---|"]
-            present = [a for a in ARMS if (g, a) in data]
+            # Drop arms that are still mid-run. A partially written arm otherwise reports a
+            # mean over whichever seeds happened to finish first, which is not a random subset --
+            # easy days finish sooner -- and it reads as a real result.
+            full = max(len(d) for (gg, _), d in data.items() if gg == g)
+            present = [a for a in ARMS if (g, a) in data and len(data[(g, a)]) >= full]
+            partial = [a for a in ARMS if (g, a) in data and len(data[(g, a)]) < full]
+            if partial:
+                md.append("_Omitted as still running: %s._" % ", ".join(
+                    "`%s` (%d/%d seeds)" % (a, len(data[(g, a)]), full) for a in partial))
+                md.append("")
             # the strongest arm that is not ours -- the honest bar to clear
             outs = [a for a in present if a in OUTSIDE]
             best_out = max(outs, key=lambda a: st.mean(data[(g, a)].values())) if outs else None
