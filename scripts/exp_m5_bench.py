@@ -40,6 +40,18 @@ assert BAYFLOOR in ("legacy", "retired"), BAYFLOOR
 # orders, W steps ahead: 0 = none (the control), 999 = everything to the rollout horizon. Running it
 # through this harness means foresight is measured on exactly the code the headline is.
 FORESIGHT = int(os.environ.get("FORESIGHT", "0"))
+# SEQDEPTH (2026-10-09). The stage-6 ablation: how much of the champion's value comes from the
+# rollout sequencer itself. SEQ_DEPTH=0 short-circuits the sequencer (congestion_policies 1577), so
+# the arm is the champion funnel with stages 1-5 and 7 intact and stage 6 removed. The published
+# -7.2% (t=-30.6) was measured on the PRE-AUDIT world and never reran; this is the corrected-floor
+# measurement. Applies to `champ` ONLY: SEQ_DEPTH is tuner parameter 4 (m3_mpc.DEFAULT[4]=5), so on
+# the `mpc` arm apply_setting would overwrite it at the first tune and the ablation would not hold.
+SEQDEPTH = os.environ.get("SEQDEPTH")
+# OUTSIDE BASELINES (2026-10-09). Token Passing and Hungarian assignment, so the benchmark compares
+# against published task-assignment methods and not only against the simulator's FIFO and our own
+# heuristics. They share FIFO's whole execution layer, so the arm difference is the assignment rule
+# alone. See scripts/baselines_mapd.py.
+from baselines_mapd import ARMS as BASELINES
 
 
 class _ForesightMixin:
@@ -88,12 +100,14 @@ def one(job):
         env.b_hard = 0.5
         env.los_sensing = True
 
-    if arm in ("fifo", "rush"):
+    if arm in ("fifo", "rush") or arm in BASELINES:
         # baselines run on the SAME world; swap the decision layer only
         from sim_dashboard import FIFOController
         from sim_priority import RushValueController
-        ctrl2 = (FIFOController(env) if arm == "fifo" else RushValueController(env))
-        ctrl = ctrl2
+        if arm in BASELINES:
+            ctrl = BASELINES[arm](env)
+        else:
+            ctrl = FIFOController(env) if arm == "fifo" else RushValueController(env)
         bat = None
     elif arm == "mpc":
         M.apply_setting(ctrl, M.DEFAULT)
@@ -103,6 +117,11 @@ def one(job):
         _base = type(ctrl)
         ctrl.__class__ = type("Foresight" + _base.__name__, (_ForesightMixin, _base),
                               {"FORESIGHT_W": FORESIGHT})
+    if SEQDEPTH is not None and arm == "champ":
+        # class attribute, not instance: same deepcopy-survival reason as the foresight mixin
+        _b = type(ctrl)
+        ctrl.__class__ = type("Seq%s%s" % (SEQDEPTH, _b.__name__), (_b,),
+                              {"SEQ_DEPTH": int(SEQDEPTH)})
 
     cur = M.DEFAULT
     stats = {mv: [0, 0.0] for mv in M.moves_for(env)}
