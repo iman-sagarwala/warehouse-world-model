@@ -35,9 +35,20 @@ SCALE = dict(pred_finish=60.0, my_arrival=30.0, dock=30.0, picker_eta=30.0, my_w
              delay_ema=40.0, dur_recent=60.0, dur_trend=10.0, deliv_rate=0.2, busy_frac=1.0,
              free_pk_frac=1.0, q_per_agv=3.0, local_density=1.0, path_stretch=3.0, sin_t=1.0,
              cos_t=1.0, day_frac=1.0, dl_soon40=10.0, dl_soon80=15.0)
-MODEL = "results/marl_policy.pt"
-TRAIN_SEEDS = list(range(1, 97))
-TEST_SEEDS = list(range(97, 145))
+MODEL = os.environ.get("MARL_MODEL", "results/marl_policy.pt")
+# SPLIT (2026-10-09). The original 1-96 / 97-144 split is a SEQUENTIAL one, and seed difficulty is
+# monotone in the index -- FIFO scores 879.57 on seeds 1-48, 754.10 on 49-96 and 348.32 on 97-144 --
+# so training on 1-96 and testing on 97-144 is a distribution shift rather than a random holdout.
+# 2.5 of the paper already rules sequential halves out for exactly this reason ("seed parity, rather
+# than sequential halves ... because seeds tile a daily demand profile"); the learner was the one
+# place that did not follow it. MARLSPLIT=parity trains on even seeds and tests on odd ones, which
+# puts easy and hard days on both sides.
+if os.environ.get("MARLSPLIT") == "parity":
+    TRAIN_SEEDS = [i for i in range(1, 145) if i % 2 == 0]
+    TEST_SEEDS = [i for i in range(1, 145) if i % 2 == 1]
+else:
+    TRAIN_SEEDS = list(range(1, 97))
+    TEST_SEEDS = list(range(97, 145))
 
 
 def vec(feat):

@@ -53,6 +53,31 @@ SEQDEPTH = os.environ.get("SEQDEPTH")
 # alone. See scripts/baselines_mapd.py.
 from baselines_mapd import ARMS as BASELINES
 
+# MARL (2026-10-09). The learned dispatcher as a benchmark arm, so it runs the same grid as every
+# other arm instead of only wave/clean. It was trained on seeds 1-96 (marl_dispatch.TRAIN_SEEDS),
+# so ONLY seeds 97-144 are valid for it -- running it on 1-144 would score it on its own training
+# data. It was also trained on wave/clean only, so the stream and disturbance cells are
+# out-of-distribution for it; that is informative, not a defect, but it must be said.
+MARL_MODEL = os.environ.get("MARL_MODEL", "results/marl_policy.pt")
+
+
+def _attach_marl(ctrl):
+    """Plug the trained scorer into the funnel's winner-pick, greedy (no sampling)."""
+    import numpy as np
+    import torch
+    from marl_dispatch import make_net, vec
+    net = make_net()
+    net.load_state_dict(torch.load(MARL_MODEL))
+    net.eval()
+
+    def pick(self, scored):
+        X = np.stack([vec(c[4]) for c in scored])
+        with torch.no_grad():
+            logits = net(torch.from_numpy(X)).squeeze(-1).numpy()
+        return scored[int(np.argmax(logits))]
+    # class-level, matching marl_dispatch: each worker is its own process, so this cannot leak
+    type(ctrl)._pick_winner = pick
+
 
 class _ForesightMixin:
     """Hands the rollout the TRUE upcoming orders in (now, min(horizon, now + W)] instead of []."""
@@ -111,6 +136,8 @@ def one(job):
         bat = None
     elif arm == "mpc":
         M.apply_setting(ctrl, M.DEFAULT)
+    elif arm == "marl":
+        _attach_marl(ctrl)
     if FORESIGHT and arm in ("champ", "mpc"):
         # a runtime subclass, not a patched method: the tuner deep-copies ctrl every 50 steps, and a
         # class survives deepcopy where an instance-bound method would not
