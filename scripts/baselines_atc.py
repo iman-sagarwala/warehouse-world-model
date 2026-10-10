@@ -114,13 +114,78 @@ class ATCPerRobotController(ATCController):
             tasks.remove(best)
 
 
+class ATCShedController(ATCController):
+    """ATC's index, but projected-late tasks are demoted beneath every makeable one.
+
+    The one place ATC is wrong for this objective. Its slack term is max(0, d_j - t - p_j), so once
+    a task is late the exponent is zero, exp(0) = 1, and the task receives the LARGEST urgency
+    multiplier the rule can give. That is correct for weighted tardiness -- finishing a late job
+    sooner still reduces total lateness -- and wrong here, where a late order banks exactly nothing,
+    so ATC spends robots chasing work the objective has already written off.
+
+    This arm keeps the index and adds the one thing `rush` has that ATC lacks: a hard tier boundary
+    at the deadline, so a doomed task is only ever taken when no makeable task is available. Tiering
+    is `rush`'s (deadline - now >= window), the index is ATC's, and nothing else changes -- so the
+    difference between this arm, `atc` and `rush` isolates which of the two ideas carries the rule.
+    """
+
+    def _task_order(self):
+        now, p = self.timestep, self.window
+
+        def key(sh):
+            pi = self._index(sh, now, p, p)
+            if sh.deadline is None:
+                return (2, 0.0, 0)
+            doomed = (sh.deadline - now) < p
+            return (1 if doomed else 0, -pi, sh.deadline)
+        return sorted(self.env.request_queue, key=key)
+
+
+class ATCPerRobotShedController(ATCPerRobotController):
+    """The robot-dependent ATC with the same demotion, applied per (AGV, task) pair."""
+
+    def _assign_tasks(self):
+        env, now, pbar = self.env, self.timestep, self.window
+        taken = set(self.assigned_items.values())
+        tasks = [t for t in env.request_queue if t.id not in taken]
+        free = [a for a in self.agvs
+                if not a.busy and not a.carrying_shelf and a not in self.assigned_agvs]
+        for agv in free:
+            if not tasks:
+                return
+            near = sorted(tasks, key=lambda t: abs(t.x - agv.x) + abs(t.y - agv.y))[:20]
+            best, best_key = None, None
+            for t in near:
+                path = env.find_path((agv.y, agv.x), (t.y, t.x), agv, care_for_agents=False)
+                if not path:
+                    continue
+                p = len(path) + pbar
+                pi = self._index(t, now, p, pbar)
+                tier = 2 if t.deadline is None else (1 if (t.deadline - now) < pbar else 0)
+                k = (tier, -pi)
+                if best_key is None or k < best_key:
+                    best, best_key = t, k
+            if best is None:
+                continue
+            loc_id = self.coords_to_id[(best.y, best.x)]
+            self.assigned_agvs[agv] = Mission(MissionType.PICKING, loc_id,
+                                              best.x, best.y, self.timestep)
+            self.assigned_items[agv] = best.id
+            self._assign_step.setdefault(best.id, self.timestep)
+            tasks.remove(best)
+
+
 def _k(cls, k):
     """A runtime subclass pinning K, so the value survives the tuner's deepcopy."""
     return type("%sK%s" % (cls.__name__, str(k).replace(".", "p")), (cls,), {"K": float(k)})
 
 
 # Arm names: atc/atcx use the default K; atc_k<value> pins one for the sweep.
-ARMS = {"atc": ATCController, "atcx": ATCPerRobotController}
+ARMS = {"atc": ATCController, "atcx": ATCPerRobotController,
+        "atcs": ATCShedController, "atcxs": ATCPerRobotShedController}
 for _kv in (0.5, 1.0, 2.0, 3.0, 5.0, 8.0):
-    ARMS["atc_k%s" % str(_kv).replace(".", "p")] = _k(ATCController, _kv)
-    ARMS["atcx_k%s" % str(_kv).replace(".", "p")] = _k(ATCPerRobotController, _kv)
+    _t = str(_kv).replace(".", "p")
+    ARMS["atc_k%s" % _t] = _k(ATCController, _kv)
+    ARMS["atcx_k%s" % _t] = _k(ATCPerRobotController, _kv)
+    ARMS["atcs_k%s" % _t] = _k(ATCShedController, _kv)
+    ARMS["atcxs_k%s" % _t] = _k(ATCPerRobotShedController, _kv)
